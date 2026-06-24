@@ -126,6 +126,17 @@
   .remed-row a{color:var(--accent);margin-right:8px}
   .report-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
   #copyNote{text-align:center;font-size:12px;color:var(--muted);margin-top:8px;min-height:14px}
+
+  /* ---- preteach (skill drill) ---- */
+  .preteach-card{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:10px;background:var(--paper)}
+  .preteach-card.preteach-target{border:2px solid var(--accent)}
+  .preteach-band{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .preteach-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;margin-left:8px}
+  .preteach-label.review{color:var(--correct)}
+  .preteach-label.target{color:var(--accent)}
+  .preteach-label.stretch{color:var(--muted)}
+  .preteach-name{font-family:Georgia,serif;font-size:16px;font-weight:700;margin:6px 0 4px}
+  .preteach-example{font-family:Georgia,serif;font-size:15px;color:var(--muted);font-style:italic;line-height:1.4}
 </style>
 </head>
 <body>
@@ -147,11 +158,21 @@
     <div class="start-bar">
       <button class="btn btn-primary" id="startBtn" disabled>Start practising</button>
     </div>
-    <p class="muted" style="text-align:center;margin-top:14px">
+    <p class="muted" style="text-align:center;margin-top:14px" id="helpText">
       Click the highest level you've <b>mastered</b> in a row — it turns green, lower levels go faint green,
       and the next band up (marked <b>drill ▸</b>) is what you'll practise. Click the strand name to start from C1.
-      Each run pulls a random couple of questions per skill. Greyed cells aren't introduced at that band.
+      Each run pulls a random couple of questions per skill.
     </p>
+  </section>
+
+  <!-- ============ PRETEACH (skill drill) ============ -->
+  <section class="screen" id="preteachScreen">
+    <div class="report-title">Skill Drill</div>
+    <p class="subtitle">Review these examples, then start practising</p>
+    <div id="preteachContent"></div>
+    <div class="start-bar">
+      <button class="btn btn-primary" id="preteachStartBtn">Start practising</button>
+    </div>
   </section>
 
   <!-- ============ TASK ============ -->

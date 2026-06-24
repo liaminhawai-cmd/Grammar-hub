@@ -6,7 +6,7 @@
    the report. Knows nothing about specific grammar — it dispatches
    every item to TASK_TYPES[item.type].
 
-   Screen flow:   select  ->  task  ->  report
+   Screen flow:   select  -> [preteach] ->  task  ->  report
    Mastery loop:  wrong items come back each round until every
                   selected item has been answered correctly once.
    ============================================================ */
@@ -27,8 +27,9 @@
   let firstPass = {};     // uid -> bool (correct on first ever attempt)
   let log = [];           // {round, skill, type, stimulus, response, result}
   let rowLevel = {};      // category -> mastered band index (0..3), or -1 = "from scratch"
-  let typeFilter = "all";
-  const SAMPLE_PER_SKILL = 2;  // questions drawn per skill each run
+  let mode = "revision";  // "drill" (single skill + neighbors) | "revision" (whole rubric)
+  let drillTarget = null; // drill mode: { category, bandIndex } | null
+  const SAMPLE_PER_SKILL = 2;  // questions drawn per skill each run (revision mode)
 
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
@@ -38,10 +39,7 @@
   /* ---------------- SELECT SCREEN ---------------- */
 
   function skillById(id) { return window.SKILLS.find((s) => s.id === id); }
-  function itemsFor(skill) {
-    if (typeFilter === "all") return skill.items;
-    return skill.items.filter((it) => it.type === typeFilter);
-  }
+  function itemsFor(skill) { return skill.items; }
 
   // ---- level model: click your highest mastered cell, drill the next band up ----
   function cellAt(cat, i) {
@@ -72,6 +70,28 @@
     buildMatrix();
   }
 
+  function setDrillTarget(cat, bandIdx) {
+    if (drillTarget && drillTarget.category === cat && drillTarget.bandIndex === bandIdx) {
+      drillTarget = null;
+    } else {
+      drillTarget = { category: cat, bandIndex: bandIdx };
+    }
+    buildMatrix();
+  }
+
+  function getDrillSkills() {
+    if (!drillTarget) return [];
+    const { category, bandIndex } = drillTarget;
+    const skills = [];
+    const below = drillableAt(category, bandIndex - 1);
+    if (below) skills.push(below);
+    const target = drillableAt(category, bandIndex);
+    if (target) skills.push(target);
+    const above = drillableAt(category, bandIndex + 1);
+    if (above) skills.push(above);
+    return skills;
+  }
+
   function buildMatrix() {
     const wrap = $("matrix");
     wrap.innerHTML = "";
@@ -91,12 +111,15 @@
       const row = document.createElement("div");
       row.className = "matrix-row";
 
-      // clickable strand label = "I'm starting this strand" (drill C1)
       const label = document.createElement("div");
-      label.className = "matrix-cell rowlabel" + (lvl === -1 ? " beginner" : "");
       label.textContent = cat;
-      label.title = "Click to practise this strand from C1";
-      label.addEventListener("click", () => setLevel(cat, -1));
+      if (mode === "revision") {
+        label.className = "matrix-cell rowlabel" + (lvl === -1 ? " beginner" : "");
+        label.title = "Click to practise this strand from C1";
+        label.addEventListener("click", () => setLevel(cat, -1));
+      } else {
+        label.className = "matrix-cell rowlabel";
+      }
       row.appendChild(label);
 
       window.BANDS.forEach((band, i) => {
@@ -113,19 +136,33 @@
         cell.classList.add(n ? "has-items" : "no-items");
         cell.dataset.id = skill.id;
 
-        // cascade colouring
-        if (lvl >= 0) {
-          if (i === lvl) cell.classList.add("achieved");
-          else if (i < lvl) cell.classList.add("below");
+        if (mode === "drill") {
+          const isDT = drillTarget && drillTarget.category === cat && i === drillTarget.bandIndex;
+          const isInc = drillTarget && drillTarget.category === cat &&
+            (i === drillTarget.bandIndex - 1 || i === drillTarget.bandIndex + 1) && n;
+          if (isDT) cell.classList.add("target");
+          else if (isInc) cell.classList.add("below");
+
+          cell.innerHTML = `<span class="cell-name">${skill.name}</span>` +
+            (isDT ? `<span class="drill-tag">drill ▸</span>`
+              : isInc ? `<span class="drill-tag">included</span>`
+              : (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`));
+
+          if (n) cell.addEventListener("click", () => setDrillTarget(cat, i));
+        } else {
+          if (lvl >= 0) {
+            if (i === lvl) cell.classList.add("achieved");
+            else if (i < lvl) cell.classList.add("below");
+          }
+          const isTarget = i === targetIdx;
+          if (isTarget) cell.classList.add("target");
+
+          cell.innerHTML = `<span class="cell-name">${skill.name}</span>` +
+            (isTarget ? `<span class="drill-tag">drill ▸</span>`
+                      : (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`));
+
+          if (n) cell.addEventListener("click", () => setLevel(cat, i));
         }
-        const isTarget = i === targetIdx;
-        if (isTarget) cell.classList.add("target");
-
-        cell.innerHTML = `<span class="cell-name">${skill.name}</span>` +
-          (isTarget ? `<span class="drill-tag">drill ▸</span>`
-                    : (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`));
-
-        if (n) cell.addEventListener("click", () => setLevel(cat, i));
         row.appendChild(cell);
       });
       wrap.appendChild(row);
@@ -134,46 +171,77 @@
   }
 
   function refreshCount() {
-    const targets = activeTargets();
-    let items = 0;
-    targets.forEach((s) => { items += Math.min(SAMPLE_PER_SKILL, itemsFor(s).length); });
-    $("selCount").textContent =
-      `${targets.length} skill${targets.length === 1 ? "" : "s"} queued · ~${items} question${items === 1 ? "" : "s"}`;
-    $("startBtn").disabled = targets.length === 0;
+    if (mode === "drill") {
+      const skills = getDrillSkills();
+      let items = 0;
+      skills.forEach((s) => { items += itemsFor(s).length; });
+      $("selCount").textContent = skills.length > 0
+        ? `${skills.length} skill${skills.length === 1 ? "" : "s"} · ${items} question${items === 1 ? "" : "s"}`
+        : "Click a skill to drill";
+      $("startBtn").disabled = skills.length === 0;
+    } else {
+      const targets = activeTargets();
+      let items = 0;
+      targets.forEach((s) => { items += Math.min(SAMPLE_PER_SKILL, itemsFor(s).length); });
+      $("selCount").textContent =
+        `${targets.length} skill${targets.length === 1 ? "" : "s"} queued · ~${items} question${items === 1 ? "" : "s"}`;
+      $("startBtn").disabled = targets.length === 0;
+    }
   }
 
-  function buildTypeFilter() {
+  function buildModeToggle() {
     const wrap = $("typeFilter");
-    const types = ["all", "identify", "gapfill"];
-    wrap.innerHTML = types.map((t) =>
-      `<button class="filter-btn${t === typeFilter ? " active" : ""}" data-t="${t}">${t === "all" ? "All tasks" : window.TASK_TYPES[t].label}</button>`
-    ).join("");
+    wrap.innerHTML =
+      `<button class="filter-btn${mode === "drill" ? " active" : ""}" data-m="drill">Skill Drill</button>` +
+      `<button class="filter-btn${mode === "revision" ? " active" : ""}" data-m="revision">Revision</button>`;
     wrap.querySelectorAll(".filter-btn").forEach((b) => {
       b.addEventListener("click", () => {
-        typeFilter = b.dataset.t;
+        mode = b.dataset.m;
+        drillTarget = null;
+        rowLevel = {};
         wrap.querySelectorAll(".filter-btn").forEach((x) => x.classList.toggle("active", x === b));
         buildMatrix();
+        updateToolbar();
       });
     });
+  }
+
+  function updateToolbar() {
+    $("selectAllBtn").style.display = mode === "revision" ? "" : "none";
+    $("helpText").innerHTML = mode === "drill"
+      ? `Click any skill to focus on it. You'll see worked examples, then practise that skill plus the level below (review) and above (stretch).`
+      : `Click the highest level you've <b>mastered</b> in a row — it turns green, lower levels go faint green, and the next band up (marked <b>drill ▸</b>) is what you'll practise. Click the strand name to start from C1. Each run pulls a random couple of questions per skill.`;
   }
 
   /* ---------------- DRILL ---------------- */
 
   function startSession() {
     pool = [];
-    activeTargets().forEach((skill) => {
-      const picks = shuffle(itemsFor(skill).slice()).slice(0, SAMPLE_PER_SKILL);
-      picks.forEach((item) => {
-        const i = skill.items.indexOf(item);  // stable original index for the uid
-        pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
+    if (mode === "drill") {
+      getDrillSkills().forEach((skill) => {
+        skill.items.forEach((item, i) => {
+          pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
+        });
       });
-    });
+    } else {
+      activeTargets().forEach((skill) => {
+        const picks = shuffle(itemsFor(skill).slice()).slice(0, SAMPLE_PER_SKILL);
+        picks.forEach((item) => {
+          const i = skill.items.indexOf(item);
+          pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
+        });
+      });
+    }
     if (pool.length === 0) return;
     shuffle(pool);
     attempts = {}; correctEver = {}; firstPass = {}; log = [];
     currentSet = [...pool]; nextSet = []; idx = 0; round = 1;
-    show("task");
-    showItem();
+    if (mode === "drill") {
+      showPreteach();
+    } else {
+      show("task");
+      showItem();
+    }
   }
 
   function showItem() {
@@ -322,6 +390,27 @@
       .catch(() => { $("copyNote").textContent = "Copy failed — select the report text manually."; });
   }
 
+  /* ---------------- preteach (skill drill) ---------------- */
+
+  function showPreteach() {
+    const skills = getDrillSkills();
+    const content = $("preteachContent");
+    content.innerHTML = skills.map((s) => {
+      const bi = window.BANDS.indexOf(s.band);
+      let label, cls;
+      if (bi < drillTarget.bandIndex) { label = "Review"; cls = "review"; }
+      else if (bi === drillTarget.bandIndex) { label = "Target"; cls = "target"; }
+      else { label = "Stretch"; cls = "stretch"; }
+      return `<div class="preteach-card${cls === "target" ? " preteach-target" : ""}">
+        <span class="preteach-band">${s.band}</span>
+        <span class="preteach-label ${cls}">${label}</span>
+        <div class="preteach-name">${escapeHtmlE(s.name)}</div>
+        <div class="preteach-example">"${escapeHtmlE(s.example)}"</div>
+      </div>`;
+    }).join("");
+    show("preteach");
+  }
+
   /* ---------------- helpers ---------------- */
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -338,17 +427,20 @@
     screens.select = $("selectScreen");
     screens.task = $("taskScreen");
     screens.report = $("reportScreen");
+    screens.preteach = $("preteachScreen");
 
-    buildTypeFilter();
+    buildModeToggle();
     buildMatrix();
+    updateToolbar();
 
     $("selectAllBtn").addEventListener("click", () => {
       // queue every strand from its first level (drills each C1)
       window.CATEGORIES.forEach((cat) => { rowLevel[cat] = -1; });
       buildMatrix();
     });
-    $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; buildMatrix(); });
+    $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; buildMatrix(); });
     $("startBtn").addEventListener("click", startSession);
+    $("preteachStartBtn").addEventListener("click", () => { show("task"); showItem(); });
 
     // task area emits gh:ready when an answer is entered, gh:submit on Enter
     $("taskArea").addEventListener("gh:ready", () => { if (!graded) $("checkBtn").disabled = false; });
