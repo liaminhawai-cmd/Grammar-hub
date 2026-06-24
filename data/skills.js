@@ -65,6 +65,10 @@ window.SKILLS = [
       { type:"order", prompt:"Arrange the words to tell us where she goes", words:["school","to","goes","She"], answer:"She goes to school", explain:"Subject (She) + verb (goes) + rest (to school) = SVO order.", tags:["svo"] },
       { type:"order", prompt:"Arrange the words to say what the cat does", words:["the","reads","cat","book","a"], answer:"The cat reads a book", explain:"Subject (the cat) + verb (reads) + object (a book) = correct SVO.", tags:["svo"] },
       { type:"produce", prompt:"Write one sentence about something you did today (it needs a person, an action, and a thing)", explain:"Teacher assessed. Check that it has subject + verb + object in order.", tags:["svo"] },
+      { type:"match", prompt:"One little comma, two very different meanings. Match each sentence to what it actually says.", pairs:[
+          { sentence:"Let's eat, Grandma!", meaning:"Inviting Grandma to come and eat" },
+          { sentence:"Let's eat Grandma!", meaning:"Suggesting we eat Grandma (yikes!)" }
+        ], explain:"The comma of direct address tells Grandma we're talking TO her, not about eating her.", tags:["svo"] },
   ] },
   { id:"sentence-c2", category:"Sentence Structure", band:"C2", name:"Coordination", example:"He ran fast and won the race.", introduced:true, mode:"progression", assessed:true, resources:{ sheets:[{name:"Compound Sentences",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Compound-Sentences.aspx"},{name:"Conjunctions",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Conjunctions.aspx"}] }, items:[
       { type:"identify", prompt:"Which word shows the two ideas pull in opposite directions?", sentence:"She likes maths ___ she hates science.", options:["and","but","or","so"], answer:"but", explain:"But joins two ideas that contrast.", tags:["coordination"] },
@@ -78,6 +82,11 @@ window.SKILLS = [
       { type:"join", prompt:"Combine these into one sentence — both events happened, one then the other", sentence1:"The dog barked loudly.", sentence2:"The cat ran away.", accept:["the dog barked loudly and the cat ran away","and the cat ran away","the dog barked loudly and the cat","the dog barked and the cat ran away"], explain:"'And' joins two events of equal importance, one after the other.", tags:["coordination"] },
       { type:"join", prompt:"Combine these to show the swim was a surprise — it happened despite the cold", sentence1:"It was very cold.", sentence2:"We went swimming anyway.", accept:["it was very cold but we went swimming anyway","but we went swimming anyway","it was cold but we went swimming"], explain:"'But' shows the contrast: cold, yet we swam anyway.", tags:["coordination"] },
       { type:"join", prompt:"Combine these to show that forgetting the homework is why she got extra time", sentence1:"She forgot her homework.", sentence2:"The teacher gave her extra time.", accept:["she forgot her homework so the teacher gave her extra time","so the teacher gave her extra time","she forgot so the teacher gave her extra time"], explain:"'So' shows the result: she forgot, so the teacher gave her extra time.", tags:["coordination"] },
+      { type:"match", prompt:"Same two ideas, different connective. Match each sentence to the relationship it shows.", pairs:[
+          { sentence:"She was tired, so she stopped working.", meaning:"Being tired caused her to stop (result)" },
+          { sentence:"She was tired, but she kept working.", meaning:"She kept going despite being tired (contrast)" },
+          { sentence:"She was tired, and she went home.", meaning:"One thing, then the next (addition)" }
+        ], explain:"The connective is what carries the meaning: so = result, but = contrast, and = addition.", tags:["coordination"] },
   ] },
   { id:"sentence-c3", category:"Sentence Structure", band:"C3", name:"Subordination", example:"Although it was raining, we went out.", introduced:true, mode:"progression", assessed:true, resources:{ sheets:[{name:"Complex Sentences",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Complex-Sentences.aspx"},{name:"Clauses",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Clauses.aspx"}] }, items:[
       { type:"identify", prompt:"Which word gives the reason they went swimming?", sentence:"Because it was hot, we went swimming.", options:["Because","it was","hot","we went"], answer:"Because", explain:"Because introduces the reason clause (subordinate clause).", tags:["subordination"] },
@@ -116,6 +125,10 @@ window.SKILLS = [
       { type:"gapfill", prompt:"Write the correct form", before:"We", after:"that movie twice.", cue:"see", accept:["have seen"], explain:"Experience up to now = have + past participle: have seen.", tags:["present-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"He", after:"his lunch yet.", cue:"not eat", accept:["has not eaten","hasn't eaten","hasnt eaten"], explain:"Third person + not + past participle: has not eaten.", tags:["present-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"She", after:"to Perth three times.", cue:"travel", accept:["has travelled","has traveled"], explain:"Third person experience = has + past participle: has travelled.", tags:["present-perfect"] },
+      { type:"match", prompt:"Same place, different tense. Match each sentence to what it really tells you.", pairs:[
+          { sentence:"I have lived in Spain.", meaning:"It's part of my life experience (it still counts now)" },
+          { sentence:"I lived in Spain.", meaning:"A finished fact about the past (that time is over)" }
+        ], explain:"Present perfect links the past to now; past simple closes it off in the past.", tags:["present-perfect"] },
   ] },
   { id:"tense-c3", category:"Verb Tenses", band:"C3", name:"Past Perfect / Progressive", example:"He had been waiting when I arrived.", introduced:true, mode:"progression", assessed:true, resources:{ sheets:[{name:"Verbs",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Verbs.aspx"},{name:"Tense Consistency",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Tense-Consistency.aspx"}] }, items:[
       { type:"identify", prompt:"Name the tense", sentence:"She <b>had finished</b> dinner before the guests arrived.", options:["past perfect","past simple","present perfect","past continuous"], answer:"past perfect", explain:"had + past participle = past perfect (earlier past event).", tags:["past-perfect"] },
@@ -246,6 +259,10 @@ window.SKILLS = [
       { type:"gapfill", prompt:"Add commas if needed (type the full clause)", before:"My dog", after:"loves swimming.", cue:"who is called Max / add commas if non-defining", accept:[", who is called max,",", who is called Max,"], explain:"My dog is unique, so this is non-defining and needs commas.", tags:["non-defining"] },
       { type:"gapfill", prompt:"Add the relative pronoun", before:"The students", after:"passed the exam were very happy.", cue:"who / which", accept:["who"], explain:"Students are people = who. No commas = defining.", tags:["defining"] },
       { type:"gapfill", prompt:"Add the relative pronoun", before:"The Yarra River", after:"runs through Melbourne, is very long.", cue:"who / which", accept:["which",", which"], explain:"The Yarra is unique, so use which with commas (non-defining).", tags:["non-defining"] },
+      { type:"match", prompt:"The commas change who you mean. Match each sentence to what it tells you about the family.", pairs:[
+          { sentence:"My sister who lives in Perth is a doctor.", meaning:"I have several sisters — this says which one" },
+          { sentence:"My sister, who lives in Perth, is a doctor.", meaning:"I have one sister — Perth is just extra info" }
+        ], explain:"No commas (defining) picks out which one; commas (non-defining) just add extra detail.", tags:["defining","non-defining"] },
   ] },
   { id:"relative-c3", category:"Relative Clauses", band:"C3", name:"—", example:"", introduced:false, mode:"progression", assessed:false, resources:null, items:[] },
   { id:"relative-c4", category:"Relative Clauses", band:"C4/C4+", name:"Non-defining + Reduced", example:"Students living nearby don't drive.", introduced:true, mode:"progression", assessed:true, resources:{ sheets:[{name:"Relative Clauses",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Relative-Clauses.aspx"},{name:"Embedding and Stacking Clauses",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Embedding-and-Stacking-Clauses.aspx"}] }, items:[
