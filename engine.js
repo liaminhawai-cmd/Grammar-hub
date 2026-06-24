@@ -351,8 +351,8 @@
     if (result.correct) correctEver[entry.uid] = true;
 
     log.push({ round, skill: entry.skillName, type: entry.item.type,
-               stimulus: stripTags(entry.item.sentence || (entry.item.before + " ___ " + entry.item.after)),
-               response, result: result.correct ? "correct" : "incorrect" });
+               stimulus: stimulusOf(entry.item),
+               response: responseText(entry.item, response), result: result.correct ? "correct" : "incorrect" });
 
     const fb = $("feedback");
     fb.className = "feedback " + (result.correct ? "good" : "bad");
@@ -514,6 +514,22 @@
     return arr;
   }
   function stripTags(s) { return (s || "").replace(/<[^>]*>/g, ""); }
+  // A readable stimulus for the teacher log, whatever shape the item is.
+  function stimulusOf(item) {
+    if (item.sentence) return stripTags(item.sentence);
+    if (item.before !== undefined || item.after !== undefined) return stripTags((item.before || "") + " ___ " + (item.after || ""));
+    if (item.sentence1 && item.sentence2) return stripTags(item.sentence1 + " + " + item.sentence2);
+    if (item.words) return item.words.join(" ");
+    if (item.pairs) return item.pairs.map((p) => p.sentence).join(" / ");
+    return stripTags(item.prompt || "");
+  }
+  // A readable response for the teacher log (match returns index pairs).
+  function responseText(item, response) {
+    if (item.type === "match" && Array.isArray(response)) {
+      return response.map(([s, m]) => `${item.pairs[s].sentence} = ${item.pairs[m].meaning}`).join("; ");
+    }
+    return response;
+  }
   function escapeHtmlE(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
   /* ---------------- boot ---------------- */
