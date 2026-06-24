@@ -287,8 +287,98 @@
       },
     },
 
-    order:   stub("Order",   "put scrambled words in order — not built yet."),
-    produce: stub("Produce", "free written response, self/teacher assessed — not built yet."),
+    /* ===== order: put scrambled words in correct order ===== */
+    order: {
+      label: "Order",
+
+      render(item) {
+        const prompt = `<div class="cue">${esc(item.prompt)}</div>`;
+        const wordButtons = item.words.map((w, i) =>
+          `<button type="button" class="order-word" data-index="${i}">${esc(w)}</button>`
+        ).join("");
+        const sequence = `<div class="order-sequence" aria-label="your word order"></div>`;
+        return `${prompt}
+                <div class="order-words">${wordButtons}</div>
+                <div>Tap words in order:</div>
+                ${sequence}`;
+      },
+
+      wire(area) {
+        const words = area.querySelectorAll(".order-word");
+        const sequence = area.querySelector(".order-sequence");
+        const selected = [];
+
+        words.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = parseInt(btn.dataset.index);
+            if (selected.includes(idx)) {
+              selected.splice(selected.indexOf(idx), 1);
+              btn.classList.remove("selected");
+            } else {
+              selected.push(idx);
+              btn.classList.add("selected");
+            }
+            sequence.innerHTML = selected.map((i) => `<span>${esc(item.words[i])}</span>`).join(" ");
+            if (selected.length === item.words.length) ready(area);
+          });
+          btn.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && selected.length === item.words.length) submit(area);
+          });
+        });
+      },
+
+      collect(area) {
+        const sequence = area.querySelector(".order-sequence");
+        const spans = sequence.querySelectorAll("span");
+        return spans.length === 0 ? null : Array.from(spans).map((s) => s.textContent).join(" ");
+      },
+
+      check(item, response) {
+        const expected = item.answer;
+        return { correct: norm(response) === norm(expected), expected };
+      },
+
+      mark(area, item, result) {
+        const sequence = area.querySelector(".order-sequence");
+        sequence.classList.add(result.correct ? "correct" : "incorrect");
+        area.querySelectorAll(".order-word").forEach((btn) => btn.disabled = true);
+      },
+    },
+
+    /* ===== produce: free written response, teacher assessed ===== */
+    produce: {
+      label: "Produce",
+
+      render(item) {
+        return `<div class="cue">${esc(item.prompt)}</div>
+                <textarea class="produce-input" rows="4" autocomplete="off"
+                          spellcheck="true" aria-label="your answer"></textarea>`;
+      },
+
+      wire(area) {
+        const input = area.querySelector(".produce-input");
+        input.addEventListener("input", () => { if (input.value.trim()) ready(area); });
+        input.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && input.value.trim()) submit(area);
+        });
+        input.focus();
+      },
+
+      collect(area) {
+        const v = area.querySelector(".produce-input").value.trim();
+        return v === "" ? null : v;
+      },
+
+      check(item, response) {
+        return { correct: true, expected: "(teacher assessed)" };
+      },
+
+      mark(area, item, result) {
+        const input = area.querySelector(".produce-input");
+        input.readOnly = true;
+        input.classList.add("produce-submitted");
+      },
+    },
 
   };
 
