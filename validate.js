@@ -57,19 +57,26 @@ window.SKILLS.forEach((skill) => {
       return;
     }
 
-    // Determine model answer based on type
+    // Determine the model answer (the response that MUST grade correct).
+    // Each autograded type exposes its own canonical answer field.
     let modelAnswer = null;
-    if (item.type === 'identify' || item.type === 'choose') {
+    if (item.type === 'identify' || item.type === 'choose' || item.type === 'order') {
       modelAnswer = item.answer;
-    } else if (item.type === 'gapfill') {
+    } else if (item.type === 'gapfill' || item.type === 'transform' || item.type === 'join') {
       modelAnswer = item.accept?.[0];
-    }
-    // For stub types (order, join, transform, produce), skip validation
-    else {
+    } else if (item.type === 'match') {
+      // match has no scalar answer: the model response is the identity pairing.
+      modelAnswer = (item.pairs || []).map((_, i) => [i, i]);
+    } else if (item.type === 'produce') {
+      // free response, no auto-grade — nothing to verify.
+      return;
+    } else {
+      console.error(`❌ [${skill.id}] Item ${idx}: type "${item.type}" not covered by sanity check`);
+      errorCount++;
       return;
     }
 
-    if (!modelAnswer) {
+    if (modelAnswer === null || modelAnswer === undefined) {
       console.error(`❌ [${skill.id}] Item ${idx}: no model answer found`);
       errorCount++;
       return;
