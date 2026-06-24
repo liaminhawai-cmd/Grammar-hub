@@ -401,11 +401,15 @@
       if (bi < drillTarget.bandIndex) { label = "Review"; cls = "review"; }
       else if (bi === drillTarget.bandIndex) { label = "Target"; cls = "target"; }
       else { label = "Stretch"; cls = "stretch"; }
+      const links = ((s.resources && s.resources.sheets) || []).map((sh) =>
+        `<a href="${sh.url}" target="_blank" rel="noopener">${escapeHtmlE(sh.name)}</a>`).join("");
+      const linksRow = links ? `<div class="preteach-links">Learn more: ${links}</div>` : "";
       return `<div class="preteach-card${cls === "target" ? " preteach-target" : ""}">
         <span class="preteach-band">${s.band}</span>
         <span class="preteach-label ${cls}">${label}</span>
         <div class="preteach-name">${escapeHtmlE(s.name)}</div>
         <div class="preteach-example">"${escapeHtmlE(s.example)}"</div>
+        ${linksRow}
       </div>`;
     }).join("");
     show("preteach");
