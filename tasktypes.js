@@ -203,10 +203,92 @@
       },
     },
 
-    order:     stub("Order",     "put scrambled words in order — not built yet."),
-    join:      stub("Join",      "combine two sentences with a target connective — not built yet."),
-    transform: stub("Transform", "rewrite a sentence to a target form — not built yet."),
-    produce:   stub("Produce",   "free written response, self/teacher assessed — not built yet."),
+    /* ===== transform: rewrite a sentence to a target form ===== */
+    transform: {
+      label: "Transform",
+
+      render(item) {
+        const prompt = `<div class="cue">${esc(item.prompt)}</div>`;
+        const stimulus = `<div class="stimulus">${esc(item.sentence)}</div>`;
+        return `${prompt}
+                ${stimulus}
+                <div class="stimulus gap">
+                  <input class="gap-input" type="text" autocomplete="off"
+                         autocapitalize="off" spellcheck="false" aria-label="your rewritten answer">
+                </div>`;
+      },
+
+      wire(area) {
+        const input = area.querySelector(".gap-input");
+        input.addEventListener("input", () => { if (input.value.trim()) ready(area); });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && input.value.trim()) submit(area);
+        });
+        input.focus();
+      },
+
+      collect(area) {
+        const v = area.querySelector(".gap-input").value.trim();
+        return v === "" ? null : v;
+      },
+
+      check(item, response) {
+        const accept = (item.accept || []).map(norm);
+        return { correct: accept.includes(norm(response)), expected: item.accept[0] };
+      },
+
+      mark(area, item, result) {
+        const input = area.querySelector(".gap-input");
+        input.readOnly = true;
+        input.classList.add(result.correct ? "correct" : "incorrect");
+      },
+    },
+
+    /* ===== join: combine two sentences with a connective ===== */
+    join: {
+      label: "Join",
+
+      render(item) {
+        const prompt = `<div class="cue">${esc(item.prompt)}</div>`;
+        const s1 = `<div class="stimulus">${esc(item.sentence1)}</div>`;
+        const s2 = `<div class="stimulus">${esc(item.sentence2)}</div>`;
+        return `${prompt}
+                ${s1}
+                ${s2}
+                <div class="stimulus gap">
+                  <input class="gap-input" type="text" autocomplete="off"
+                         autocapitalize="off" spellcheck="false" aria-label="your combined sentence">
+                </div>`;
+      },
+
+      wire(area) {
+        const input = area.querySelector(".gap-input");
+        input.addEventListener("input", () => { if (input.value.trim()) ready(area); });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && input.value.trim()) submit(area);
+        });
+        input.focus();
+      },
+
+      collect(area) {
+        const v = area.querySelector(".gap-input").value.trim();
+        return v === "" ? null : v;
+      },
+
+      check(item, response) {
+        const accept = (item.accept || []).map(norm);
+        return { correct: accept.includes(norm(response)), expected: item.accept[0] };
+      },
+
+      mark(area, item, result) {
+        const input = area.querySelector(".gap-input");
+        input.readOnly = true;
+        input.classList.add(result.correct ? "correct" : "incorrect");
+      },
+    },
+
+    order:   stub("Order",   "put scrambled words in order — not built yet."),
+    produce: stub("Produce", "free written response, self/teacher assessed — not built yet."),
 
   };
 
