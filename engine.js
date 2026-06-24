@@ -47,6 +47,11 @@
     if (i < 0 || i >= window.BANDS.length) return null;
     return window.SKILLS.find((s) => s.category === cat && s.band === window.BANDS[i]);
   }
+  // a strand is "on the pretest" if any introduced cell is assessed; if every
+  // introduced cell is assessed:false the paper handoff has no data for it.
+  function strandAssessed(cat) {
+    return window.SKILLS.some((s) => s.category === cat && s.introduced && s.assessed);
+  }
   function drillableAt(cat, i) {
     const s = cellAt(cat, i);
     return (s && s.introduced && itemsFor(s).length) ? s : null;
@@ -113,13 +118,14 @@
       row.className = "matrix-row";
 
       const label = document.createElement("div");
-      label.textContent = cat;
+      const assessed = strandAssessed(cat);
+      label.innerHTML = `<span>${cat}</span>` + (assessed ? "" : `<span class="unassessed-mark" title="Not yet on the paper pretest">*</span>`);
       if (mode === "revision") {
-        label.className = "matrix-cell rowlabel" + (lvl === -1 ? " beginner" : "");
+        label.className = "matrix-cell rowlabel" + (lvl === -1 ? " beginner" : "") + (assessed ? "" : " unassessed");
         label.title = "Click to practise this strand from C1";
         label.addEventListener("click", () => setLevel(cat, -1));
       } else {
-        label.className = "matrix-cell rowlabel";
+        label.className = "matrix-cell rowlabel" + (assessed ? "" : " unassessed");
       }
       row.appendChild(label);
 
@@ -168,6 +174,10 @@
       });
       wrap.appendChild(row);
     });
+    const anyUnassessed = window.CATEGORIES.some((cat) => !strandAssessed(cat));
+    $("matrixLegend").innerHTML = anyUnassessed
+      ? `<span class="unassessed-mark">*</span>not yet on the paper pretest (drillable, but no pretest data to seed the rubric)`
+      : "";
     buildPools();
     refreshCount();
   }

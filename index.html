@@ -74,6 +74,12 @@
   .empty{background:var(--bg);align-items:center;opacity:.5}
   .empty .dash{color:var(--muted)}
 
+  /* ---- assessed marker ---- */
+  .rowlabel.unassessed{opacity:.85}
+  .unassessed-mark{color:var(--accent);font-weight:800;margin-left:2px}
+  .matrix-legend{font-size:11px;color:var(--muted);margin-top:8px;min-height:0}
+  .matrix-legend .unassessed-mark{margin-right:3px}
+
   /* ---- pools ---- */
   .pools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .pool-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--line);border-radius:10px;
@@ -160,6 +166,7 @@
   <section class="screen active" id="selectScreen">
     <div class="filter-row" id="typeFilter"></div>
     <div class="matrix" id="matrix"></div>
+    <div class="matrix-legend" id="matrixLegend"></div>
     <div class="pools" id="pools"></div>
     <div class="select-toolbar">
       <span class="count-pill" id="selCount">0 skills queued</span>
