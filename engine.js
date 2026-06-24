@@ -56,19 +56,28 @@
     const s = cellAt(cat, i);
     return (s && s.introduced && itemsFor(s).length) ? s : null;
   }
-  // next drillable band strictly above the mastered level; if there is none,
-  // consolidate on the mastered cell itself (top of the row).
-  function targetFor(cat) {
+  function firstDrillable(cat) {
+    for (let i = 0; i < window.BANDS.length; i++) if (drillableAt(cat, i)) return i;
+    return null;
+  }
+  // revision: the cell you click is the one you revise; the band immediately
+  // before it is pulled in for review (when that earlier cell is drillable).
+  function revisionSkillsFor(cat) {
     const lvl = rowLevel[cat];
-    if (lvl === undefined) return null;
-    for (let j = lvl + 1; j < window.BANDS.length; j++) {
-      const s = drillableAt(cat, j);
-      if (s) return s;
-    }
-    return lvl >= 0 ? drillableAt(cat, lvl) : drillableAt(cat, 0);
+    if (lvl === undefined) return [];
+    const out = [];
+    const before = drillableAt(cat, lvl - 1);
+    if (before) out.push(before);
+    const here = drillableAt(cat, lvl);
+    if (here) out.push(here);
+    return out;
   }
   function activeTargets() {
-    return Object.keys(rowLevel).map(targetFor).filter(Boolean);
+    const out = [];
+    Object.keys(rowLevel).forEach((cat) => {
+      revisionSkillsFor(cat).forEach((s) => { if (!out.includes(s)) out.push(s); });
+    });
+    return out;
   }
   function setLevel(cat, val) {
     if (rowLevel[cat] === val) delete rowLevel[cat];  // click again to clear
@@ -111,8 +120,6 @@
 
     window.CATEGORIES.forEach((cat) => {
       const lvl = rowLevel[cat];
-      const target = targetFor(cat);
-      const targetIdx = target ? window.BANDS.indexOf(target.band) : -2;
 
       const row = document.createElement("div");
       row.className = "matrix-row";
@@ -121,9 +128,10 @@
       const assessed = strandAssessed(cat);
       label.innerHTML = `<span>${cat}</span>` + (assessed ? "" : `<span class="unassessed-mark" title="Not yet on the paper pretest">*</span>`);
       if (mode === "revision") {
-        label.className = "matrix-cell rowlabel" + (lvl === -1 ? " beginner" : "") + (assessed ? "" : " unassessed");
-        label.title = "Click to practise this strand from C1";
-        label.addEventListener("click", () => setLevel(cat, -1));
+        const first = firstDrillable(cat);
+        label.className = "matrix-cell rowlabel" + (assessed ? "" : " unassessed");
+        label.title = "Click to revise this strand from C1";
+        label.addEventListener("click", () => { if (first !== null) setLevel(cat, first); });
       } else {
         label.className = "matrix-cell rowlabel" + (assessed ? "" : " unassessed");
       }
@@ -157,16 +165,17 @@
 
           if (n) cell.addEventListener("click", () => setDrillTarget(cat, i));
         } else {
-          if (lvl >= 0) {
-            if (i === lvl) cell.classList.add("achieved");
-            else if (i < lvl) cell.classList.add("below");
-          }
-          const isTarget = i === targetIdx;
-          if (isTarget) cell.classList.add("target");
+          // revision: clicked cell is ringed (revise), the band before it is
+          // faint green (review) when that earlier cell is drillable.
+          const isSel = i === lvl;
+          const isReview = lvl !== undefined && i === lvl - 1 && !!drillableAt(cat, lvl - 1);
+          if (isSel) cell.classList.add("target");
+          else if (isReview) cell.classList.add("below");
 
           cell.innerHTML = `<span class="cell-name">${skill.name}</span>` +
-            (isTarget ? `<span class="drill-tag">drill ▸</span>`
-                      : (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`));
+            (isSel ? `<span class="drill-tag">revise ▸</span>`
+              : isReview ? `<span class="drill-tag">review</span>`
+              : (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`));
 
           if (n) cell.addEventListener("click", () => setLevel(cat, i));
         }
@@ -260,7 +269,7 @@
     $("selectAllBtn").style.display = mode === "revision" ? "" : "none";
     $("helpText").innerHTML = mode === "drill"
       ? `Click any skill to focus on it. You'll see worked examples, then practise that skill plus the level below (review) and above (stretch).`
-      : `Click the highest level you've <b>mastered</b> in a row — it turns green, lower levels go faint green, and the next band up (marked <b>drill ▸</b>) is what you'll practise. Click the strand name to start from C1. Each run pulls a random couple of questions per skill.`;
+      : `Click the cell you want to revise — it's <b>ringed</b> and the band just before it comes along (marked <b>review</b>). Click the strand name to revise from C1. Each run pulls a random couple of questions per skill.`;
   }
 
   /* ---------------- DRILL ---------------- */
@@ -519,7 +528,7 @@
     updateToolbar();
 
     $("selectAllBtn").addEventListener("click", () => {
-      window.CATEGORIES.forEach((cat) => { rowLevel[cat] = -1; });
+      window.CATEGORIES.forEach((cat) => { const f = firstDrillable(cat); if (f !== null) rowLevel[cat] = f; });
       (window.POOLS || []).forEach((cat) => { selectedPools[cat] = true; });
       buildMatrix();
     });
