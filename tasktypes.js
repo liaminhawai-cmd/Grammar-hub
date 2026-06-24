@@ -159,7 +159,50 @@
     /* ===== roadmap stubs (SPEC.md §10) — wired but inert until built ===== *
        Each is ONE isolated type so adding it can't break the working banks.
        `produce` is also the engine's fallback for any unknown item type.   */
-    choose:    stub("Choose",    "MCQ, pick the correct sentence (a vs b) — not built yet."),
+    /* ===== choose: MCQ, pick the correct sentence ===== */
+    choose: {
+      label: "Choose",
+
+      render(item) {
+        const opts = item.options.map((o) =>
+          `<button type="button" class="option" data-value="${esc(o)}">${esc(o)}</button>`
+        ).join("");
+        return `<div class="options choose-options">${opts}</div>`;
+      },
+
+      wire(area) {
+        const opts = area.querySelectorAll(".option");
+        opts.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            opts.forEach((o) => o.classList.remove("chosen"));
+            btn.classList.add("chosen");
+            ready(area);
+          });
+          btn.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && btn.classList.contains("chosen")) submit(area);
+          });
+        });
+      },
+
+      collect(area) {
+        const chosen = area.querySelector(".option.chosen");
+        return chosen ? chosen.dataset.value : null;
+      },
+
+      check(item, response) {
+        return { correct: response === item.answer, expected: item.answer };
+      },
+
+      mark(area, item, result) {
+        area.querySelectorAll(".option").forEach((btn) => {
+          btn.disabled = true;
+          const v = btn.dataset.value;
+          if (v === item.answer) btn.classList.add("correct");
+          else if (btn.classList.contains("chosen") && !result.correct) btn.classList.add("incorrect");
+        });
+      },
+    },
+
     order:     stub("Order",     "put scrambled words in order — not built yet."),
     join:      stub("Join",      "combine two sentences with a target connective — not built yet."),
     transform: stub("Transform", "rewrite a sentence to a target form — not built yet."),
