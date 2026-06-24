@@ -54,6 +54,14 @@
   function ready(el) { el.dispatchEvent(new CustomEvent("gh:ready", { bubbles: true })); }
   function submit(el) { el.dispatchEvent(new CustomEvent("gh:submit", { bubbles: true })); }
 
+  // A shuffled list of indices 0..n-1 (so a render can scramble display order
+  // without touching the underlying data).
+  function shuffleIdx(n) {
+    const a = Array.from({ length: n }, (_, i) => i);
+    for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+
   // A placeholder type used by the five roadmap stubs below. Renders a
   // note, never reports an answer, so the engine's Check stays disabled.
   function stub(label, blurb) {
@@ -377,6 +385,105 @@
         const input = area.querySelector(".produce-input");
         input.readOnly = true;
         input.classList.add("produce-submitted");
+      },
+    },
+
+    /* ===== match: same words, different punctuation/grammar, different meaning ===== *
+       The point is that a small change flips the meaning ("Let's eat, Grandma"
+       vs "Let's eat Grandma"). Learner taps a sentence, then taps the meaning
+       it carries. Correct = every sentence paired to its own meaning.          */
+    match: {
+      label: "Match",
+
+      render(item) {
+        const prompt = `<div class="cue">${esc(item.prompt)}</div>`;
+        // shuffle each column independently so position is not a clue
+        const sCol = shuffleIdx(item.pairs.length).map((oi) =>
+          `<button type="button" class="match-item" data-side="s" data-oi="${oi}">${esc(item.pairs[oi].sentence)}</button>`).join("");
+        const mCol = shuffleIdx(item.pairs.length).map((oi) =>
+          `<button type="button" class="match-item" data-side="m" data-oi="${oi}">${esc(item.pairs[oi].meaning)}</button>`).join("");
+        return `${prompt}
+                <div class="match-grid">
+                  <div class="match-col">${sCol}</div>
+                  <div class="match-col">${mCol}</div>
+                </div>
+                <div class="match-hint">Tap a sentence, then tap its meaning. Tap a matched item to undo.</div>`;
+      },
+
+      wire(area) {
+        const sBtns = Array.from(area.querySelectorAll('.match-item[data-side="s"]'));
+        const mBtns = Array.from(area.querySelectorAll('.match-item[data-side="m"]'));
+        const pairs = [];            // {s, m} original indices
+        area._matchPairs = pairs;    // collect() reads this back
+        let pendS = null, pendM = null;
+
+        function clearPending() {
+          pendS = null; pendM = null;
+          sBtns.concat(mBtns).forEach((b) => b.classList.remove("pending"));
+        }
+        function repaint() {
+          sBtns.concat(mBtns).forEach((b) => {
+            b.classList.remove("paired");
+            const old = b.querySelector(".match-badge");
+            if (old) old.remove();
+          });
+          pairs.forEach((p, i) => {
+            [sBtns.find((b) => +b.dataset.oi === p.s), mBtns.find((b) => +b.dataset.oi === p.m)]
+              .forEach((b) => {
+                if (!b) return;
+                b.classList.add("paired");
+                const badge = document.createElement("span");
+                badge.className = "match-badge";
+                badge.textContent = i + 1;
+                b.appendChild(badge);
+              });
+          });
+        }
+        function commitIfReady() {
+          if (pendS === null || pendM === null) return;
+          pairs.push({ s: pendS, m: pendM });
+          clearPending();
+          repaint();
+          if (pairs.length === sBtns.length) ready(area);
+        }
+        function bind(btns, side) {
+          btns.forEach((b) => b.addEventListener("click", () => {
+            const oi = +b.dataset.oi;
+            const pi = pairs.findIndex((p) => p[side] === oi);
+            if (pi >= 0) { pairs.splice(pi, 1); repaint(); return; }  // tap a match to undo
+            if (side === "s") pendS = oi; else pendM = oi;
+            btns.forEach((x) => x.classList.toggle("pending", x === b));
+            commitIfReady();
+          }));
+        }
+        bind(sBtns, "s");
+        bind(mBtns, "m");
+      },
+
+      collect(area) {
+        const pairs = area._matchPairs || [];
+        const total = area.querySelectorAll('.match-item[data-side="s"]').length;
+        if (pairs.length < total) return null;
+        return pairs.map((p) => [p.s, p.m]);
+      },
+
+      check(item, response) {
+        const ok = Array.isArray(response) && response.length === item.pairs.length &&
+                   response.every((pair) => pair[0] === pair[1]);
+        const expected = item.pairs.map((p) => `"${p.sentence}" = ${p.meaning}`).join("; ");
+        return { correct: ok, expected };
+      },
+
+      mark(area, item, result) {
+        const pairs = area._matchPairs || [];
+        const sBtns = Array.from(area.querySelectorAll('.match-item[data-side="s"]'));
+        const mBtns = Array.from(area.querySelectorAll('.match-item[data-side="m"]'));
+        pairs.forEach((p) => {
+          const right = p.s === p.m;
+          [sBtns.find((b) => +b.dataset.oi === p.s), mBtns.find((b) => +b.dataset.oi === p.m)]
+            .forEach((b) => { if (b) b.classList.add(right ? "correct" : "incorrect"); });
+        });
+        area.querySelectorAll(".match-item").forEach((b) => { b.disabled = true; });
       },
     },
 

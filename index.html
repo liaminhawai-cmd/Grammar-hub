@@ -179,6 +179,22 @@
   .produce-input:focus{outline:none;border-color:var(--accent)}
   .produce-input:read-only{background:var(--bg);border-color:var(--line-soft)}
   .produce-submitted{border-color:#888}
+
+  /* ---- match (meaning changes with a small tweak) ---- */
+  .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0}
+  .match-col{display:flex;flex-direction:column;gap:8px}
+  .match-item{position:relative;text-align:left;padding:12px 14px;border:2px solid var(--line);border-radius:10px;
+       background:var(--paper);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s ease}
+  .match-item:hover:not(:disabled){border-color:var(--accent)}
+  .match-item.pending{border-color:var(--accent);background:#faf5f0}
+  .match-item.paired{background:var(--bg);border-style:dashed}
+  .match-item.correct{background:var(--okbg);border-color:var(--correct);color:var(--correct)}
+  .match-item.incorrect{background:var(--badbg);border-color:var(--wrong);color:var(--wrong)}
+  .match-item:disabled{cursor:default}
+  .match-badge{position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;border-radius:99px;
+       background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
+  .match-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+  @media(max-width:480px){.match-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
