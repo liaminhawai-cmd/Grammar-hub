@@ -29,6 +29,7 @@
   let rowLevel = {};      // category -> mastered band index (0..3), or -1 = "from scratch"
   let mode = "revision";  // "drill" (single skill + neighbors) | "revision" (whole rubric)
   let drillTarget = null; // drill mode: { category, bandIndex } | null
+  let selectedPools = {}; // pool category -> true
   const SAMPLE_PER_SKILL = 2;  // questions drawn per skill each run (revision mode)
 
   function show(name) {
@@ -167,25 +168,63 @@
       });
       wrap.appendChild(row);
     });
+    buildPools();
     refreshCount();
   }
 
+  function poolSkill(cat) { return window.SKILLS.find((s) => s.mode === "pool" && s.category === cat); }
+
+  function buildPools() {
+    const wrap = $("pools");
+    if (!window.POOLS || !window.POOLS.length) { wrap.innerHTML = ""; return; }
+    wrap.innerHTML = `<span class="pool-label">Practice pools</span>`;
+    window.POOLS.forEach((cat) => {
+      const skill = poolSkill(cat);
+      if (!skill) return;
+      const n = skill.items.length;
+      const btn = document.createElement("button");
+      btn.className = "pool-btn" + (selectedPools[cat] ? " selected" : "");
+      btn.innerHTML = `${cat} <span class="pool-count">${n}</span>`;
+      btn.addEventListener("click", () => { togglePool(cat); });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function togglePool(cat) {
+    if (selectedPools[cat]) delete selectedPools[cat];
+    else selectedPools[cat] = true;
+    buildPools();
+    refreshCount();
+  }
+
+  function selectedPoolSkills() {
+    return Object.keys(selectedPools).map(poolSkill).filter(Boolean);
+  }
+
   function refreshCount() {
+    const pools = selectedPoolSkills();
+    let poolItems = 0;
+    pools.forEach((s) => { poolItems += Math.min(SAMPLE_PER_SKILL, itemsFor(s).length); });
+
     if (mode === "drill") {
       const skills = getDrillSkills();
       let items = 0;
       skills.forEach((s) => { items += itemsFor(s).length; });
-      $("selCount").textContent = skills.length > 0
-        ? `${skills.length} skill${skills.length === 1 ? "" : "s"} · ${items} question${items === 1 ? "" : "s"}`
+      const total = skills.length + pools.length;
+      const totalItems = items + poolItems;
+      $("selCount").textContent = total > 0
+        ? `${total} skill${total === 1 ? "" : "s"} · ${totalItems} question${totalItems === 1 ? "" : "s"}`
         : "Click a skill to drill";
-      $("startBtn").disabled = skills.length === 0;
+      $("startBtn").disabled = total === 0;
     } else {
       const targets = activeTargets();
       let items = 0;
       targets.forEach((s) => { items += Math.min(SAMPLE_PER_SKILL, itemsFor(s).length); });
+      const total = targets.length + pools.length;
+      const totalItems = items + poolItems;
       $("selCount").textContent =
-        `${targets.length} skill${targets.length === 1 ? "" : "s"} queued · ~${items} question${items === 1 ? "" : "s"}`;
-      $("startBtn").disabled = targets.length === 0;
+        `${total} skill${total === 1 ? "" : "s"} queued · ~${totalItems} question${totalItems === 1 ? "" : "s"}`;
+      $("startBtn").disabled = total === 0;
     }
   }
 
@@ -199,6 +238,7 @@
         mode = b.dataset.m;
         drillTarget = null;
         rowLevel = {};
+        selectedPools = {};
         wrap.querySelectorAll(".filter-btn").forEach((x) => x.classList.toggle("active", x === b));
         buildMatrix();
         updateToolbar();
@@ -232,6 +272,14 @@
         });
       });
     }
+    // add selected practice pools (sampled in both modes)
+    selectedPoolSkills().forEach((skill) => {
+      const picks = shuffle(skill.items.slice()).slice(0, SAMPLE_PER_SKILL);
+      picks.forEach((item) => {
+        const i = skill.items.indexOf(item);
+        pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band || "Pool", item });
+      });
+    });
     if (pool.length === 0) return;
     shuffle(pool);
     attempts = {}; correctEver = {}; firstPass = {}; log = [];
@@ -438,11 +486,11 @@
     updateToolbar();
 
     $("selectAllBtn").addEventListener("click", () => {
-      // queue every strand from its first level (drills each C1)
       window.CATEGORIES.forEach((cat) => { rowLevel[cat] = -1; });
+      (window.POOLS || []).forEach((cat) => { selectedPools[cat] = true; });
       buildMatrix();
     });
-    $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; buildMatrix(); });
+    $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; buildMatrix(); });
     $("startBtn").addEventListener("click", startSession);
     $("preteachStartBtn").addEventListener("click", () => { show("task"); showItem(); });
 

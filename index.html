@@ -74,6 +74,15 @@
   .empty{background:var(--bg);align-items:center;opacity:.5}
   .empty .dash{color:var(--muted)}
 
+  /* ---- pools ---- */
+  .pools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .pool-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--line);border-radius:10px;
+       background:var(--paper);cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);transition:all .15s ease}
+  .pool-btn:hover{border-color:var(--accent)}
+  .pool-btn.selected{border:2px solid var(--accent);background:#faf5f0}
+  .pool-btn .pool-count{font-size:10px;font-weight:700;color:var(--accent);background:var(--bg);border-radius:10px;padding:0 6px}
+  .pool-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);margin-bottom:4px}
+
   .select-toolbar{display:flex;justify-content:space-between;align-items:center;margin:16px 0 0;flex-wrap:wrap;gap:8px}
   .count-pill{background:var(--bg);color:var(--accent);border:1px solid var(--line);border-radius:20px;
        padding:5px 14px;font-size:12px;font-weight:600}
@@ -151,6 +160,7 @@
   <section class="screen active" id="selectScreen">
     <div class="filter-row" id="typeFilter"></div>
     <div class="matrix" id="matrix"></div>
+    <div class="pools" id="pools"></div>
     <div class="select-toolbar">
       <span class="count-pill" id="selCount">0 skills queued</span>
       <span>
