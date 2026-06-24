@@ -390,20 +390,39 @@
       `<div class="stat-label">correct first try</div>` +
       `<p class="muted">Mastered all ${total} after ${totalAttempts} total attempt${totalAttempts === 1 ? "" : "s"}.</p>`;
 
-    // per-skill breakdown
+    // per-skill breakdown, with per-tag sub-skill stats for bundled cells
     const bySkill = {};
     pool.forEach((e) => {
-      bySkill[e.skillId] = bySkill[e.skillId] || { name: e.skillName, cat: e.category, band: e.band, total: 0, right: 0 };
-      bySkill[e.skillId].total++;
-      if (firstPass[e.uid]) bySkill[e.skillId].right++;
+      const s = bySkill[e.skillId] = bySkill[e.skillId] ||
+        { name: e.skillName, cat: e.category, band: e.band, total: 0, right: 0, tags: {} };
+      s.total++;
+      const right = firstPass[e.uid];
+      if (right) s.right++;
+      (e.item.tags || []).forEach((tag) => {
+        const t = s.tags[tag] = s.tags[tag] || { total: 0, right: 0 };
+        t.total++;
+        if (right) t.right++;
+      });
     });
+    const scoreCls = (right, total) => {
+      const pct = Math.round((right / total) * 100);
+      return pct === 100 ? "ok" : pct >= 50 ? "mid" : "low";
+    };
     let rows = Object.values(bySkill).map((s) => {
-      const pct = Math.round((s.right / s.total) * 100);
-      const cls = pct === 100 ? "ok" : pct >= 50 ? "mid" : "low";
-      return `<div class="skill-row">
+      let row = `<div class="skill-row">
                 <span class="skill-name">${s.cat} · ${s.band} · ${s.name}</span>
-                <span class="skill-score ${cls}">${s.right}/${s.total}</span>
+                <span class="skill-score ${scoreCls(s.right, s.total)}">${s.right}/${s.total}</span>
               </div>`;
+      // bundled cell: more than one sub-skill tag -> show which half was missed
+      const tags = Object.entries(s.tags);
+      if (tags.length > 1) {
+        row += tags.map(([tag, t]) =>
+          `<div class="subskill-row">
+             <span class="subskill-name">${escapeHtmlE(tag)}</span>
+             <span class="skill-score ${scoreCls(t.right, t.total)}">${t.right}/${t.total}</span>
+           </div>`).join("");
+      }
+      return row;
     }).join("");
     $("reportSkills").innerHTML = `<h3>By skill (first try)</h3>${rows}`;
 
@@ -435,7 +454,11 @@
     let t = `GRAMMAR HUB — Teacher results\n`;
     t += `First try: ${firstRight}/${total}   Total attempts: ${totalAttempts}\n\n`;
     t += `By skill (first try):\n`;
-    Object.values(bySkill).forEach((s) => { t += `  ${s.cat} · ${s.band} · ${s.name}: ${s.right}/${s.total}\n`; });
+    Object.values(bySkill).forEach((s) => {
+      t += `  ${s.cat} · ${s.band} · ${s.name}: ${s.right}/${s.total}\n`;
+      const tags = Object.entries(s.tags || {});
+      if (tags.length > 1) tags.forEach(([tag, x]) => { t += `      - ${tag}: ${x.right}/${x.total}\n`; });
+    });
     t += `\nItem log:\n`;
     log.forEach((r) => { t += `  [r${r.round}] (${r.type}) ${r.skill} — "${r.response}" → ${r.result}\n`; });
     teacherText = t;
