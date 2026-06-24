@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grammar Hub — ELC</title>
+<style>
+  /* Palette deliberately matches the Aussie Phonics Trainer so the two
+     tools read as one suite. The signature element here is the SEQUENCE
+     MATRIX on the landing screen: the whole ELC progression is visible
+     at once, and a cell is the unit of practice. */
+  :root{
+    --bg:#f4efe6; --paper:#fbf7ee; --ink:#1f1f1f; --muted:#6b6256;
+    --line:#d8cfbb; --line-soft:#e8e0cd; --accent:#a83232;
+    --correct:#2f6a3e; --wrong:#a83232; --okbg:#eef5ee; --badbg:#f7ecec;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);
+       min-height:100vh;padding:16px;display:flex;justify-content:center;align-items:flex-start;color:var(--ink)}
+  .container{background:var(--paper);border:1px solid var(--line);border-radius:12px;
+       max-width:860px;width:100%;padding:26px;margin-top:12px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  h1{text-align:center;font-size:23px;font-family:Georgia,'Times New Roman',serif;letter-spacing:.5px}
+  h3{font-family:Georgia,serif;font-size:15px;margin:18px 0 8px;color:var(--ink)}
+  .subtitle{color:var(--muted);text-align:center;margin:6px 0 18px;font-size:13px}
+  .muted{color:var(--muted);font-size:13px;line-height:1.5}
+  .screen{display:none}.screen.active{display:block}
+  button{font-family:inherit}
+
+  /* ---- buttons ---- */
+  .btn{padding:11px 18px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-weight:600;
+       cursor:pointer;background:var(--paper);color:var(--ink);transition:all .15s ease}
+  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn-primary:hover:not(:disabled){background:#8c2828}
+  .btn-primary:disabled{background:var(--line);border-color:var(--line);color:var(--muted);cursor:not-allowed}
+  .btn-ghost{background:var(--bg);color:var(--muted)}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink)}
+  .linkbtn{background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;padding:4px 8px}
+  .linkbtn:hover{text-decoration:underline}
+
+  /* ---- select: filter + matrix ---- */
+  .filter-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+  .filter-btn{border:1px solid var(--line-soft);background:var(--bg);color:var(--muted);font-size:11px;
+       font-weight:600;padding:5px 12px;border-radius:14px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px}
+  .filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .filter-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  .matrix{display:flex;flex-direction:column;gap:4px;overflow-x:auto}
+  .matrix-row{display:grid;grid-template-columns:128px repeat(5,1fr);gap:4px;min-width:620px}
+  .matrix-cell{border:1px solid var(--line-soft);border-radius:7px;background:var(--paper);
+       padding:7px 6px;min-height:52px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+  .matrix-head .matrix-cell{min-height:0;background:transparent;border:none;padding:2px 6px}
+  .colhead{text-align:center;font-weight:800;font-size:12px;color:var(--muted)}
+  .rowlabel{justify-content:center;font-weight:700;font-size:11px;color:var(--ink);
+       background:var(--bg);text-transform:uppercase;letter-spacing:.3px;text-align:left}
+  .cell-name{font-size:11px;font-weight:600;line-height:1.25}
+  .cell-count{font-size:10px;font-weight:700;color:var(--accent);align-self:flex-start;
+       background:var(--bg);border-radius:10px;padding:0 6px}
+  .cell-count.zero{color:var(--muted)}
+  .has-items{cursor:pointer}
+  .has-items:hover{border-color:var(--accent);background:#faf5f0}
+  .has-items.selected{border-color:var(--accent);background:var(--accent)}
+  .has-items.selected .cell-name{color:#fff}
+  .has-items.selected .cell-count{background:rgba(255,255,255,.85)}
+  .no-items{opacity:.65}
+  .empty{background:var(--bg);align-items:center;opacity:.5}
+  .empty .dash{color:var(--muted)}
+
+  .select-toolbar{display:flex;justify-content:space-between;align-items:center;margin:16px 0 0;flex-wrap:wrap;gap:8px}
+  .count-pill{background:var(--bg);color:var(--accent);border:1px solid var(--line);border-radius:20px;
+       padding:5px 14px;font-size:12px;font-weight:600}
+  .start-bar{margin-top:18px;text-align:center}.start-bar .btn{width:100%;max-width:320px}
+
+  /* ---- task ---- */
+  .progress-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin-bottom:8px}
+  .progress-track{height:8px;background:var(--line-soft);border-radius:99px;overflow:hidden;margin-bottom:6px}
+  .progress-fill{height:100%;width:0;background:var(--accent);transition:width .3s ease}
+  .skill-tag{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:center;margin:10px 0 4px}
+  .prompt{font-family:Georgia,serif;font-size:16px;text-align:center;color:var(--ink);margin-bottom:14px}
+  .stimulus{font-size:24px;line-height:1.3;font-weight:700;text-align:center;background:var(--bg);
+       border:1px solid var(--line);border-radius:12px;padding:24px 18px;margin-bottom:14px}
+  .stimulus b{color:var(--accent);text-decoration:underline;text-underline-offset:4px}
+  .stimulus.gap{font-size:21px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .gap-input{font-family:Georgia,serif;font-size:20px;font-weight:700;text-align:center;min-width:120px;
+       padding:6px 10px;border:2px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .gap-input:focus{outline:none;border-color:var(--accent)}
+  .gap-input.correct{border-color:var(--correct);background:var(--okbg)}
+  .gap-input.incorrect{border-color:var(--wrong);background:var(--badbg)}
+  .cue{text-align:center;color:var(--muted);font-size:13px;margin-bottom:8px}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .option{font-size:15px;font-weight:600;text-align:left;padding:14px 16px;border-radius:10px;
+       border:2px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .option:hover{border-color:var(--accent)}
+  .option.chosen{border-color:var(--accent);background:#faf5f0}
+  .option.correct{background:var(--okbg);border-color:var(--correct);color:var(--correct)}
+  .option.incorrect{background:var(--badbg);border-color:var(--wrong);color:var(--wrong)}
+  @media(max-width:480px){.options{grid-template-columns:1fr}}
+  .feedback{font-size:14px;line-height:1.5;margin-top:14px;padding:14px;border-radius:10px;min-height:20px;color:var(--muted)}
+  .feedback.good{background:var(--okbg);color:#234e2c}
+  .feedback.bad{background:var(--badbg);color:#7a2020}
+  .stub{padding:18px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
+  .action-row{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+  .exit-btn{background:none;border:none;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer}
+  .exit-btn:hover{color:var(--ink)}
+
+  /* ---- report ---- */
+  .report-title{font-family:Georgia,serif;font-size:20px;text-align:center;margin-bottom:6px}
+  .big-stat{font-family:Georgia,serif;font-size:46px;font-weight:700;color:var(--accent);text-align:center;line-height:1}
+  .stat-label{text-align:center;color:var(--muted);font-size:13px;margin-bottom:6px}
+  #reportSummary p{text-align:center}
+  .skill-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line-soft);border-radius:8px;margin-bottom:5px;font-size:13px}
+  .skill-name{font-weight:600}
+  .skill-score{font-weight:800;border-radius:10px;padding:1px 9px}
+  .skill-score.ok{color:var(--correct);background:var(--okbg)}
+  .skill-score.mid{color:#8a6d1e;background:#f6efda}
+  .skill-score.low{color:var(--wrong);background:var(--badbg)}
+  .remed-row{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+  .remed-row a{color:var(--accent);margin-right:8px}
+  .report-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+  #copyNote{text-align:center;font-size:12px;color:var(--muted);margin-top:8px;min-height:14px}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Grammar Hub</h1>
+  <p class="subtitle">ELC grammar progression · pick skills, practise, get a report</p>
+
+  <!-- ============ SELECT ============ -->
+  <section class="screen active" id="selectScreen">
+    <div class="filter-row" id="typeFilter"></div>
+    <div class="matrix" id="matrix"></div>
+    <div class="select-toolbar">
+      <span class="count-pill" id="selCount">0 skills · 0 items</span>
+      <span>
+        <button class="linkbtn" id="selectAllBtn">Select all ready</button>
+        <button class="linkbtn" id="selectNoneBtn">Clear</button>
+      </span>
+    </div>
+    <div class="start-bar">
+      <button class="btn btn-primary" id="startBtn" disabled>Start practising</button>
+    </div>
+    <p class="muted" style="text-align:center;margin-top:14px">
+      Greyed cells aren't introduced at that band. Cells showing <b>0</b> exist in the sequence but have no items yet.
+    </p>
+  </section>
+
+  <!-- ============ TASK ============ -->
+  <section class="screen" id="taskScreen">
+    <div class="progress-row">
+      <span id="roundText">Main round</span>
+      <button class="exit-btn" id="quitBtn">Exit</button>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="bar"></div></div>
+    <div class="progress-row"><span></span><span id="remainText"></span></div>
+
+    <div class="skill-tag" id="skillTag"></div>
+    <div class="prompt" id="promptText"></div>
+    <div id="taskArea"></div>
+    <div class="feedback" id="feedback"></div>
+
+    <div class="action-row">
+      <span></span>
+      <span>
+        <button class="btn btn-primary" id="checkBtn" disabled>Check</button>
+        <button class="btn btn-primary" id="nextBtn" style="display:none">Next</button>
+      </span>
+    </div>
+  </section>
+
+  <!-- ============ REPORT ============ -->
+  <section class="screen" id="reportScreen">
+    <div class="report-title">Session complete</div>
+    <div id="reportSummary"></div>
+    <div id="reportSkills"></div>
+    <div id="reportRemediation"></div>
+    <div class="report-actions">
+      <button class="btn btn-ghost" id="copyBtn">Copy teacher results</button>
+      <button class="btn btn-ghost" id="reviewBtn">Run again</button>
+      <button class="btn btn-primary" id="restartBtn">New selection</button>
+    </div>
+    <div id="copyNote"></div>
+  </section>
+</div>
+
+<!-- load order matters: content, then task types, then engine -->
+<script src="data/skills.js"></script>
+<script src="tasktypes.js"></script>
+<script src="engine.js"></script>
+</body>
+</html>

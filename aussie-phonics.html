@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentence builder &mdash; Edward arrives at Peg's house</title>
+<style>
+  :root{
+    --ink:#1F2430; --muted:#6B6458; --accent:#8A1C1C;
+    --rule:#D9D3C7; --soft:#F2EFE9; --paper:#FFFFFF; --pale:#FAF7F2;
+    --ok-bg:#EAF3DE; --ok-tx:#3B6D11;
+    --warn-bg:#FAEEDA; --warn-tx:#854F0B;
+    --err-bg:#FCEBEB;  --err-tx:#A32D2D;
+    /* tile palette */
+    --prep-bg:#FFF3B0; --prep-tx:#7A5A00;
+    --subj-bg:#D6EAFC; --subj-tx:#0B447C;
+    --verb-bg:#E1F5EE; --verb-tx:#0F6E56;
+    --effect-bg:#FBEAF0; --effect-tx:#993556;
+    --connect-bg:#EEEBE3; --connect-tx:#574D3A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--pale);line-height:1.5;}
+  .wrap{max-width:1320px;margin:0 auto;padding:10px 18px 20px;}
+  header.app{display:flex;align-items:baseline;gap:14px;margin-bottom:8px;}
+  header.app h1{font-family:Georgia,serif;font-size:20px;margin:0;}
+  header.app p.sub{margin:0;color:var(--muted);font-style:italic;font-size:12.5px;}
+
+  .panel{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .panel.tight{padding:9px 12px;}
+
+  h2.sec{font-family:Georgia,serif;font-size:16px;margin:0 0 4px;}
+  p.lead{color:var(--muted);font-size:12.5px;margin:0 0 10px;}
+
+  /* Top panel: scene+focus inline */
+  .scene-inner{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;}
+  .scene-inner .descbox{background:var(--soft);border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.45;}
+  .scene-inner .descbox h3{margin:0 0 4px;font-size:12px;color:var(--accent);}
+  .timestamp{display:inline-block;background:var(--ink);color:#fff;font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;}
+  .scene-inner h2.sec{margin-top:4px;}
+
+  /* Focus pickers */
+  .focusbox{background:var(--soft);border-radius:8px;padding:8px 10px;margin-bottom:8px;}
+  .focusbox:last-child{margin-bottom:0;}
+  .focusbox h4{margin:0 0 6px;font-size:12px;color:var(--accent);}
+  .focuschoices{display:flex;flex-wrap:wrap;gap:5px;}
+  .fchoice{cursor:pointer;border:1px solid var(--rule);background:var(--paper);border-radius:99px;padding:4px 10px;font-size:12px;color:var(--ink);font-family:inherit;}
+  .fchoice:hover{background:#fff;}
+  .fchoice.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  /* Canvas */
+  .canvas-wrap{margin-top:6px;}
+  .canvas-label{font-size:12.5px;color:var(--muted);font-weight:600;margin:0 0 3px;display:flex;justify-content:space-between;align-items:center;}
+  .canvas-label .focus-echo{font-style:italic;color:var(--accent);font-weight:500;}
+  .canvas{min-height:48px;border:2px dashed var(--rule);border-radius:10px;padding:7px 9px;background:#fff;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;align-items:center;transition:background .15s,border-color .15s;}
+  .canvas.over{background:var(--soft);border-color:var(--accent);}
+  .canvas .placeholder{color:var(--muted);font-style:italic;font-size:13px;}
+
+  .preview{margin-top:4px;font-size:13.5px;color:var(--ink);background:var(--soft);border-radius:7px;padding:6px 9px;min-height:28px;}
+  .preview em{color:var(--muted);font-style:italic;}
+
+  /* Tiles */
+  .tile{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:6px;font-size:12.5px;line-height:1.3;border:1px solid transparent;cursor:grab;user-select:none;font-family:inherit;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;}
+  .tile:active{cursor:grabbing;}
+  .tile.dragging{opacity:.45;}
+  .tile.in-canvas{position:relative;padding-right:22px;}
+  .tile.in-canvas .x{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:13px;height:13px;border-radius:50%;background:rgba(0,0,0,.12);color:#fff;font-size:9px;line-height:13px;text-align:center;cursor:pointer;}
+  .tile.in-canvas .x:hover{background:rgba(0,0,0,.3);}
+  .tile.warn-flag{outline:2px solid var(--warn-tx);outline-offset:1px;}
+  .tile.err-flag{outline:2px solid var(--err-tx);outline-offset:1px;}
+
+  .tile.prep    {background:var(--prep-bg);    color:var(--prep-tx);}
+  .tile.subj    {background:var(--subj-bg);    color:var(--subj-tx);}
+  .tile.verb    {background:var(--verb-bg);    color:var(--verb-tx);}
+  .tile.effect  {background:var(--effect-bg);  color:var(--effect-tx);}
+  .tile.connect {background:var(--connect-bg); color:var(--connect-tx);}
+
+  /* Bank: five narrow columns side by side, each with its own internal scroll */
+  .panel.bank{padding:10px 12px;}
+  .bank-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .bank-head h2{margin:0;}
+  .bank-head .hint{font-size:12px;color:var(--muted);font-style:italic;}
+  .bins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+  .bin{border:1px solid var(--rule);border-radius:8px;background:#fff;display:flex;flex-direction:column;min-height:0;}
+  .bin h4{margin:0;padding:6px 10px;font-size:12px;color:var(--accent);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--rule);}
+  .bin h4 .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;}
+  .bin .tiles{display:flex;flex-wrap:wrap;gap:5px;padding:7px;overflow-y:auto;max-height:200px;min-height:200px;}
+  /* Subtle scrollbar styling */
+  .bin .tiles::-webkit-scrollbar{width:6px;}
+  .bin .tiles::-webkit-scrollbar-track{background:transparent;}
+  .bin .tiles::-webkit-scrollbar-thumb{background:var(--rule);border-radius:3px;}
+
+  /* Buttons & feedback */
+  .btnrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+  button.act{cursor:pointer;border:1px solid var(--rule);background:#fff;border-radius:7px;padding:6px 14px;font-size:13px;color:var(--ink);font-family:inherit;font-weight:600;}
+  button.act:hover{background:var(--soft);}
+  button.act.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+  .feedbackrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .feedback{border-radius:8px;padding:9px 12px;font-size:12.5px;display:none;}
+  .feedback.show{display:block;}
+  .feedback h4{margin:0 0 4px;font-size:12.5px;}
+  .feedback ul{margin:4px 0 0 16px;padding:0;}
+  .feedback li{margin-bottom:2px;}
+  .feedback.ok{background:var(--ok-bg);color:var(--ok-tx);}
+  .feedback.warn{background:var(--warn-bg);color:var(--warn-tx);}
+  .feedback.err{background:var(--err-bg);color:var(--err-tx);}
+  #feedbackFocus{margin-top:8px;}
+
+  details.helpkey{margin-top:6px;}
+  details.helpkey summary{cursor:pointer;font-size:13px;color:var(--muted);}
+  details.helpkey .key{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:12.5px;}
+  details.helpkey .key span{display:inline-flex;align-items:center;gap:6px;}
+  details.helpkey .key .sw{width:12px;height:12px;border-radius:3px;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="app">
+  <h1>Sentence builder</h1>
+  <p class="sub">Edward Scissorhands &middot; build analytical sentences about the scene below</p>
+</header>
+
+<div class="layout">
+
+<!-- ============ SCENE + FOCUS ============ -->
+<section class="panel tight">
+  <div class="scene-inner">
+    <div>
+      <span class="timestamp">15:30 &ndash; 17:00</span>
+      <h2 class="sec">The scene: Edward arrives at Peg's house</h2>
+      <div class="descbox">
+        Peg drives Edward from the dark mansion into the bright pastel suburb. Neighbours stop and stare as they roll down the street. They park at Peg's pale-coloured house and Edward steps awkwardly out, scissor hands held close to his body, and follows Peg to the door.
+      </div>
+    </div>
+    <div>
+      <div class="focusbox">
+        <h4>Choose a theme</h4>
+        <div class="focuschoices" id="themePicks">
+          <button class="fchoice" data-fv="conformity and difference">Conformity and difference</button>
+          <button class="fchoice" data-fv="fear and acceptance">Fear and acceptance</button>
+          <button class="fchoice" data-fv="beauty and ugliness">Beauty and ugliness</button>
+        </div>
+      </div>
+      <div class="focusbox">
+        <h4>Choose a character</h4>
+        <div class="focuschoices" id="charPicks">
+          <button class="fchoice" data-fv="Edward">Edward</button>
+          <button class="fchoice" data-fv="Peg">Peg</button>
+          <button class="fchoice" data-fv="the neighbours">The neighbours</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CANVASES + FEEDBACK ============ -->
+<section class="panel tight">
+  <div class="canvas-wrap">
+    <div class="canvas-label">
+      <span>Sentence 1 &mdash; about the <strong>theme</strong></span>
+      <span class="focus-echo" id="echoTheme">(pick a theme above)</span>
+    </div>
+    <div class="canvas" id="canvasTheme" data-canvas="theme">
+      <span class="placeholder">Drag tiles here&hellip;</span>
+    </div>
+    <div class="preview" id="previewTheme"><em>your sentence will appear here as you build it</em></div>
+  </div>
+
+  <div class="canvas-wrap" style="margin-top:10px;">
+    <div class="canvas-label">
+      <span>Sentence 2 &mdash; about the <strong>character</strong></span>
+      <span class="focus-echo" id="echoChar">(pick a character above)</span>
+    </div>
+    <div class="canvas" id="canvasChar" data-canvas="char">
+      <span class="placeholder">Drag tiles here&hellip;</span>
+    </div>
+    <div class="preview" id="previewChar"><em>your sentence will appear here as you build it</em></div>
+  </div>
+
+  <div class="btnrow">
+    <button class="act primary" onclick="checkAll()">Check my sentences</button>
+    <button class="act" onclick="resetAll()">Reset both</button>
+  </div>
+
+  <div class="feedbackrow">
+    <div class="feedback" id="feedbackTheme"></div>
+    <div class="feedback" id="feedbackChar"></div>
+  </div>
+  <div class="feedback" id="feedbackFocus"></div>
+</section>
+
+<!-- ============ TILE BANK ============ -->
+<section class="panel bank">
+  <div class="bank-head">
+    <h2 class="sec">Word bank</h2>
+    <span class="hint">Tiles stay in the bank when you drag &mdash; reuse them as many times as you need. Each bin scrolls.</span>
+  </div>
+  <div class="bins" id="binsArea"></div>
+</section>
+
+</div><!-- /layout -->
+
+</div>
+
+<script>
+/* ======================== TILE BANK DATA ======================== */
+// Each tile: { id, kind, text, quality }
+// quality: "good" (strong/specific), "ok" (acceptable), "weak" (vague), "verbWeak", "subjVague" (subject hard-fail)
+const TILES = [
+
+  /* ---- PREPOSITIONAL PHRASES ---- */
+  {id:'p1', kind:'prep', text:'In this scene,', quality:'ok'},
+  {id:'p2', kind:'prep', text:'As Peg drives Edward into the suburb,', quality:'good'},
+  {id:'p3', kind:'prep', text:'From the moment Edward steps out of the car,', quality:'good'},
+  {id:'p4', kind:'prep', text:'On the bright suburban street,', quality:'good'},
+  {id:'p5', kind:'prep', text:'At Peg\u2019s front door,', quality:'good'},
+  {id:'p6', kind:'prep', text:'Through the car windscreen,', quality:'good'},
+  {id:'p7', kind:'prep', text:'Throughout the scene,', quality:'ok'},
+  {id:'p8', kind:'prep', text:'When the neighbours stop and stare,', quality:'good'},
+  {id:'p9', kind:'prep', text:'As Edward leaves the dark mansion behind,', quality:'good'},
+  {id:'p10', kind:'prep', text:'Beside the bright lawns,', quality:'good'},
+  {id:'p11', kind:'prep', text:'In the yellow car,', quality:'good'},
+  {id:'p12', kind:'prep', text:'Sometimes,', quality:'weak'},
+  {id:'p13', kind:'prep', text:'Then,', quality:'weak'},
+  {id:'p14', kind:'prep', text:'In the movie,', quality:'weak'},
+
+  /* ---- SUBJECTS ---- */
+  // Strong: specific film techniques
+  {id:'s1', kind:'subj', text:'a close-up of Edward\u2019s face', quality:'good'},
+  {id:'s2', kind:'subj', text:'a wide shot of the pastel suburb', quality:'good'},
+  {id:'s3', kind:'subj', text:'a high-angle shot of the street', quality:'good'},
+  {id:'s4', kind:'subj', text:'the bright, saturated colour palette', quality:'good'},
+  {id:'s5', kind:'subj', text:'the soft, hopeful soundtrack', quality:'good'},
+  {id:'s6', kind:'subj', text:'the slow, careful camera movement', quality:'good'},
+  {id:'s12', kind:'subj', text:'the contrast between dark and bright', quality:'good'},
+  {id:'s13', kind:'subj', text:'a low-angle shot of Edward', quality:'good'},
+  {id:'s14', kind:'subj', text:'the silence as Edward steps out', quality:'good'},
+  // Strong: character-as-subject (for the character sentence)
+  {id:'s7', kind:'subj', text:'Edward', quality:'good', character:'Edward'},
+  {id:'s8', kind:'subj', text:'Peg', quality:'good', character:'Peg'},
+  {id:'s9', kind:'subj', text:'the neighbours', quality:'good', character:'the neighbours'},
+  // Specific-but-mid
+  {id:'s10', kind:'subj', text:'the camera', quality:'ok'},
+  {id:'s11', kind:'subj', text:'the lighting', quality:'ok'},
+  {id:'s15', kind:'subj', text:'the music', quality:'ok'},
+  // Vague (hard-fail in subject role)
+  {id:'sv1', kind:'subj', text:'this', quality:'subjVague'},
+  {id:'sv2', kind:'subj', text:'it', quality:'subjVague'},
+  {id:'sv3', kind:'subj', text:'the film', quality:'subjVague'},
+  {id:'sv4', kind:'subj', text:'the scene', quality:'subjVague'},
+  {id:'sv5', kind:'subj', text:'this part', quality:'subjVague'},
+  {id:'sv6', kind:'subj', text:'the thing', quality:'subjVague'},
+
+  /* ---- VERBS ---- */
+  // Analytical (strong)
+  {id:'v1', kind:'verb', text:'reveals', quality:'good'},
+  {id:'v2', kind:'verb', text:'suggests', quality:'good'},
+  {id:'v3', kind:'verb', text:'undercuts', quality:'good'},
+  {id:'v4', kind:'verb', text:'contrasts with', quality:'good'},
+  {id:'v5', kind:'verb', text:'frames', quality:'good'},
+  {id:'v6', kind:'verb', text:'conveys', quality:'good'},
+  {id:'v7', kind:'verb', text:'transforms', quality:'good'},
+  {id:'v8', kind:'verb', text:'emphasises', quality:'good'},
+  {id:'v13', kind:'verb', text:'highlights', quality:'good'},
+  {id:'v14', kind:'verb', text:'establishes', quality:'good'},
+  {id:'v15', kind:'verb', text:'positions', quality:'good'},
+  {id:'v16', kind:'verb', text:'invites', quality:'good'},
+  // For character sentences
+  {id:'v9', kind:'verb', text:'looks', quality:'ok'},
+  {id:'v10', kind:'verb', text:'stands', quality:'ok'},
+  {id:'v11', kind:'verb', text:'hesitates', quality:'good'},
+  {id:'v12', kind:'verb', text:'stares', quality:'good'},
+  {id:'v17', kind:'verb', text:'flinches', quality:'good'},
+  {id:'v18', kind:'verb', text:'smiles', quality:'ok'},
+  // Weak (nudge)
+  {id:'vw1', kind:'verb', text:'shows', quality:'verbWeak'},
+  {id:'vw2', kind:'verb', text:'is about', quality:'verbWeak'},
+  {id:'vw3', kind:'verb', text:'is', quality:'verbWeak'},
+  {id:'vw4', kind:'verb', text:'has', quality:'verbWeak'},
+  {id:'vw5', kind:'verb', text:'does', quality:'verbWeak'},
+  {id:'vw6', kind:'verb', text:'gets', quality:'verbWeak'},
+
+  /* ---- EFFECT CLAUSES ---- */
+  // 'themes' field lists which themes this effect clause supports.
+  // 'character' field lists which characters this effect clause is about (for the character sentence check).
+  // Theme-oriented
+  {id:'e1', kind:'effect', text:'that Edward does not fit in with the world he is entering', quality:'good', themes:['conformity and difference','fear and acceptance'], character:['Edward']},
+  {id:'e2', kind:'effect', text:'the gap between Edward\u2019s appearance and the cheerful suburb around him', quality:'good', themes:['conformity and difference','beauty and ugliness'], character:['Edward']},
+  {id:'e3', kind:'effect', text:'how quickly the neighbours judge a stranger by how he looks', quality:'good', themes:['fear and acceptance','beauty and ugliness'], character:['the neighbours']},
+  {id:'e4', kind:'effect', text:'that everyone in the suburb has been shaped to look the same', quality:'good', themes:['conformity and difference'], character:['the neighbours']},
+  {id:'e5', kind:'effect', text:'Edward\u2019s vulnerability rather than his menace', quality:'good', themes:['fear and acceptance','beauty and ugliness'], character:['Edward']},
+  {id:'e6', kind:'effect', text:'the audience\u2019s sympathy for Edward before he has spoken', quality:'good', themes:['fear and acceptance'], character:['Edward']},
+  {id:'e11', kind:'effect', text:'how the bright colours hide a colder kind of judgement', quality:'good', themes:['beauty and ugliness','conformity and difference'], character:['the neighbours']},
+  {id:'e12', kind:'effect', text:'that beauty in this world is only skin-deep', quality:'good', themes:['beauty and ugliness']},
+  {id:'e13', kind:'effect', text:'how strangeness is treated as a threat in the suburb', quality:'good', themes:['fear and acceptance','conformity and difference'], character:['Edward']},
+  // Character-oriented
+  {id:'e7', kind:'effect', text:'his nervousness about leaving the mansion behind', quality:'good', themes:['fear and acceptance'], character:['Edward']},
+  {id:'e8', kind:'effect', text:'her kindness and quiet bravery', quality:'good', themes:['fear and acceptance'], character:['Peg']},
+  {id:'e9', kind:'effect', text:'their curiosity edging into suspicion', quality:'good', themes:['fear and acceptance','conformity and difference'], character:['the neighbours']},
+  {id:'e10', kind:'effect', text:'his discomfort with being out in the open', quality:'good', themes:['fear and acceptance'], character:['Edward']},
+  {id:'e14', kind:'effect', text:'her warmth toward someone everyone else fears', quality:'good', themes:['fear and acceptance'], character:['Peg']},
+  {id:'e15', kind:'effect', text:'their fascination with the new and strange', quality:'good', themes:['fear and acceptance','conformity and difference'], character:['the neighbours']},
+  // Weak / generic (nudge) - no theme/character tags
+  {id:'ew1', kind:'effect', text:'that the film is interesting', quality:'weak'},
+  {id:'ew2', kind:'effect', text:'a lot of things', quality:'weak'},
+  {id:'ew3', kind:'effect', text:'that something is happening', quality:'weak'},
+  {id:'ew4', kind:'effect', text:'how the story moves on', quality:'weak'},
+  {id:'ew5', kind:'effect', text:'that this part of the film is important', quality:'weak'},
+
+  /* ---- CONNECTORS / GLUE ---- */
+  {id:'c1', kind:'connect', text:'and', quality:'ok'},
+  {id:'c2', kind:'connect', text:'while', quality:'ok'},
+  {id:'c3', kind:'connect', text:'as', quality:'ok'},
+  {id:'c4', kind:'connect', text:'because', quality:'ok'},
+  {id:'c5', kind:'connect', text:'which', quality:'ok'},
+  {id:'c8', kind:'connect', text:'suggesting', quality:'ok'},
+  {id:'c9', kind:'connect', text:'showing', quality:'ok'},
+  {id:'c10', kind:'connect', text:'inviting', quality:'ok'},
+  {id:'c11', kind:'connect', text:'so that', quality:'ok'},
+  {id:'c12', kind:'connect', text:'even though', quality:'ok'},
+  {id:'c6', kind:'connect', text:',', quality:'ok'},
+  {id:'c7', kind:'connect', text:'.', quality:'ok'},
+];
+
+const KIND_LABEL = {
+  subj:    {name:'Subjects',     swatch:'var(--subj-bg)'},
+  verb:    {name:'Verbs',        swatch:'var(--verb-bg)'},
+  prep:    {name:'Prep. phrases', swatch:'var(--prep-bg)'},
+  effect:  {name:'Audience effect', swatch:'var(--effect-bg)'},
+  connect: {name:'Connectors',   swatch:'var(--connect-bg)'},
+};
+
+/* ======================== STATE ======================== */
+const state = {
+  theme: null,
+  character: null,
+  canvasTheme: [],   // array of {tileId, instanceId}
+  canvasChar:  [],
+};
+let instCounter = 0;
+
+/* ======================== TILE RENDERING ======================== */
+function tileEl(tile, opts){
+  opts = opts || {};
+  const el = document.createElement('div');
+  el.className = 'tile ' + tile.kind + (opts.inCanvas?' in-canvas':'');
+  el.setAttribute('draggable','true');
+  el.dataset.tileId = tile.id;
+  if(opts.instanceId) el.dataset.instId = opts.instanceId;
+  el.dataset.kind = tile.kind;
+  el.dataset.quality = tile.quality;
+  el.textContent = tile.text;
+  if(opts.inCanvas){
+    const x = document.createElement('span');
+    x.className = 'x'; x.textContent = '\u00d7';
+    x.onclick = (e)=>{e.stopPropagation(); removeFromCanvas(el);};
+    // touch-friendly removal
+    x.addEventListener('touchend', (e)=>{e.stopPropagation();e.preventDefault();removeFromCanvas(el);});
+    el.appendChild(x);
+  }
+  // ---- Mouse / native HTML5 drag ----
+  el.addEventListener('dragstart', (e)=>{
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      tileId: tile.id,
+      from: opts.inCanvas ? 'canvas' : 'bank',
+      instId: opts.instanceId || null,
+    }));
+    el.classList.add('dragging');
+  });
+  el.addEventListener('dragend', ()=>el.classList.remove('dragging'));
+
+  // ---- Touch drag (mobile / tablet / interactive whiteboard) ----
+  attachTouchDrag(el, {
+    tileId: tile.id,
+    from: opts.inCanvas ? 'canvas' : 'bank',
+    instId: opts.instanceId || null,
+  });
+
+  return el;
+}
+
+function renderBank(){
+  const area = document.getElementById('binsArea');
+  area.innerHTML = '';
+  const kindsInOrder = ['subj','verb','prep','effect','connect'];
+  kindsInOrder.forEach(k=>{
+    const bin = document.createElement('div');
+    bin.className = 'bin';
+    const h = document.createElement('h4');
+    h.innerHTML = '<span class="swatch" style="background:'+KIND_LABEL[k].swatch+'"></span>'+KIND_LABEL[k].name;
+    bin.appendChild(h);
+    const wrap = document.createElement('div'); wrap.className='tiles';
+    TILES.filter(t=>t.kind===k).forEach(t=>wrap.appendChild(tileEl(t,{inCanvas:false})));
+    bin.appendChild(wrap);
+    area.appendChild(bin);
+  });
+}
+
+function renderCanvas(which){
+  const id = which==='theme' ? 'canvasTheme' : 'canvasChar';
+  const arr = which==='theme' ? state.canvasTheme : state.canvasChar;
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  if(arr.length===0){
+    const ph = document.createElement('span'); ph.className='placeholder';
+    ph.textContent = 'Drag tiles here\u2026';
+    el.appendChild(ph);
+  } else {
+    arr.forEach(rec=>{
+      const t = TILES.find(t=>t.id===rec.tileId);
+      el.appendChild(tileEl(t,{inCanvas:true, instanceId:rec.instId}));
+    });
+  }
+  renderPreview(which);
+}
+
+function renderPreview(which){
+  const arr = which==='theme' ? state.canvasTheme : state.canvasChar;
+  const previewEl = document.getElementById(which==='theme'?'previewTheme':'previewChar');
+  if(arr.length===0){
+    previewEl.innerHTML = '<em>your sentence will appear here as you build it</em>';
+    return;
+  }
+  const parts = arr.map(rec=>{
+    const t = TILES.find(t=>t.id===rec.tileId);
+    return t.text;
+  });
+  // join with smart spacing: punctuation tiles don't need a leading space.
+  let out = '';
+  parts.forEach(p=>{
+    const punct = /^[.,]$/.test(p);
+    if(out.length===0){ out = p; }
+    else if(punct){ out += p; }
+    else { out += ' ' + p; }
+  });
+  // Capitalise first letter
+  out = out.charAt(0).toUpperCase() + out.slice(1);
+  previewEl.textContent = out;
+}
+
+/* ======================== DROP LOGIC (shared by mouse and touch) ======================== */
+function performDrop(targetCanvasId, dragData, clientX, clientY){
+  const z = document.getElementById(targetCanvasId);
+  if(!z) return;
+  const which = targetCanvasId==='canvasTheme'?'theme':'char';
+  const arr   = which==='theme' ? state.canvasTheme : state.canvasChar;
+
+  const afterEl = getDropTarget(z, clientX, clientY);
+  let insertAt = arr.length;
+  if(afterEl){
+    const instId = afterEl.dataset.instId;
+    insertAt = arr.findIndex(r=>r.instId===instId);
+    if(insertAt<0) insertAt = arr.length;
+  }
+  if(dragData.from==='canvas'){
+    let sourceWhich = null;
+    let sourceIdx = state.canvasTheme.findIndex(r=>r.instId===dragData.instId);
+    if(sourceIdx>=0) sourceWhich='theme';
+    else {
+      sourceIdx = state.canvasChar.findIndex(r=>r.instId===dragData.instId);
+      if(sourceIdx>=0) sourceWhich='char';
+    }
+    if(sourceWhich){
+      const sourceArr = sourceWhich==='theme'?state.canvasTheme:state.canvasChar;
+      const [rec] = sourceArr.splice(sourceIdx,1);
+      if(sourceWhich===which && sourceIdx<insertAt) insertAt--;
+      arr.splice(insertAt,0,rec);
+      renderCanvas(sourceWhich);
+      if(sourceWhich!==which) renderCanvas(which);
+    }
+  } else {
+    const inst = 'i'+(++instCounter);
+    arr.splice(insertAt,0,{tileId:dragData.tileId, instId:inst});
+    renderCanvas(which);
+  }
+  clearFlags();
+}
+
+/* ======================== TOUCH DRAG ======================== */
+// On touch devices, HTML5 dragstart does not fire. We implement our own:
+// - touchstart records the start position and the drag payload
+// - touchmove: until movement passes a small threshold, do nothing (let scroll work)
+//   once movement exceeds the threshold, commit to drag mode: prevent scroll, show a
+//   floating ghost following the finger, highlight any canvas under the finger
+// - touchend: if in drag mode, drop into the canvas under the finger (if any)
+const TOUCH_DRAG_THRESHOLD = 8; // px
+
+function attachTouchDrag(el, dragPayload){
+  let startX = 0, startY = 0;
+  let dragging = false;
+  let ghost = null;
+  let activeZone = null;
+
+  function onStart(e){
+    if(e.touches.length !== 1) return;
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    dragging = false;
+    // ghost not created until threshold passed
+  }
+  function onMove(e){
+    if(e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if(!dragging){
+      if(Math.hypot(dx, dy) < TOUCH_DRAG_THRESHOLD) return; // still allow scroll
+      // Commit to drag mode
+      dragging = true;
+      el.classList.add('dragging');
+      // Create ghost
+      ghost = el.cloneNode(true);
+      ghost.classList.add('touch-ghost');
+      // Remove the X button from the ghost so it doesn't visually nag
+      const gx = ghost.querySelector('.x');
+      if(gx) gx.remove();
+      ghost.style.position='fixed';
+      ghost.style.pointerEvents='none';
+      ghost.style.opacity='0.92';
+      ghost.style.zIndex='1000';
+      ghost.style.transform='translate(-50%,-50%)';
+      ghost.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)';
+      document.body.appendChild(ghost);
+    }
+    if(dragging){
+      e.preventDefault(); // suppress scroll only while actively dragging
+      ghost.style.left = t.clientX + 'px';
+      ghost.style.top  = t.clientY + 'px';
+      // Hit test for canvas zones
+      const newZone = canvasUnder(t.clientX, t.clientY);
+      if(newZone !== activeZone){
+        if(activeZone) activeZone.classList.remove('over');
+        activeZone = newZone;
+        if(activeZone) activeZone.classList.add('over');
+      }
+    }
+  }
+  function onEnd(e){
+    if(dragging){
+      el.classList.remove('dragging');
+      if(ghost){ ghost.remove(); ghost=null; }
+      // Use last touch position from changedTouches
+      const t = e.changedTouches && e.changedTouches[0];
+      if(t && activeZone){
+        performDrop(activeZone.id, dragPayload, t.clientX, t.clientY);
+      }
+      if(activeZone){ activeZone.classList.remove('over'); activeZone = null; }
+      e.preventDefault();
+    }
+    dragging = false;
+  }
+  function onCancel(){
+    if(ghost){ ghost.remove(); ghost=null; }
+    if(activeZone){ activeZone.classList.remove('over'); activeZone = null; }
+    el.classList.remove('dragging');
+    dragging = false;
+  }
+  el.addEventListener('touchstart', onStart, {passive:true});
+  el.addEventListener('touchmove',  onMove,  {passive:false}); // need to be able to preventDefault
+  el.addEventListener('touchend',   onEnd,   {passive:false});
+  el.addEventListener('touchcancel',onCancel);
+}
+
+function canvasUnder(x, y){
+  for(const id of ['canvasTheme','canvasChar']){
+    const z = document.getElementById(id);
+    const r = z.getBoundingClientRect();
+    if(x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return z;
+  }
+  return null;
+}
+
+/* ======================== DRAG TARGETS (mouse) ======================== */
+function wireDropZones(){
+  ['canvasTheme','canvasChar'].forEach(id=>{
+    const z = document.getElementById(id);
+    z.addEventListener('dragover', e=>{e.preventDefault();z.classList.add('over');});
+    z.addEventListener('dragleave', ()=>z.classList.remove('over'));
+    z.addEventListener('drop', e=>{
+      e.preventDefault();
+      z.classList.remove('over');
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      performDrop(id, data, e.clientX, e.clientY);
+    });
+  });
+}
+function getDropTarget(zone, x, y){
+  const tiles = [...zone.querySelectorAll('.tile')];
+  for(const t of tiles){
+    const r = t.getBoundingClientRect();
+    if(x < r.left + r.width/2 && y >= r.top && y <= r.bottom) return t;
+  }
+  return null;
+}
+
+function removeFromCanvas(tileEl){
+  const instId = tileEl.dataset.instId;
+  let i = state.canvasTheme.findIndex(r=>r.instId===instId);
+  if(i>=0){ state.canvasTheme.splice(i,1); renderCanvas('theme'); return; }
+  i = state.canvasChar.findIndex(r=>r.instId===instId);
+  if(i>=0){ state.canvasChar.splice(i,1); renderCanvas('char'); }
+}
+
+/* ======================== FOCUS PICKERS ======================== */
+function wirePickers(){
+  document.querySelectorAll('#themePicks .fchoice').forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll('#themePicks .fchoice').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      state.theme = b.dataset.fv;
+      document.getElementById('echoTheme').textContent = '('+state.theme+')';
+    };
+  });
+  document.querySelectorAll('#charPicks .fchoice').forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll('#charPicks .fchoice').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      state.character = b.dataset.fv;
+      document.getElementById('echoChar').textContent = '('+state.character+')';
+    };
+  });
+}
+
+/* ======================== VALIDATION ======================== */
+function analyseSentence(arr){
+  // Counts and findings
+  const tiles = arr.map(rec=>TILES.find(t=>t.id===rec.tileId));
+  const kinds = tiles.map(t=>t.kind);
+  const counts = {prep:0,subj:0,verb:0,effect:0,connect:0};
+  kinds.forEach(k=>counts[k]++);
+
+  const findings = [];
+  const flaggedInstances = [];
+
+  // ===== HARD FAILS =====
+  if(arr.length === 0){
+    findings.push({sev:'err', text:'This canvas is empty. Drag some tiles into it to build a sentence.'});
+    return {findings, flaggedInstances, level:'err'};
+  }
+
+  // Subject vagueness: any "this"/"it"/"the film"/"the scene" tile -> hard fail
+  arr.forEach(rec=>{
+    const t = TILES.find(t=>t.id===rec.tileId);
+    if(t.quality==='subjVague'){
+      flaggedInstances.push({instId:rec.instId, level:'err'});
+    }
+  });
+  if(flaggedInstances.some(f=>f.level==='err')){
+    findings.push({sev:'err', text:'You\u2019ve used a vague subject (like \u201cthis\u201d, \u201cit\u201d, \u201cthe film\u201d, or \u201cthe scene\u201d). Replace it with a specific subject \u2014 a film technique (close-up, lighting, soundtrack) or a character.'});
+  }
+
+  // Must have at least one subject
+  if(counts.subj === 0){
+    findings.push({sev:'err', text:'There is no subject in this sentence. Drag a subject tile in \u2014 a specific film technique works best.'});
+  }
+
+  // Must have at least one verb
+  if(counts.verb === 0){
+    findings.push({sev:'err', text:'There is no verb. A sentence needs an action or process tile.'});
+  }
+
+  // ===== NUDGES =====
+  // No prepositional phrase
+  if(counts.prep === 0){
+    findings.push({sev:'warn', text:'Try adding a prepositional phrase (yellow) \u2014 a where, when or how tile makes the sentence land harder.'});
+  }
+
+  // Weak verb only
+  if(counts.verb > 0){
+    const hasStrongVerb = arr.some(rec=>{
+      const t = TILES.find(t=>t.id===rec.tileId);
+      return t.kind==='verb' && t.quality!=='verbWeak';
+    });
+    const hasWeakVerb = arr.some(rec=>{
+      const t = TILES.find(t=>t.id===rec.tileId);
+      return t.kind==='verb' && t.quality==='verbWeak';
+    });
+    if(hasWeakVerb && !hasStrongVerb){
+      findings.push({sev:'warn', text:'Your verb is a bit flat (\u201cshows\u201d, \u201cis\u201d, \u201chas\u201d). Try an analytical verb like \u201creveals\u201d, \u201csuggests\u201d, \u201cundercuts\u201d, or \u201cconveys\u201d.'});
+      arr.forEach(rec=>{
+        const t = TILES.find(t=>t.id===rec.tileId);
+        if(t.kind==='verb' && t.quality==='verbWeak') flaggedInstances.push({instId:rec.instId, level:'warn'});
+      });
+    }
+  }
+
+  // Effect clause missing
+  if(counts.effect === 0){
+    findings.push({sev:'warn', text:'There\u2019s no effect-on-audience clause (pink). Add one to say what the technique makes the audience think or feel \u2014 that\u2019s where the analysis really lives.'});
+  } else {
+    // Weak effect clause
+    const hasGoodEffect = arr.some(rec=>{const t=TILES.find(t=>t.id===rec.tileId);return t.kind==='effect'&&t.quality==='good';});
+    const hasWeakEffect = arr.some(rec=>{const t=TILES.find(t=>t.id===rec.tileId);return t.kind==='effect'&&t.quality==='weak';});
+    if(hasWeakEffect && !hasGoodEffect){
+      findings.push({sev:'warn', text:'Your effect clause is too general (e.g. \u201cthat the film is interesting\u201d). Try one that names a specific feeling or idea.'});
+      arr.forEach(rec=>{const t=TILES.find(t=>t.id===rec.tileId);
+        if(t.kind==='effect'&&t.quality==='weak') flaggedInstances.push({instId:rec.instId, level:'warn'});
+      });
+    }
+  }
+
+  // Determine overall level
+  const hasErr = findings.some(f=>f.sev==='err');
+  const hasWarn = findings.some(f=>f.sev==='warn');
+  let level = hasErr ? 'err' : (hasWarn ? 'warn' : 'ok');
+  return {findings, flaggedInstances, level};
+}
+
+// Theme focus check: does any effect tile in the sentence match the chosen theme?
+// If there are no effect tiles tagged with themes at all, we skip the check rather than nudge.
+function themeFocusOk(arr, theme){
+  const effectTiles = arr
+    .map(rec => TILES.find(t => t.id === rec.tileId))
+    .filter(t => t.kind === 'effect' && t.themes);
+  if(effectTiles.length === 0) return null;  // no tagged effects; can't tell, skip
+  return effectTiles.some(t => t.themes.indexOf(theme) !== -1);
+}
+
+// Character focus check: is the subject of the sentence the chosen character?
+// Looks at subject tiles and effect tiles that are tagged with characters.
+function characterFocusOk(arr, character){
+  const tagged = arr
+    .map(rec => TILES.find(t => t.id === rec.tileId))
+    .filter(t => (t.kind === 'subj' && t.character) ||
+                 (t.kind === 'effect' && t.character));
+  if(tagged.length === 0) return null;
+  // Subject match is stronger than effect match, but either counts.
+  return tagged.some(t => {
+    if(t.kind === 'subj') return t.character === character;
+    return t.character.indexOf(character) !== -1;
+  });
+}
+
+function clearFlags(){
+  document.querySelectorAll('.tile.warn-flag,.tile.err-flag').forEach(el=>{
+    el.classList.remove('warn-flag','err-flag');
+  });
+}
+
+function applyFlags(flagged){
+  flagged.forEach(f=>{
+    const el = document.querySelector('.tile.in-canvas[data-inst-id="'+f.instId+'"]');
+    if(el) el.classList.add(f.level==='err'?'err-flag':'warn-flag');
+  });
+}
+
+function showFeedback(boxId, result, which){
+  const box = document.getElementById(boxId);
+  box.className = 'feedback show ' + result.level;
+  const heads = {
+    ok:   'Strong analytical sentence',
+    warn: 'A good start \u2014 here\u2019s how to lift it',
+    err:  'Something needs fixing'
+  };
+  const sentenceLabel = which==='theme' ? 'Sentence 1 (theme)' : 'Sentence 2 (character)';
+  let html = '<h4>'+sentenceLabel+': '+heads[result.level]+'</h4>';
+  if(result.findings.length){
+    html += '<ul>';
+    result.findings.forEach(f=>{ html += '<li>'+f.text+'</li>'; });
+    html += '</ul>';
+  } else {
+    html += '<div>Every part is there: specific subject, analytical verb, prepositional phrase, and an effect on the audience. This is the level you want to aim for in your CAT.</div>';
+  }
+  box.innerHTML = html;
+}
+
+function checkAll(){
+  clearFlags();
+  // Theme sentence
+  const rt = analyseSentence(state.canvasTheme);
+  // Theme focus: does an effect tile match the chosen theme?
+  if(state.theme && state.canvasTheme.length > 0){
+    const ok = themeFocusOk(state.canvasTheme, state.theme);
+    if(ok === false){
+      rt.findings.push({sev:'warn', text:'Your effect clause doesn\u2019t connect to ' + state.theme + '. Choose a pink tile that points to that idea, or pick a different theme above.'});
+      if(rt.level === 'ok') rt.level = 'warn';
+    } else if(ok === null){
+      // no effect clause at all - existing check already flags that
+    }
+  }
+  applyFlags(rt.flaggedInstances);
+  showFeedback('feedbackTheme', rt, 'theme');
+
+  // Character sentence
+  const rc = analyseSentence(state.canvasChar);
+  if(state.character && state.canvasChar.length > 0){
+    const ok = characterFocusOk(state.canvasChar, state.character);
+    if(ok === false){
+      rc.findings.push({sev:'warn', text:'This sentence isn\u2019t really about ' + state.character + '. Make ' + state.character + ' the subject (drag the ' + state.character + ' tile in), or choose an effect clause about ' + state.character + '.'});
+      if(rc.level === 'ok') rc.level = 'warn';
+    }
+  }
+  applyFlags(rc.flaggedInstances);
+  showFeedback('feedbackChar', rc, 'char');
+
+  // Focus banner (single, separate)
+  const focusBox = document.getElementById('feedbackFocus');
+  const missing = [];
+  if(!state.theme) missing.push('a theme');
+  if(!state.character) missing.push('a character');
+  if(missing.length){
+    focusBox.className = 'feedback show warn';
+    focusBox.innerHTML = '<div>Heads up: you haven\u2019t picked '+missing.join(' or ')+' at the top of the page. Pick so the focus of each sentence is clear.</div>';
+  } else {
+    focusBox.className = 'feedback';
+    focusBox.innerHTML = '';
+  }
+}
+
+function resetAll(){
+  state.canvasTheme = [];
+  state.canvasChar = [];
+  renderCanvas('theme'); renderCanvas('char');
+  document.getElementById('feedbackTheme').className='feedback';
+  document.getElementById('feedbackChar').className='feedback';
+  document.getElementById('feedbackFocus').className='feedback';
+}
+
+/* ======================== INIT ======================== */
+renderBank();
+renderCanvas('theme');
+renderCanvas('char');
+wireDropZones();
+wirePickers();
+</script>
+</body>
+</html>
