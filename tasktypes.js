@@ -34,14 +34,16 @@
 
   /* ---------------- shared helpers (kept local; see DESIGN_RULES §1) ---------------- */
 
-  // Normalise a free-typed answer for comparison: lowercase, trim,
-  // collapse internal whitespace, straighten curly apostrophes.
+  // Normalise a free-typed answer for comparison. SPEC.md §6 contract:
+  // lowercase, strip apostrophes, collapse spaces, drop trailing
+  // punctuation. accept[] lists still carry contraction variants.
   function norm(s) {
     return (s || "")
       .toLowerCase()
-      .replace(/[‘’]/g, "'")
+      .replace(/[‘’']/g, "")     // strip apostrophes (don't == dont)
       .replace(/\s+/g, " ")
-      .trim();
+      .trim()
+      .replace(/[.,!?;:]+$/, ""); // drop trailing punctuation
   }
 
   function esc(s) {
@@ -157,11 +159,11 @@
     /* ===== roadmap stubs (SPEC.md §10) — wired but inert until built ===== *
        Each is ONE isolated type so adding it can't break the working banks.
        `produce` is also the engine's fallback for any unknown item type.   */
-    choose:    stub("Choose",    "pick the correct word from a set (not built yet)."),
-    order:     stub("Order",     "drag words into the right order (not built yet)."),
-    join:      stub("Join",      "combine two sentences into one (not built yet)."),
-    transform: stub("Transform", "rewrite a sentence to a new form (not built yet)."),
-    produce:   stub("Produce",   "write a free response (not built yet)."),
+    choose:    stub("Choose",    "MCQ, pick the correct sentence (a vs b) — not built yet."),
+    order:     stub("Order",     "put scrambled words in order — not built yet."),
+    join:      stub("Join",      "combine two sentences with a target connective — not built yet."),
+    transform: stub("Transform", "rewrite a sentence to a target form — not built yet."),
+    produce:   stub("Produce",   "free written response, self/teacher assessed — not built yet."),
 
   };
 
