@@ -26,8 +26,9 @@
   let correctEver = {};   // uid -> bool
   let firstPass = {};     // uid -> bool (correct on first ever attempt)
   let log = [];           // {round, skill, type, stimulus, response, result}
-  let selectedSkills = new Set();
+  let rowLevel = {};      // category -> mastered band index (0..3), or -1 = "from scratch"
   let typeFilter = "all";
+  const SAMPLE_PER_SKILL = 2;  // questions drawn per skill each run
 
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
@@ -42,6 +43,35 @@
     return skill.items.filter((it) => it.type === typeFilter);
   }
 
+  // ---- level model: click your highest mastered cell, drill the next band up ----
+  function cellAt(cat, i) {
+    if (i < 0 || i >= window.BANDS.length) return null;
+    return window.SKILLS.find((s) => s.category === cat && s.band === window.BANDS[i]);
+  }
+  function drillableAt(cat, i) {
+    const s = cellAt(cat, i);
+    return (s && s.introduced && itemsFor(s).length) ? s : null;
+  }
+  // next drillable band strictly above the mastered level; if there is none,
+  // consolidate on the mastered cell itself (top of the row).
+  function targetFor(cat) {
+    const lvl = rowLevel[cat];
+    if (lvl === undefined) return null;
+    for (let j = lvl + 1; j < window.BANDS.length; j++) {
+      const s = drillableAt(cat, j);
+      if (s) return s;
+    }
+    return lvl >= 0 ? drillableAt(cat, lvl) : drillableAt(cat, 0);
+  }
+  function activeTargets() {
+    return Object.keys(rowLevel).map(targetFor).filter(Boolean);
+  }
+  function setLevel(cat, val) {
+    if (rowLevel[cat] === val) delete rowLevel[cat];  // click again to clear
+    else rowLevel[cat] = val;
+    buildMatrix();
+  }
+
   function buildMatrix() {
     const wrap = $("matrix");
     wrap.innerHTML = "";
@@ -54,32 +84,48 @@
     wrap.appendChild(head);
 
     window.CATEGORIES.forEach((cat) => {
+      const lvl = rowLevel[cat];
+      const target = targetFor(cat);
+      const targetIdx = target ? window.BANDS.indexOf(target.band) : -2;
+
       const row = document.createElement("div");
       row.className = "matrix-row";
-      row.innerHTML = `<div class="matrix-cell rowlabel">${cat}</div>`;
-      window.BANDS.forEach((band) => {
-        const skill = window.SKILLS.find((s) => s.category === cat && s.band === band);
+
+      // clickable strand label = "I'm starting this strand" (drill C1)
+      const label = document.createElement("div");
+      label.className = "matrix-cell rowlabel" + (lvl === -1 ? " beginner" : "");
+      label.textContent = cat;
+      label.title = "Click to practise this strand from C1";
+      label.addEventListener("click", () => setLevel(cat, -1));
+      row.appendChild(label);
+
+      window.BANDS.forEach((band, i) => {
+        const skill = cellAt(cat, i);
         const cell = document.createElement("div");
         cell.className = "matrix-cell";
         if (!skill || !skill.introduced) {
           cell.classList.add("empty");
           cell.innerHTML = `<span class="dash">—</span>`;
-        } else {
-          const n = itemsFor(skill).length;
-          cell.classList.add(n ? "has-items" : "no-items");
-          cell.dataset.id = skill.id;
-          cell.innerHTML = `<span class="cell-name">${skill.name}</span>` +
-            (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`);
-          if (n) {
-            cell.addEventListener("click", () => {
-              if (selectedSkills.has(skill.id)) selectedSkills.delete(skill.id);
-              else selectedSkills.add(skill.id);
-              cell.classList.toggle("selected");
-              refreshCount();
-            });
-            if (selectedSkills.has(skill.id)) cell.classList.add("selected");
-          }
+          row.appendChild(cell);
+          return;
         }
+        const n = itemsFor(skill).length;
+        cell.classList.add(n ? "has-items" : "no-items");
+        cell.dataset.id = skill.id;
+
+        // cascade colouring
+        if (lvl >= 0) {
+          if (i === lvl) cell.classList.add("achieved");
+          else if (i < lvl) cell.classList.add("below");
+        }
+        const isTarget = i === targetIdx;
+        if (isTarget) cell.classList.add("target");
+
+        cell.innerHTML = `<span class="cell-name">${skill.name}</span>` +
+          (isTarget ? `<span class="drill-tag">drill ▸</span>`
+                    : (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`));
+
+        if (n) cell.addEventListener("click", () => setLevel(cat, i));
         row.appendChild(cell);
       });
       wrap.appendChild(row);
@@ -88,10 +134,12 @@
   }
 
   function refreshCount() {
+    const targets = activeTargets();
     let items = 0;
-    selectedSkills.forEach((id) => { items += itemsFor(skillById(id)).length; });
-    $("selCount").textContent = `${selectedSkills.size} skill${selectedSkills.size === 1 ? "" : "s"} · ${items} item${items === 1 ? "" : "s"}`;
-    $("startBtn").disabled = items === 0;
+    targets.forEach((s) => { items += Math.min(SAMPLE_PER_SKILL, itemsFor(s).length); });
+    $("selCount").textContent =
+      `${targets.length} skill${targets.length === 1 ? "" : "s"} queued · ~${items} question${items === 1 ? "" : "s"}`;
+    $("startBtn").disabled = targets.length === 0;
   }
 
   function buildTypeFilter() {
@@ -104,8 +152,6 @@
       b.addEventListener("click", () => {
         typeFilter = b.dataset.t;
         wrap.querySelectorAll(".filter-btn").forEach((x) => x.classList.toggle("active", x === b));
-        // drop selections that now have no items
-        [...selectedSkills].forEach((id) => { if (itemsFor(skillById(id)).length === 0) selectedSkills.delete(id); });
         buildMatrix();
       });
     });
@@ -115,12 +161,14 @@
 
   function startSession() {
     pool = [];
-    selectedSkills.forEach((id) => {
-      const skill = skillById(id);
-      itemsFor(skill).forEach((item, i) => {
-        pool.push({ uid: id + "#" + i, skillId: id, skillName: skill.name, category: skill.category, band: skill.band, item });
+    activeTargets().forEach((skill) => {
+      const picks = shuffle(itemsFor(skill).slice()).slice(0, SAMPLE_PER_SKILL);
+      picks.forEach((item) => {
+        const i = skill.items.indexOf(item);  // stable original index for the uid
+        pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
       });
     });
+    if (pool.length === 0) return;
     shuffle(pool);
     attempts = {}; correctEver = {}; firstPass = {}; log = [];
     currentSet = [...pool]; nextSet = []; idx = 0; round = 1;
@@ -295,10 +343,11 @@
     buildMatrix();
 
     $("selectAllBtn").addEventListener("click", () => {
-      window.SKILLS.forEach((s) => { if (s.introduced && itemsFor(s).length) selectedSkills.add(s.id); });
+      // queue every strand from its first level (drills each C1)
+      window.CATEGORIES.forEach((cat) => { rowLevel[cat] = -1; });
       buildMatrix();
     });
-    $("selectNoneBtn").addEventListener("click", () => { selectedSkills.clear(); buildMatrix(); });
+    $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; buildMatrix(); });
     $("startBtn").addEventListener("click", startSession);
 
     // task area emits gh:ready when an answer is entered, gh:submit on Enter

@@ -57,10 +57,19 @@
        background:var(--bg);border-radius:10px;padding:0 6px}
   .cell-count.zero{color:var(--muted)}
   .has-items{cursor:pointer}
-  .has-items:hover{border-color:var(--accent);background:#faf5f0}
-  .has-items.selected{border-color:var(--accent);background:var(--accent)}
-  .has-items.selected .cell-name{color:#fff}
-  .has-items.selected .cell-count{background:rgba(255,255,255,.85)}
+  .has-items:hover{border-color:var(--accent)}
+  /* cascade: mastered cell (bright green), levels below it (faint green),
+     and the next band up — the one you'll actually drill (accent ring). */
+  .matrix-cell.below{background:var(--okbg);border-color:var(--line-soft)}
+  .matrix-cell.achieved{background:var(--correct);border-color:var(--correct)}
+  .matrix-cell.achieved .cell-name{color:var(--paper)}
+  .matrix-cell.achieved .cell-count{background:var(--okbg);color:var(--correct)}
+  .matrix-cell.target{border:2px solid var(--accent)}
+  .drill-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+       color:var(--accent);align-self:flex-start;background:var(--bg);border-radius:8px;padding:0 5px}
+  .rowlabel{cursor:pointer}
+  .rowlabel.beginner{outline:2px solid var(--accent);outline-offset:-2px}
+  .matrix-head .rowlabel{cursor:default}
   .no-items{opacity:.65}
   .empty{background:var(--bg);align-items:center;opacity:.5}
   .empty .dash{color:var(--muted)}
@@ -129,9 +138,9 @@
     <div class="filter-row" id="typeFilter"></div>
     <div class="matrix" id="matrix"></div>
     <div class="select-toolbar">
-      <span class="count-pill" id="selCount">0 skills · 0 items</span>
+      <span class="count-pill" id="selCount">0 skills queued</span>
       <span>
-        <button class="linkbtn" id="selectAllBtn">Select all ready</button>
+        <button class="linkbtn" id="selectAllBtn">All strands</button>
         <button class="linkbtn" id="selectNoneBtn">Clear</button>
       </span>
     </div>
@@ -139,7 +148,9 @@
       <button class="btn btn-primary" id="startBtn" disabled>Start practising</button>
     </div>
     <p class="muted" style="text-align:center;margin-top:14px">
-      Greyed cells aren't introduced at that band. Cells showing <b>0</b> exist in the sequence but have no items yet.
+      Click the highest level you've <b>mastered</b> in a row — it turns green, lower levels go faint green,
+      and the next band up (marked <b>drill ▸</b>) is what you'll practise. Click the strand name to start from C1.
+      Each run pulls a random couple of questions per skill. Greyed cells aren't introduced at that band.
     </p>
   </section>
 
