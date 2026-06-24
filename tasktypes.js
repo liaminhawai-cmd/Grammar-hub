@@ -1,75 +1,168 @@
-# Grammar Hub
+/* ============================================================
+   GRAMMAR HUB — TASK TYPES
+   ------------------------------------------------------------
+   The registry the engine dispatches to. Each item in a skill
+   has a `type`; the engine looks it up here and calls the
+   interface below. Types are self-contained and never call each
+   other (see DESIGN_RULES.md §1).
 
-A grammar practice hub for the ELC. Pick any cell of the ELC progression matrix, drill it with a mastery loop, get a first-try report. Built to sit alongside the Aussie Phonics Trainer as one suite.
+   INTERFACE (SPEC.md §5) — a task type is one entry in
+   window.TASK_TYPES keyed by the item's `type`:
 
-This is the **skeleton**: the architecture, two working task types, and a few seeded skills. The bones are here; content and the remaining task types come next. Before editing, read **DESIGN_RULES.md** (lanes, tokens, fonts, what's out of scope) so multiple contributors don't clobber each other.
+     label                  text shown in the task filter.
+     render(item) -> html   markup for #taskArea. Reuse existing
+                            classes (.stimulus/.options/.gap-input);
+                            do not invent component styles.
+     wire(area)             optional. Attach listeners after render.
+                            Tell the engine an answer is ready by
+                            dispatching a bubbling "gh:ready" from
+                            inside `area`; dispatch "gh:submit" to
+                            check immediately (e.g. on Enter).
+     collect(area) -> resp  the learner's response, or null if
+                            nothing has been entered yet.
+     check(item, resp)      -> { correct:bool, expected:string }.
+                            `expected` is shown in the feedback line
+                            and the model answer must grade correct
+                            (this is what README's sanity check runs).
+     mark(area,item,result) optional. Paint the input(s) correct /
+                            incorrect after grading.
 
-## Run it
+   Add a new type by appending one entry and a stub note in SPEC.
+   ============================================================ */
 
-Open `index.html` in a browser (double-click works, no server needed). Or in Claude Code, open the preview pane and it will serve `index.html`.
+(function () {
 
-## What works right now
+  /* ---------------- shared helpers (kept local; see DESIGN_RULES §1) ---------------- */
 
-- The rubric matrix renders on the landing screen: **8 progression strands x 4 bands (C1, C2, C3, C4/C4+)**, mapped to the marking grid John's pretest uses. Greyed cells aren't introduced at that band; cells showing `0` exist but have no items yet.
-- Two task types: **Identify** (MCQ, name the feature) and **Gap fill** (type the form).
-- Seeded skills (15 items): Verb Tenses C1, Modality C1, Conditionals C1 and C2.
-- Prepositions and Articles exist as **pools** in the data (not mastery-tracked); their UI is a roadmap item.
-- Mastery loop: missed items come back until correct.
-- Report: first-try score, per-skill breakdown, "Practise next" list, and **Copy teacher results** to clipboard.
+  // Normalise a free-typed answer for comparison: lowercase, trim,
+  // collapse internal whitespace, straighten curly apostrophes.
+  function norm(s) {
+    return (s || "")
+      .toLowerCase()
+      .replace(/[‘’]/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
-## Repo map
+  function esc(s) {
+    return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
 
-```
-index.html        the app (markup + styling + design tokens + script tags)
-data/skills.js    ALL content. 8 strands x 4 bands + 2 pools + seeded items. Edit to add questions.
-tasktypes.js      the task-type registry. Add a task style here.
-engine.js         the machinery. You rarely touch this.
-SPEC.md           read first. Architecture, the grid mapping, schema, roadmap, deferred work.
-DESIGN_RULES.md   the shared constitution: lanes, colour/font tokens, what's out of scope.
-content-prompt.md paste-in prompt to generate new items to schema (content lane).
-reference/        artifacts this was modelled on (phonics, Holly's quiz, sentence builder).
-```
+  // Fire the events the engine listens for on #taskArea.
+  function ready(el) { el.dispatchEvent(new CustomEvent("gh:ready", { bubbles: true })); }
+  function submit(el) { el.dispatchEvent(new CustomEvent("gh:submit", { bubbles: true })); }
 
-## Migrating to the Claude Code tab
+  // A placeholder type used by the five roadmap stubs below. Renders a
+  // note, never reports an answer, so the engine's Check stays disabled.
+  function stub(label, blurb) {
+    return {
+      label,
+      render: () => `<div class="stub">${esc(label)} — ${esc(blurb)}</div>`,
+      collect: () => null,
+      check: () => ({ correct: false, expected: "" }),
+    };
+  }
 
-1. Push this folder to a GitHub repo (or open the local folder directly).
-2. In the Claude Desktop app, open the **Code** tab, start a session, and point it at this folder/repo.
-3. First message: ask it to read `SPEC.md`, **and DESIGN_RULES.md**, then pick a roadmap item (SPEC section 10). Good first task: "Build the `choose` task type per the interface in SPEC.md section 5, with a few seeded items, staying within the lane rules."
-4. Use the preview pane to watch it work against `index.html`.
+  /* ---------------- the registry ---------------- */
 
-The spec is written to be the brief, so Claude Code should need little hand-holding once it reads it.
+  window.TASK_TYPES = {
 
-## Adding content (no code needed)
+    /* ===== identify: MCQ, name the grammatical feature ===== */
+    identify: {
+      label: "Identify",
 
-1. Open `data/skills.js`, find the skill node (e.g. `tense-c2`).
-2. Add items to its `items:[]` array using the shapes in `SPEC.md` section 6.
-3. Reload. Run the smoke check (below) before committing a batch.
+      render(item) {
+        // item.sentence already wraps the target in <b></b> (trusted content).
+        const opts = item.options.map((o) =>
+          `<button type="button" class="option" data-value="${esc(o)}">${esc(o)}</button>`
+        ).join("");
+        return `<div class="stimulus">${item.sentence}</div>
+                <div class="options">${opts}</div>`;
+      },
 
-To generate a batch, paste `content-prompt.md` into ChatGPT/Copilot with the target skill, and drop the returned array in.
+      wire(area) {
+        const opts = area.querySelectorAll(".option");
+        opts.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            opts.forEach((o) => o.classList.remove("chosen"));
+            btn.classList.add("chosen");
+            ready(area);
+          });
+          btn.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && btn.classList.contains("chosen")) submit(area);
+          });
+        });
+      },
 
-## Adding a task type (code)
+      collect(area) {
+        const chosen = area.querySelector(".option.chosen");
+        return chosen ? chosen.dataset.value : null;
+      },
 
-Add one entry to `window.TASK_TYPES` in `tasktypes.js` following the interface in `SPEC.md` section 5. The five stubs (`choose`, `order`, `join`, `transform`, `produce`) mark where they go and what they are.
+      check(item, response) {
+        return { correct: response === item.answer, expected: item.answer };
+      },
 
-## Sanity check before committing content
+      mark(area, item, result) {
+        area.querySelectorAll(".option").forEach((btn) => {
+          btn.disabled = true;
+          const v = btn.dataset.value;
+          if (v === item.answer) btn.classList.add("correct");
+          else if (btn.classList.contains("chosen") && !result.correct) btn.classList.add("incorrect");
+        });
+      },
+    },
 
-A quick script that confirms every item's model answer grades as correct against its own checker (catches wrong keys and bad `accept` lists):
+    /* ===== gapfill: type the correct form into a blank ===== */
+    gapfill: {
+      label: "Gap fill",
 
-```bash
-node -e 'global.window={};require("./data/skills.js");require("./tasktypes.js");
-const S=window.SKILLS,T=window.TASK_TYPES;let n=0,bad=0;
-S.forEach(s=>s.items.forEach((it,i)=>{n++;const p=it.type==="identify"?it.answer:it.accept[0];
-if(!T[it.type].check(it,p).correct){bad++;console.log("BAD",s.id,i,it.type)}}));
-console.log("items",n,"problems",bad)'
-```
+      render(item) {
+        const cue = item.cue ? `<div class="cue">(${esc(item.cue)})</div>` : "";
+        return `${cue}
+                <div class="stimulus gap">
+                  <span>${esc(item.before)}</span>
+                  <input class="gap-input" type="text" autocomplete="off"
+                         autocapitalize="off" spellcheck="false" aria-label="your answer">
+                  <span>${esc(item.after)}</span>
+                </div>`;
+      },
 
-## Open decision already made
+      wire(area) {
+        const input = area.querySelector(".gap-input");
+        input.addEventListener("input", () => { if (input.value.trim()) ready(area); });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && input.value.trim()) submit(area);
+        });
+        input.focus();
+      },
 
-Report is **performance-first** (first-try score + teacher export) with a **remediation hook** in place. When per-skill resources exist, populate each node's `resources` field and the "Practise next" list becomes live links. No schema change needed. See SPEC.md section 7.
+      collect(area) {
+        const v = area.querySelector(".gap-input").value.trim();
+        return v === "" ? null : v;
+      },
 
-## Out of scope for now (don't build yet)
+      check(item, response) {
+        const accept = (item.accept || []).map(norm);
+        return { correct: accept.includes(norm(response)), expected: item.accept[0] };
+      },
 
-The rules-based multi-skill sentence builder is **deferred** (SPEC section 11). v1 is
-deliberately modular static banks so content and mechanics can be added in parallel
-without collisions. No accounts, no backend, no localStorage in artifact-previewed
-builds. See DESIGN_RULES.md section 7.
+      mark(area, item, result) {
+        const input = area.querySelector(".gap-input");
+        input.readOnly = true;
+        input.classList.add(result.correct ? "correct" : "incorrect");
+      },
+    },
+
+    /* ===== roadmap stubs (SPEC.md §10) — wired but inert until built ===== *
+       Each is ONE isolated type so adding it can't break the working banks.
+       `produce` is also the engine's fallback for any unknown item type.   */
+    choose:    stub("Choose",    "pick the correct word from a set (not built yet)."),
+    order:     stub("Order",     "drag words into the right order (not built yet)."),
+    join:      stub("Join",      "combine two sentences into one (not built yet)."),
+    transform: stub("Transform", "rewrite a sentence to a new form (not built yet)."),
+    produce:   stub("Produce",   "write a free response (not built yet)."),
+
+  };
+
+})();
