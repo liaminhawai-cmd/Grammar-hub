@@ -324,7 +324,9 @@
     $("promptText").innerHTML = recognition
       ? escapeHtmlE(promptText)
       : linkifyGlossary(escapeHtmlE(promptText));
-    $("skillTag").textContent = `${entry.category} · ${entry.band} · ${entry.skillName}`;
+    // The skill tag is metadata, not the question — safe to linkify even on
+    // recognition items (it names the cell, which is already shown anyway).
+    $("skillTag").innerHTML = linkifyGlossary(escapeHtmlE(`${entry.category} · ${entry.band} · ${entry.skillName}`));
 
     const area = $("taskArea");
     area.innerHTML = type.render(entry.item);
@@ -426,7 +428,7 @@
     };
     let rows = Object.values(bySkill).map((s) => {
       let row = `<div class="skill-row">
-                <span class="skill-name">${s.cat} · ${s.band} · ${s.name}</span>
+                <span class="skill-name">${linkifyGlossary(escapeHtmlE(`${s.cat} · ${s.band} · ${s.name}`))}</span>
                 <span class="skill-score ${scoreCls(s.right, s.total)}">${s.right}/${s.total}</span>
               </div>`;
       // bundled cell: more than one sub-skill tag -> show which half was missed
@@ -448,7 +450,7 @@
       let html = `<h3>Practise next</h3>`;
       weak.forEach(([id, s]) => {
         const skill = skillById(id);
-        html += `<div class="remed-row"><b>${s.name}</b> `;
+        html += `<div class="remed-row"><b>${linkifyGlossary(escapeHtmlE(s.name))}</b> `;
         if (skill.resources && (skill.resources.video || (skill.resources.sheets || []).length)) {
           if (skill.resources.video) html += `<a href="${skill.resources.video}" target="_blank">video</a> `;
           (skill.resources.sheets || []).forEach((sh) => { html += `<a href="${sh.url}" target="_blank">${escapeHtmlE(sh.name)}</a> `; });
@@ -548,8 +550,12 @@
     if (glossRe !== null) return glossRe;
     const keys = Object.keys(window.GLOSSARY || {}).sort((a, b) => b.length - a.length);
     if (!keys.length) { glossRe = false; return glossRe; }
-    const alt = keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-    glossRe = new RegExp("(?<![\\w-])(" + alt + ")(?![\\w-])", "gi");
+    // escape regex specials, then let any hyphen in a key match any dash
+    // (so "subject-verb agreement" also matches "Subject–Verb Agreement").
+    const alt = keys.map((k) =>
+      k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/-/g, "[-–—]")).join("|");
+    // trailing s? so plurals link too ("Prepositions", "Verbs", "clauses").
+    glossRe = new RegExp("(?<![\\w-])(?:" + alt + ")s?(?![\\w-])", "gi");
     return glossRe;
   }
   function linkifyGlossary(escapedText) {
@@ -557,7 +563,8 @@
     if (!re) return escapedText;
     re.lastIndex = 0;
     return escapedText.replace(re, (m) => {
-      const key = m.toLowerCase();
+      let key = m.toLowerCase().replace(/[–—]/g, "-");
+      if (!window.GLOSSARY[key] && key.endsWith("s")) key = key.slice(0, -1);  // de-pluralise
       if (!window.GLOSSARY[key]) return m;
       return `<button type="button" class="gloss" data-term="${key}">${m}</button>`;
     });
