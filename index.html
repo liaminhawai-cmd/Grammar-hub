@@ -196,6 +196,17 @@
        background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
   .match-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
   @media(max-width:480px){.match-grid{grid-template-columns:1fr}}
+
+  /* ---- glossary: click a grammar term for its definition ---- */
+  .gloss{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:help;
+       border-bottom:1px dotted var(--accent)}
+  .gloss:hover{color:var(--accent)}
+  .gloss-pop{position:absolute;z-index:50;max-width:264px;background:var(--paper);border:1px solid var(--line);
+       border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.16);padding:12px 14px;text-align:left}
+  .gloss-term{font-family:Georgia,serif;font-weight:700;font-size:14px;margin-bottom:4px}
+  .gloss-def{color:var(--muted);font-size:13px;line-height:1.45;margin-bottom:8px}
+  .gloss-links a{color:var(--accent);font-weight:600;text-decoration:none;font-size:12px}
+  .gloss-links a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -274,8 +285,12 @@
   </section>
 </div>
 
-<!-- load order matters: content, then task types, then engine -->
+<!-- click-to-define popover (filled and positioned by the engine) -->
+<div id="glossPop" class="gloss-pop" hidden></div>
+
+<!-- load order matters: content, glossary, then task types, then engine -->
 <script src="data/skills.js"></script>
+<script src="data/glossary.js"></script>
 <script src="tasktypes.js"></script>
 <script src="engine.js"></script>
 </body>

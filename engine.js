@@ -316,7 +316,14 @@
     const entry = currentSet[idx];
     const type = window.TASK_TYPES[entry.item.type] || window.TASK_TYPES.produce;
 
-    $("promptText").textContent = entry.item.prompt || type.label;
+    // Linkify glossary terms in the live prompt — but NOT for recognition
+    // tasks (identify/choose), where defining the named term would give the
+    // answer away ("find the verb"). Explanations are always linkified later.
+    const promptText = entry.item.prompt || type.label;
+    const recognition = entry.item.type === "identify" || entry.item.type === "choose";
+    $("promptText").innerHTML = recognition
+      ? escapeHtmlE(promptText)
+      : linkifyGlossary(escapeHtmlE(promptText));
     $("skillTag").textContent = `${entry.category} · ${entry.band} · ${entry.skillName}`;
 
     const area = $("taskArea");
@@ -357,7 +364,7 @@
     const fb = $("feedback");
     fb.className = "feedback " + (result.correct ? "good" : "bad");
     fb.innerHTML = (result.correct ? "✓ Correct. " : `✗ Not yet. Answer: <b>${escapeHtmlE(result.expected)}</b>. `) +
-                   (entry.item.explain ? escapeHtmlE(entry.item.explain) : "");
+                   (entry.item.explain ? linkifyGlossary(escapeHtmlE(entry.item.explain)) : "");
 
     graded = true;
     $("checkBtn").style.display = "none";
@@ -497,7 +504,7 @@
       return `<div class="preteach-card${cls === "target" ? " preteach-target" : ""}">
         <span class="preteach-band">${s.band}</span>
         <span class="preteach-label ${cls}">${label}</span>
-        <div class="preteach-name">${escapeHtmlE(s.name)}</div>
+        <div class="preteach-name">${linkifyGlossary(escapeHtmlE(s.name))}</div>
         <div class="preteach-example">"${escapeHtmlE(s.example)}"</div>
         ${linksRow}
       </div>`;
@@ -532,6 +539,30 @@
   }
   function escapeHtmlE(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
+  // ---- glossary auto-linking ----
+  // Wrap any known grammar term (longest first, whole-word, case-insensitive)
+  // in a clickable .gloss button. INPUT MUST ALREADY BE HTML-ESCAPED plain text
+  // (no tags) so we never wrap inside an attribute or split a tag.
+  let glossRe = null;
+  function glossRegex() {
+    if (glossRe !== null) return glossRe;
+    const keys = Object.keys(window.GLOSSARY || {}).sort((a, b) => b.length - a.length);
+    if (!keys.length) { glossRe = false; return glossRe; }
+    const alt = keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    glossRe = new RegExp("(?<![\\w-])(" + alt + ")(?![\\w-])", "gi");
+    return glossRe;
+  }
+  function linkifyGlossary(escapedText) {
+    const re = glossRegex();
+    if (!re) return escapedText;
+    re.lastIndex = 0;
+    return escapedText.replace(re, (m) => {
+      const key = m.toLowerCase();
+      if (!window.GLOSSARY[key]) return m;
+      return `<button type="button" class="gloss" data-term="${key}">${m}</button>`;
+    });
+  }
+
   /* ---------------- boot ---------------- */
   document.addEventListener("DOMContentLoaded", () => {
     screens.select = $("selectScreen");
@@ -563,5 +594,39 @@
     $("copyBtn").addEventListener("click", copyTeacher);
     $("reviewBtn").addEventListener("click", () => { startSession(); }); // re-run same selection
     $("restartBtn").addEventListener("click", () => show("select"));
+
+    wireGlossaryPopover();
   });
+
+  /* ---------------- glossary popover ---------------- */
+  function wireGlossaryPopover() {
+    const pop = $("glossPop");
+    if (!pop) return;
+    const close = () => { pop.hidden = true; };
+
+    document.addEventListener("click", (e) => {
+      const term = e.target.closest && e.target.closest(".gloss");
+      if (term) {
+        const key = term.dataset.term;
+        const entry = window.GLOSSARY && window.GLOSSARY[key];
+        if (!entry) return;
+        const title = key.charAt(0).toUpperCase() + key.slice(1);
+        const links = [];
+        if (entry.more) links.push(`<a href="${entry.more}" target="_blank" rel="noopener">Writing Hub</a>`);
+        links.push(`<a href="https://en.wiktionary.org/wiki/${encodeURIComponent(key)}" target="_blank" rel="noopener">Wiktionary</a>`);
+        pop.innerHTML = `<div class="gloss-term">${escapeHtmlE(title)}</div>` +
+                        `<div class="gloss-def">${escapeHtmlE(entry.def)}</div>` +
+                        `<div class="gloss-links">${links.join(" · ")}</div>`;
+        pop.hidden = false;
+        const r = term.getBoundingClientRect();
+        const maxLeft = document.documentElement.clientWidth - pop.offsetWidth - 12;
+        pop.style.top = (window.scrollY + r.bottom + 6) + "px";
+        pop.style.left = (window.scrollX + Math.max(8, Math.min(r.left, maxLeft))) + "px";
+        e.stopPropagation();
+        return;
+      }
+      if (!(e.target.closest && e.target.closest("#glossPop"))) close();
+    });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  }
 })();
