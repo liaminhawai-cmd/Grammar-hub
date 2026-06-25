@@ -160,18 +160,19 @@
   .preteach-links a{color:var(--accent);margin-right:10px;text-decoration:none;font-weight:600}
   .preteach-links a:hover{text-decoration:underline}
 
-  /* ---- order (word sequencing) ---- */
-  .order-words{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+  /* ---- order (word sequencing: tap words between bank and sentence line) ---- */
+  .order-line{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:54px;
+       padding:12px;border:2px dashed var(--line);border-radius:10px;background:var(--bg);margin:6px 0}
+  .order-line.correct{border-style:solid;border-color:var(--correct);background:var(--okbg)}
+  .order-line.incorrect{border-style:solid;border-color:var(--wrong);background:var(--badbg)}
+  .order-placeholder{color:var(--muted);font-size:13px;font-weight:600}
+  .order-bank{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
   .order-word{padding:10px 14px;border:2px solid var(--line);border-radius:10px;background:var(--paper);
-       color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s ease}
-  .order-word:hover{border-color:var(--accent)}
-  .order-word.selected{border-color:var(--accent);background:#faf5f0;color:var(--accent)}
-  .order-word:disabled{opacity:.5;cursor:not-allowed}
-  .order-sequence{font-size:16px;font-weight:700;line-height:1.5;padding:12px;border:1px solid var(--line);
-       border-radius:10px;background:var(--bg);min-height:24px;text-align:center}
-  .order-sequence span{margin:0 4px}
-  .order-sequence.correct{border-color:var(--correct);background:var(--okbg)}
-  .order-sequence.incorrect{border-color:var(--wrong);background:var(--badbg)}
+       color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s ease}
+  .order-word:hover:not(:disabled){border-color:var(--accent)}
+  .order-word.in-line{border-color:var(--accent);background:#faf5f0}
+  .order-word:disabled{cursor:default;opacity:.9}
+  .order-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
 
   /* ---- produce (free response) ---- */
   .produce-input{font-family:Georgia,serif;font-size:14px;padding:12px;border:2px solid var(--line);

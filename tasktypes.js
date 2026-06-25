@@ -304,41 +304,42 @@
         const wordButtons = item.words.map((w, i) =>
           `<button type="button" class="order-word" data-index="${i}">${esc(w)}</button>`
         ).join("");
-        const sequence = `<div class="order-sequence" aria-label="your word order"></div>`;
         return `${prompt}
-                <div class="order-words">${wordButtons}</div>
-                <div>Tap words in order:</div>
-                ${sequence}`;
+                <div class="order-line" aria-label="your sentence"><span class="order-placeholder">tap words below to build your sentence…</span></div>
+                <div class="order-bank">${wordButtons}</div>
+                <div class="order-hint">Tap a word to add it. Tap a word in your sentence to send it back.</div>`;
       },
 
+      // DOM-only: tapping a word moves the button between the bank and the
+      // sentence line. (wire only receives `area`, so never reference `item` here.)
       wire(area) {
-        const words = area.querySelectorAll(".order-word");
-        const sequence = area.querySelector(".order-sequence");
-        const selected = [];
+        const line = area.querySelector(".order-line");
+        const bank = area.querySelector(".order-bank");
+        const ph = line.querySelector(".order-placeholder");
+        const total = area.querySelectorAll(".order-word").length;
 
-        words.forEach((btn) => {
+        function refresh() {
+          const inLine = line.querySelectorAll(".order-word").length;
+          if (ph) ph.style.display = inLine ? "none" : "";
+          if (inLine === total) ready(area);
+        }
+        area.querySelectorAll(".order-word").forEach((btn) => {
           btn.addEventListener("click", () => {
-            const idx = parseInt(btn.dataset.index);
-            if (selected.includes(idx)) {
-              selected.splice(selected.indexOf(idx), 1);
-              btn.classList.remove("selected");
-            } else {
-              selected.push(idx);
-              btn.classList.add("selected");
-            }
-            sequence.innerHTML = selected.map((i) => `<span>${esc(item.words[i])}</span>`).join(" ");
-            if (selected.length === item.words.length) ready(area);
+            if (btn.parentElement === bank) { btn.classList.add("in-line"); line.appendChild(btn); }
+            else { btn.classList.remove("in-line"); bank.appendChild(btn); }
+            refresh();
           });
           btn.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && selected.length === item.words.length) submit(area);
+            if (e.key === "Enter" && line.querySelectorAll(".order-word").length === total) submit(area);
           });
         });
       },
 
       collect(area) {
-        const sequence = area.querySelector(".order-sequence");
-        const spans = sequence.querySelectorAll("span");
-        return spans.length === 0 ? null : Array.from(spans).map((s) => s.textContent).join(" ");
+        const line = area.querySelector(".order-line");
+        const placed = Array.from(line.querySelectorAll(".order-word")).map((b) => b.textContent);
+        const total = area.querySelectorAll(".order-word").length;
+        return placed.length === total && total > 0 ? placed.join(" ") : null;
       },
 
       check(item, response) {
@@ -347,9 +348,8 @@
       },
 
       mark(area, item, result) {
-        const sequence = area.querySelector(".order-sequence");
-        sequence.classList.add(result.correct ? "correct" : "incorrect");
-        area.querySelectorAll(".order-word").forEach((btn) => btn.disabled = true);
+        area.querySelector(".order-line").classList.add(result.correct ? "correct" : "incorrect");
+        area.querySelectorAll(".order-word").forEach((btn) => { btn.disabled = true; });
       },
     },
 
