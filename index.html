@@ -223,6 +223,17 @@
   .rpt-subskill .x{color:var(--wrong)} .rpt-subskill .t{color:var(--correct)}
   .rpt-next-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--accent)}
 
+  /* ---- level-up reveal: score holds ~1s, then the grid fades in,
+          mastered cells pop green one by one, and the next-selection
+          outline slides in last. ---- */
+  #reportScreen .report-reveal{transition:opacity .5s ease,transform .5s ease}
+  #reportScreen .report-reveal.pre-reveal{opacity:0;transform:translateY(10px)}
+  #reportRubric .matrix-cell{transition:background .45s ease,border-color .45s ease}
+  #reportRubric .matrix-cell .cell-name{transition:color .45s ease}
+  #reportRubric .matrix-cell.rpt-next{transition:outline-color .35s ease,background .45s ease,border-color .45s ease}
+  .matrix-cell.rpt-justmastered{animation:rptPop .5s ease}
+  @keyframes rptPop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+
   /* ---- export row ---- */
   .export-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:12px}
   .name-input{font-family:inherit;font-size:13px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;

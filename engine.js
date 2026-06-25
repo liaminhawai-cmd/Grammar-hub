@@ -473,8 +473,38 @@
 
     advanceSelection(bySkill);     // bump mastered cells up a band for next time
     buildReportRubric(bySkill);    // the annotated grid, with the next selection shown
+    runReportReveal();             // hold the score, then reveal + light up the grid
     lastReport = { bySkill, firstRight, total, totalAttempts };
     buildTeacherExport(firstRight, total, totalAttempts, bySkill);
+  }
+
+  // Level-up reveal. The score stat holds alone for a beat, then the rubric
+  // and breakdowns fade in, the cells mastered this round pop green one by one,
+  // and the next-selection outline arrives last. Strips the colour classes the
+  // rubric was built with and re-applies them on a timeline — this all runs in
+  // endSession's turn, so the browser paints the "pre" state first (no flash).
+  function runReportReveal() {
+    const sections = [
+      document.querySelector("#reportScreen h3"),   // "Your rubric now"
+      $("reportRubricHint"), $("reportRubric"), $("reportRubricLegend"),
+      $("reportRemediation"), $("reportSkills"),
+    ].filter(Boolean);
+    sections.forEach((el) => el.classList.add("report-reveal", "pre-reveal"));
+
+    const rubric = $("reportRubric");
+    const mastered = Array.from(rubric.querySelectorAll(".rpt-mastered"));
+    mastered.forEach((c) => c.classList.remove("rpt-mastered"));
+    const nextCell = rubric.querySelector(".rpt-next");
+    if (nextCell) nextCell.classList.remove("rpt-next");
+
+    setTimeout(() => {
+      sections.forEach((el) => el.classList.remove("pre-reveal"));
+      mastered.forEach((cell, i) => {
+        setTimeout(() => cell.classList.add("rpt-mastered", "rpt-justmastered"), 350 + i * 160);
+      });
+      const tail = 350 + mastered.length * 160 + 150;
+      if (nextCell) setTimeout(() => nextCell.classList.add("rpt-next"), tail);
+    }, 1000);
   }
 
   /* ---------------- next-step rubric + exports ---------------- */
