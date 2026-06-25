@@ -30,6 +30,7 @@
   let mode = "revision";  // "drill" (single skill + neighbors) | "revision" (whole rubric)
   let drillTarget = null; // drill mode: { category, bandIndex } | null
   let selectedPools = {}; // pool category -> true
+  let lastServed = {};    // skillId -> Set of item indices served last round (avoid repeats)
   const SAMPLE_PER_SKILL = 2;  // questions drawn per skill each run (revision mode)
 
   function show(name) {
@@ -259,6 +260,7 @@
         drillTarget = null;
         rowLevel = {};
         selectedPools = {};
+        lastServed = {};
         wrap.querySelectorAll(".filter-btn").forEach((x) => x.classList.toggle("active", x === b));
         buildMatrix();
         updateToolbar();
@@ -275,32 +277,45 @@
 
   /* ---------------- DRILL ---------------- */
 
+  // Pick n items from a skill, preferring ones NOT served last round so a
+  // "Revise again" varies the questions. Falls back to repeats only when the
+  // bank is too small to fill n with fresh items.
+  function sampleItems(skill, n) {
+    const prev = lastServed[skill.id] || new Set();
+    const indexed = skill.items.map((item, i) => ({ item, i }));
+    const fresh = shuffle(indexed.filter((x) => !prev.has(x.i)));
+    const seen = shuffle(indexed.filter((x) => prev.has(x.i)));
+    return fresh.concat(seen).slice(0, n);
+  }
+
   function startSession() {
     pool = [];
+    const served = {};
+    const record = (skill, i) => { (served[skill.id] = served[skill.id] || new Set()).add(i); };
     if (mode === "drill") {
       getDrillSkills().forEach((skill) => {
         skill.items.forEach((item, i) => {
+          record(skill, i);
           pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
         });
       });
     } else {
       activeTargets().forEach((skill) => {
-        const picks = shuffle(itemsFor(skill).slice()).slice(0, SAMPLE_PER_SKILL);
-        picks.forEach((item) => {
-          const i = skill.items.indexOf(item);
+        sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
+          record(skill, i);
           pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
         });
       });
     }
     // add selected practice pools (sampled in both modes)
     selectedPoolSkills().forEach((skill) => {
-      const picks = shuffle(skill.items.slice()).slice(0, SAMPLE_PER_SKILL);
-      picks.forEach((item) => {
-        const i = skill.items.indexOf(item);
+      sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
+        record(skill, i);
         pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band || "Pool", item });
       });
     });
     if (pool.length === 0) return;
+    lastServed = served;   // remember this round's picks so the next avoids them
     shuffle(pool);
     attempts = {}; correctEver = {}; firstPass = {}; log = [];
     currentSet = [...pool]; nextSet = []; idx = 0; round = 1;
@@ -523,14 +538,19 @@
       const sk = cellAt(drillTarget.category, drillTarget.bandIndex);
       if (mastered(sk)) {
         const nb = nextDrillableAbove(drillTarget.category, drillTarget.bandIndex);
+        // climb to the next band, or drop the target entirely once the top
+        // (C4/C4+) is cleared — there's nothing higher to revise.
         if (nb !== null) drillTarget = { category: drillTarget.category, bandIndex: nb };
+        else drillTarget = null;
       }
     } else {
       Object.keys(rowLevel).forEach((cat) => {
         const sk = cellAt(cat, rowLevel[cat]);
         if (mastered(sk)) {
           const nb = nextDrillableAbove(cat, rowLevel[cat]);
+          // climb a band, or deselect the strand once the top is mastered.
           if (nb !== null) rowLevel[cat] = nb;
+          else delete rowLevel[cat];
         }
       });
     }
@@ -777,7 +797,7 @@
       (window.POOLS || []).forEach((cat) => { selectedPools[cat] = true; });
       buildMatrix();
     });
-    $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; buildMatrix(); });
+    $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; lastServed = {}; buildMatrix(); });
     $("startBtn").addEventListener("click", startSession);
     $("preteachStartBtn").addEventListener("click", () => { show("task"); showItem(); });
 
@@ -796,7 +816,7 @@
     // interactive selector pre-set to it; Start over clears everything.
     $("reviseAgainBtn").addEventListener("click", () => { startSession(); });
     $("adjustBtn").addEventListener("click", () => { buildMatrix(); show("select"); });
-    $("restartBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; buildMatrix(); show("select"); });
+    $("restartBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; lastServed = {}; buildMatrix(); show("select"); });
 
     wireGlossaryPopover();
   });
