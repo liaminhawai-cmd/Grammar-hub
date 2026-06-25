@@ -324,9 +324,15 @@
     $("promptText").innerHTML = recognition
       ? escapeHtmlE(promptText)
       : linkifyGlossary(escapeHtmlE(promptText));
-    // The skill tag is metadata, not the question — safe to linkify even on
-    // recognition items (it names the cell, which is already shown anyway).
-    $("skillTag").innerHTML = linkifyGlossary(escapeHtmlE(`${entry.category} · ${entry.band} · ${entry.skillName}`));
+    // The skill tag orients the learner. On recognition items we hide the
+    // specific cell NAME, because it often spells out the answer ("Present
+    // Perfect" above a 'name the tense' question). Category + band stay (and
+    // the category term is still clickable for a definition). On productive
+    // items the learner writes the answer, so the full name is fine.
+    const tagText = recognition
+      ? `${entry.category} · ${entry.band}`
+      : `${entry.category} · ${entry.band} · ${entry.skillName}`;
+    $("skillTag").innerHTML = linkifyGlossary(escapeHtmlE(tagText));
 
     const area = $("taskArea");
     area.innerHTML = type.render(entry.item);
@@ -464,7 +470,152 @@
       $("reportRemediation").innerHTML = `<p class="muted">Every selected skill correct first try. Nothing to reteach.</p>`;
     }
 
+    advanceSelection(bySkill);     // bump mastered cells up a band for next time
+    buildReportRubric(bySkill);    // the annotated grid, with the next selection shown
+    lastReport = { bySkill, firstRight, total, totalAttempts };
     buildTeacherExport(firstRight, total, totalAttempts, bySkill);
+  }
+
+  /* ---------------- next-step rubric + exports ---------------- */
+  let lastReport = null;
+
+  function nextDrillableAbove(cat, b) {
+    for (let j = b + 1; j < window.BANDS.length; j++) if (drillableAt(cat, j)) return j;
+    return null;
+  }
+
+  // Where this session fully mastered a cell, move the selection up one band so
+  // "Revise again" naturally carries the learner forward (master C2 -> aim C3).
+  function advanceSelection(bySkill) {
+    const mastered = (skill) => skill && bySkill[skill.id] && bySkill[skill.id].right === bySkill[skill.id].total;
+    if (mode === "drill" && drillTarget) {
+      const sk = cellAt(drillTarget.category, drillTarget.bandIndex);
+      if (mastered(sk)) {
+        const nb = nextDrillableAbove(drillTarget.category, drillTarget.bandIndex);
+        if (nb !== null) drillTarget = { category: drillTarget.category, bandIndex: nb };
+      }
+    } else {
+      Object.keys(rowLevel).forEach((cat) => {
+        const sk = cellAt(cat, rowLevel[cat]);
+        if (mastered(sk)) {
+          const nb = nextDrillableAbove(cat, rowLevel[cat]);
+          if (nb !== null) rowLevel[cat] = nb;
+        }
+      });
+    }
+  }
+
+  // mastered (all first-try right) | partial (a bundled cell with one sub-skill
+  // clean and another not) | missed | none (cell wasn't in this session).
+  function cellStatusFor(skill, bySkill) {
+    const s = bySkill[skill.id];
+    if (!s) return { kind: "none" };
+    if (s.right === s.total) return { kind: "mastered" };
+    const tags = Object.entries(s.tags);
+    const someRight = tags.some(([, t]) => t.right === t.total);
+    const someWrong = tags.some(([, t]) => t.right < t.total);
+    if (tags.length > 1 && someRight && someWrong) return { kind: "partial", tags };
+    return { kind: "missed" };
+  }
+
+  // Read-only grid mirroring the selector, annotated with results + next pick.
+  function buildReportRubric(bySkill) {
+    const wrap = $("reportRubric");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    const head = document.createElement("div");
+    head.className = "matrix-row matrix-head";
+    head.innerHTML = `<div class="matrix-cell rowlabel"></div>` +
+      window.BANDS.map((b) => `<div class="matrix-cell colhead">${b}</div>`).join("");
+    wrap.appendChild(head);
+
+    window.CATEGORIES.forEach((cat) => {
+      const row = document.createElement("div");
+      row.className = "matrix-row";
+      const label = document.createElement("div");
+      label.className = "matrix-cell rowlabel";
+      label.textContent = cat;
+      row.appendChild(label);
+
+      window.BANDS.forEach((band, i) => {
+        const skill = cellAt(cat, i);
+        const cell = document.createElement("div");
+        cell.className = "matrix-cell";
+        if (!skill || !skill.introduced) { cell.classList.add("empty"); cell.innerHTML = `<span class="dash">—</span>`; row.appendChild(cell); return; }
+
+        const st = cellStatusFor(skill, bySkill);
+        const isNext = (mode === "drill")
+          ? (drillTarget && drillTarget.category === cat && drillTarget.bandIndex === i)
+          : (rowLevel[cat] === i);
+
+        let mark = "", sub = "";
+        if (st.kind === "mastered") { cell.classList.add("rpt-mastered"); mark = `<span class="rpt-mark ok">✓</span>`; }
+        else if (st.kind === "partial") {
+          cell.classList.add("rpt-partial");
+          sub = `<div class="rpt-subskill">` + st.tags.map(([tag, t]) =>
+            `<div><span class="${t.right === t.total ? "t" : "x"}">${t.right === t.total ? "✓" : "✗"}</span> ${escapeHtmlE(tag)}</div>`).join("") + `</div>`;
+        }
+        else if (st.kind === "missed") { cell.classList.add("rpt-missed"); mark = `<span class="rpt-mark bad">✗</span>`; }
+        else { cell.classList.add("rpt-none"); }
+        if (isNext) cell.classList.add("rpt-next");
+
+        cell.innerHTML = `${mark}<span class="cell-name">${escapeHtmlE(skill.name)}</span>${sub}` +
+          (isNext ? `<span class="rpt-next-tag">next ▸</span>` : "");
+        row.appendChild(cell);
+      });
+      wrap.appendChild(row);
+    });
+    $("reportRubricLegend").innerHTML =
+      `<b style="color:var(--correct)">✓</b> mastered · <b style="color:#caa53a">▮</b> half-mastered · ` +
+      `<b style="color:var(--wrong)">✗</b> another go · grey = not included this round`;
+  }
+
+  /* ---- exportable progress summary (CSV for import, TSV row for a form/sheet) ---- */
+  function csvCell(v) {
+    const s = String(v == null ? "" : v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function studentName() { const el = $("studentName"); return (el && el.value.trim()) || ""; }
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+  function buildCsv() {
+    if (!lastReport) return "";
+    const { bySkill, firstRight, total } = lastReport;
+    const name = studentName(), date = todayStr();
+    let csv = "name,date,strand,band,skill,sub_skill,first_try,out_of\n";
+    csv += [name, date, "OVERALL", "", "", "", firstRight, total].map(csvCell).join(",") + "\n";
+    Object.values(bySkill).forEach((s) => {
+      csv += [name, date, s.cat, s.band, s.name, "", s.right, s.total].map(csvCell).join(",") + "\n";
+      const tags = Object.entries(s.tags || {});
+      if (tags.length > 1) tags.forEach(([tag, t]) => {
+        csv += [name, date, s.cat, s.band, s.name, tag, t.right, t.total].map(csvCell).join(",") + "\n";
+      });
+    });
+    return csv;
+  }
+  function buildTsvRow() {
+    if (!lastReport) return "";
+    const { bySkill, firstRight, total } = lastReport;
+    const header = ["name", "date", "first_try", "out_of"].concat(Object.values(bySkill).map((s) => `${s.cat} ${s.band}`));
+    const values = [studentName(), todayStr(), firstRight, total].concat(Object.values(bySkill).map((s) => `${s.right}/${s.total}`));
+    return header.join("\t") + "\n" + values.join("\t");
+  }
+  function downloadCsv() {
+    const csv = buildCsv(); if (!csv) return;
+    const safe = (studentName().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "student");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `grammar-hub-${safe}-${todayStr()}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    $("copyNote").textContent = "CSV downloaded.";
+  }
+  function copyTsv() {
+    const tsv = buildTsvRow(); if (!tsv) return;
+    navigator.clipboard.writeText(tsv)
+      .then(() => { $("copyNote").textContent = "Row copied — paste into your sheet or form."; })
+      .catch(() => { $("copyNote").textContent = "Copy failed — try Download CSV instead."; });
   }
 
   let teacherText = "";
@@ -599,8 +750,13 @@
     $("quitBtn").addEventListener("click", () => show("select"));
 
     $("copyBtn").addEventListener("click", copyTeacher);
-    $("reviewBtn").addEventListener("click", () => { startSession(); }); // re-run same selection
-    $("restartBtn").addEventListener("click", () => show("select"));
+    $("downloadCsvBtn").addEventListener("click", downloadCsv);
+    $("copyTsvBtn").addEventListener("click", copyTsv);
+    // Revise again runs the (already advanced) selection; Adjust reopens the
+    // interactive selector pre-set to it; Start over clears everything.
+    $("reviseAgainBtn").addEventListener("click", () => { startSession(); });
+    $("adjustBtn").addEventListener("click", () => { buildMatrix(); show("select"); });
+    $("restartBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; buildMatrix(); show("select"); });
 
     wireGlossaryPopover();
   });

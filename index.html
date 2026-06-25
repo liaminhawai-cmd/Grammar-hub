@@ -207,6 +207,27 @@
   .gloss-def{color:var(--muted);font-size:13px;line-height:1.45;margin-bottom:8px}
   .gloss-links a{color:var(--accent);font-weight:600;text-decoration:none;font-size:12px}
   .gloss-links a:hover{text-decoration:underline}
+
+  /* ---- report rubric (annotated end-of-session grid) ---- */
+  #reportRubric .matrix-cell{position:relative}
+  .matrix-cell.rpt-mastered{background:var(--correct);border-color:var(--correct)}
+  .matrix-cell.rpt-mastered .cell-name{color:var(--paper)}
+  .matrix-cell.rpt-partial{background:#f6efda;border-color:#caa53a}
+  .matrix-cell.rpt-missed{background:var(--badbg);border-color:var(--wrong)}
+  .matrix-cell.rpt-none{opacity:.5}
+  .rpt-mark{position:absolute;top:4px;right:6px;font-size:12px;font-weight:800}
+  .rpt-mark.ok{color:var(--paper)}
+  .rpt-mark.bad{color:var(--wrong)}
+  .matrix-cell.rpt-next{outline:2px solid var(--accent);outline-offset:-2px}
+  .rpt-subskill{font-size:9px;font-weight:700;line-height:1.3;color:#7a6310;margin-top:2px}
+  .rpt-subskill .x{color:var(--wrong)} .rpt-subskill .t{color:var(--correct)}
+  .rpt-next-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--accent)}
+
+  /* ---- export row ---- */
+  .export-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:12px}
+  .name-input{font-family:inherit;font-size:13px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;
+       background:var(--paper);color:var(--ink);min-width:180px}
+  .name-input:focus{outline:none;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -274,12 +295,27 @@
   <section class="screen" id="reportScreen">
     <div class="report-title">Session complete</div>
     <div id="reportSummary"></div>
-    <div id="reportSkills"></div>
+
+    <h3>Your rubric now</h3>
+    <p class="muted" id="reportRubricHint">Ticks are mastered, orange is half-mastered, crosses need another go, grey wasn't included. We've moved your selection up a level where you mastered it — start again or adjust below.</p>
+    <div class="matrix" id="reportRubric"></div>
+    <div class="matrix-legend" id="reportRubricLegend"></div>
+
     <div id="reportRemediation"></div>
+    <div id="reportSkills"></div>
+
     <div class="report-actions">
-      <button class="btn btn-ghost" id="copyBtn">Copy teacher results</button>
-      <button class="btn btn-ghost" id="reviewBtn">Run again</button>
-      <button class="btn btn-primary" id="restartBtn">New selection</button>
+      <button class="btn btn-primary" id="reviseAgainBtn">Revise again ▸</button>
+      <button class="btn btn-ghost" id="adjustBtn">Adjust selection</button>
+      <button class="btn btn-ghost" id="restartBtn">Start over</button>
+    </div>
+
+    <div class="export-row">
+      <input id="studentName" class="name-input" type="text" maxlength="40" autocomplete="name"
+             placeholder="Your name (for the export)" aria-label="your name for the export">
+      <button class="btn btn-ghost" id="downloadCsvBtn">Download CSV</button>
+      <button class="btn btn-ghost" id="copyTsvBtn">Copy row for sheet</button>
+      <button class="btn btn-ghost" id="copyBtn">Copy teacher text</button>
     </div>
     <div id="copyNote"></div>
   </section>
