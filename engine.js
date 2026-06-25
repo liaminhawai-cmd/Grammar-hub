@@ -35,6 +35,7 @@
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
     screens[name].classList.add("active");
+    window.scrollTo(0, 0);
   }
 
   /* ---------------- SELECT SCREEN ---------------- */
@@ -603,13 +604,22 @@
   function downloadCsv() {
     const csv = buildCsv(); if (!csv) return;
     const safe = (studentName().replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "student");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `grammar-hub-${safe}-${todayStr()}.csv`;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    $("copyNote").textContent = "CSV downloaded.";
+    const filename = `grammar-hub-${safe}-${todayStr()}.csv`;
+    try {
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 3000);
+      $("copyNote").textContent = "CSV downloaded.";
+    } catch (e) {
+      navigator.clipboard.writeText(csv)
+        .then(() => { $("copyNote").textContent = "Download blocked — CSV text copied to clipboard instead. Paste into a text file and save as .csv."; })
+        .catch(() => { $("copyNote").textContent = "Download failed. Use 'Copy row for sheet' instead."; });
+    }
   }
   function copyTsv() {
     const tsv = buildTsvRow(); if (!tsv) return;
