@@ -475,7 +475,7 @@
         html += `<div class="remed-row"><b>${linkifyGlossary(escapeHtmlE(s.name))}</b> `;
         if (skill.resources && (skill.resources.video || (skill.resources.sheets || []).length)) {
           if (skill.resources.video) html += `<a href="${skill.resources.video}" target="_blank">video</a> `;
-          (skill.resources.sheets || []).forEach((sh) => { html += `<a href="${sh.url}" target="_blank">${escapeHtmlE(sh.name)}</a> `; });
+          (skill.resources.sheets || []).forEach((sh) => { html += `<a href="${sh.url}" target="_blank">${escapeHtmlE(resourceLabel(sh))}</a> `; });
         } else {
           html += `<span class="muted">no resources mapped yet — add to skills.js → resources</span>`;
         }
@@ -712,7 +712,7 @@
       else if (bi === drillTarget.bandIndex) { label = "Target"; cls = "target"; }
       else { label = "Stretch"; cls = "stretch"; }
       const links = ((s.resources && s.resources.sheets) || []).map((sh) =>
-        `<a href="${sh.url}" target="_blank" rel="noopener">${escapeHtmlE(sh.name)}</a>`).join("");
+        `<a href="${sh.url}" target="_blank" rel="noopener">${escapeHtmlE(resourceLabel(sh))}</a>`).join("");
       const linksRow = links ? `<div class="preteach-links">Learn more: ${links}</div>` : "";
       return `<div class="preteach-card${cls === "target" ? " preteach-target" : ""}">
         <span class="preteach-band">${s.band}</span>
@@ -830,6 +830,15 @@
       const page = seg.replace(/^CS\W+/, "").replace(/-/g, " ").trim();
       return page ? "Writing Hub: " + page : "Writing Hub";
     } catch (e) { return "Writing Hub"; }
+  }
+
+  // Resource links read "Source: Page". Khan/ABC bake the source into the name;
+  // SharePoint (Writing Hub) page names don't, so prefix them to match.
+  function resourceLabel(sh) {
+    const name = sh.name || "";
+    if (/sharepoint\.com/i.test(sh.url || "") && !/^(writing hub|khan|abc|arc)\b/i.test(name))
+      return "Writing Hub: " + name;
+    return name;
   }
 
   function wireGlossaryPopover() {
