@@ -822,6 +822,16 @@
   });
 
   /* ---------------- glossary popover ---------------- */
+  // Turn a Writing Hub page URL into a Khan-style "Writing Hub: <Page>" label
+  // so the link names its specific page instead of a vague generic "Writing Hub".
+  function whPageLabel(url) {
+    try {
+      const seg = decodeURIComponent((url.split("/").pop() || "").replace(/\.aspx$/i, ""));
+      const page = seg.replace(/^CS\W+/, "").replace(/-/g, " ").trim();
+      return page ? "Writing Hub: " + page : "Writing Hub";
+    } catch (e) { return "Writing Hub"; }
+  }
+
   function wireGlossaryPopover() {
     const pop = $("glossPop");
     if (!pop) return;
@@ -835,7 +845,7 @@
         if (!entry) return;
         const title = key.charAt(0).toUpperCase() + key.slice(1);
         const links = [];
-        if (entry.more) links.push(`<a href="${entry.more}" target="_blank" rel="noopener">Writing Hub</a>`);
+        if (entry.more) links.push(`<a href="${entry.more}" target="_blank" rel="noopener">${escapeHtmlE(whPageLabel(entry.more))}</a>`);
         links.push(`<a href="https://en.wiktionary.org/wiki/${encodeURIComponent(key)}" target="_blank" rel="noopener">Wiktionary</a>`);
         pop.innerHTML = `<div class="gloss-term">${escapeHtmlE(title)}</div>` +
                         `<div class="gloss-def">${escapeHtmlE(entry.def)}</div>` +
