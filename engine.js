@@ -1,14 +1,19 @@
 /* ============================================================
    GRAMMAR HUB — ENGINE
    ------------------------------------------------------------
-   Owns: the matrix selector, the drill loop (with mastery
-   rounds, adapted from Holly's "Name that Tense"), scoring, and
-   the report. Knows nothing about specific grammar — it dispatches
-   every item to TASK_TYPES[item.type].
+   Owns: the matrix selector, the teaching/revision loop, scoring,
+   and the report. Knows nothing about specific grammar — it
+   dispatches every item to TASK_TYPES[item.type].
 
-   Screen flow:   select  -> [preteach] ->  task  ->  report
-   Mastery loop:  wrong items come back each round until every
-                  selected item has been answered correctly once.
+   Screen flow:
+     Teaching:  select -> vocab preteach -> skill preteach -> task -> placement
+     Revision:  select -> task -> report
+
+   Teaching mode cycle:
+     1. Preteach vocab for target cell
+     2. Preteach skill (overview + resources) for target cell
+     3. Test items from target ±1 band (mastery loop)
+     4. Adaptive placement based on results
    ============================================================ */
 
 (function () {
@@ -26,12 +31,17 @@
   let correctEver = {};   // uid -> bool
   let firstPass = {};     // uid -> bool (correct on first ever attempt)
   let log = [];           // {round, skill, type, stimulus, response, result}
-  let rowLevel = {};      // category -> mastered band index (0..3), or -1 = "from scratch"
-  let mode = "revision";  // "drill" (single skill + neighbors) | "revision" (whole rubric)
-  let drillTarget = null; // drill mode: { category, bandIndex } | null
+  let rowLevel = {};      // category -> band index (0..3), revision mode
+  let mode = "teaching";  // "teaching" (single strand, preteach + assess) | "revision" (whole rubric)
+  let drillTarget = null; // teaching mode: { category, bandIndex } | null
   let selectedPools = {}; // pool category -> true
-  let lastServed = {};    // skillId -> Set of item indices served last round (avoid repeats)
-  const SAMPLE_PER_SKILL = 2;  // questions drawn per skill each run (revision mode)
+  let lastServed = {};    // skillId -> Set of item indices served last round
+  const SAMPLE_PER_SKILL = 2;
+
+  // ---- teaching mode state ----
+  let teachPhase = "vocab";   // "vocab" | "skill" | "assess"
+  let vocabQueue = [];        // vocab items to preteach
+  let vocabIdx = 0;
 
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
@@ -44,13 +54,10 @@
   function skillById(id) { return window.SKILLS.find((s) => s.id === id); }
   function itemsFor(skill) { return skill.items; }
 
-  // ---- level model: click your highest mastered cell, drill the next band up ----
   function cellAt(cat, i) {
     if (i < 0 || i >= window.BANDS.length) return null;
     return window.SKILLS.find((s) => s.category === cat && s.band === window.BANDS[i]);
   }
-  // a strand is "on the pretest" if any introduced cell is assessed; if every
-  // introduced cell is assessed:false the paper handoff has no data for it.
   function strandAssessed(cat) {
     return window.SKILLS.some((s) => s.category === cat && s.introduced && s.assessed);
   }
@@ -62,8 +69,6 @@
     for (let i = 0; i < window.BANDS.length; i++) if (drillableAt(cat, i)) return i;
     return null;
   }
-  // revision: the cell you click is the one you revise; the band immediately
-  // before it is pulled in for review (when that earlier cell is drillable).
   function revisionSkillsFor(cat) {
     const lvl = rowLevel[cat];
     if (lvl === undefined) return [];
@@ -82,7 +87,7 @@
     return out;
   }
   function setLevel(cat, val) {
-    if (rowLevel[cat] === val) delete rowLevel[cat];  // click again to clear
+    if (rowLevel[cat] === val) delete rowLevel[cat];
     else rowLevel[cat] = val;
     buildMatrix();
   }
@@ -96,7 +101,7 @@
     buildMatrix();
   }
 
-  function getDrillSkills() {
+  function getTeachingSkills() {
     if (!drillTarget) return [];
     const { category, bandIndex } = drillTarget;
     const skills = [];
@@ -113,7 +118,6 @@
     const wrap = $("matrix");
     wrap.innerHTML = "";
 
-    // header row
     const head = document.createElement("div");
     head.className = "matrix-row matrix-head";
     head.innerHTML = `<div class="matrix-cell rowlabel"></div>` +
@@ -153,7 +157,7 @@
         cell.classList.add(n ? "has-items" : "no-items");
         cell.dataset.id = skill.id;
 
-        if (mode === "drill") {
+        if (mode === "teaching") {
           const isDT = drillTarget && drillTarget.category === cat && i === drillTarget.bandIndex;
           const isInc = drillTarget && drillTarget.category === cat &&
             (i === drillTarget.bandIndex - 1 || i === drillTarget.bandIndex + 1) && n;
@@ -161,14 +165,12 @@
           else if (isInc) cell.classList.add("below");
 
           cell.innerHTML = `<span class="cell-name">${skill.name}</span>` +
-            (isDT ? `<span class="drill-tag">drill ▸</span>`
+            (isDT ? `<span class="drill-tag">teach ▸</span>`
               : isInc ? `<span class="drill-tag">included</span>`
               : (n ? `<span class="cell-count">${n}</span>` : `<span class="cell-count zero">0</span>`));
 
           if (n) cell.addEventListener("click", () => setDrillTarget(cat, i));
         } else {
-          // revision: clicked cell is ringed (revise), the band before it is
-          // faint green (review) when that earlier cell is drillable.
           const isSel = i === lvl;
           const isReview = lvl !== undefined && i === lvl - 1 && !!drillableAt(cat, lvl - 1);
           if (isSel) cell.classList.add("target");
@@ -227,15 +229,15 @@
     let poolItems = 0;
     pools.forEach((s) => { poolItems += Math.min(SAMPLE_PER_SKILL, itemsFor(s).length); });
 
-    if (mode === "drill") {
-      const skills = getDrillSkills();
+    if (mode === "teaching") {
+      const skills = getTeachingSkills();
       let items = 0;
       skills.forEach((s) => { items += itemsFor(s).length; });
       const total = skills.length + pools.length;
       const totalItems = items + poolItems;
       $("selCount").textContent = total > 0
         ? `${total} skill${total === 1 ? "" : "s"} · ${totalItems} question${totalItems === 1 ? "" : "s"}`
-        : "Click a skill to drill";
+        : "Click a skill to teach";
       $("startBtn").disabled = total === 0;
     } else {
       const targets = activeTargets();
@@ -252,7 +254,7 @@
   function buildModeToggle() {
     const wrap = $("typeFilter");
     wrap.innerHTML =
-      `<button class="filter-btn${mode === "drill" ? " active" : ""}" data-m="drill">Skill Drill</button>` +
+      `<button class="filter-btn${mode === "teaching" ? " active" : ""}" data-m="teaching">Teaching</button>` +
       `<button class="filter-btn${mode === "revision" ? " active" : ""}" data-m="revision">Revision</button>`;
     wrap.querySelectorAll(".filter-btn").forEach((b) => {
       b.addEventListener("click", () => {
@@ -270,16 +272,13 @@
 
   function updateToolbar() {
     $("selectAllBtn").style.display = mode === "revision" ? "" : "none";
-    $("helpText").innerHTML = mode === "drill"
-      ? `Click any skill to focus on it. You'll see worked examples, then practise that skill plus the level below (review) and above (stretch).`
+    $("helpText").innerHTML = mode === "teaching"
+      ? `Click any skill to focus on it. You'll learn the key vocabulary first, see worked examples, then practise that skill plus the level below (review) and above (stretch).`
       : `Click the cell you want to revise — it's <b>ringed</b> and the band just before it comes along (marked <b>review</b>). Click the strand name to revise from C1. Each run pulls a random couple of questions per skill.`;
   }
 
-  /* ---------------- DRILL ---------------- */
+  /* ---------------- ITEM SAMPLING ---------------- */
 
-  // Pick n items from a skill, preferring ones NOT served last round so a
-  // "Revise again" varies the questions. Falls back to repeats only when the
-  // bank is too small to fill n with fresh items.
   function sampleItems(skill, n) {
     const prev = lastServed[skill.id] || new Set();
     const indexed = skill.items.map((item, i) => ({ item, i }));
@@ -288,17 +287,35 @@
     return fresh.concat(seen).slice(0, n);
   }
 
+  /* ---------------- START SESSION ---------------- */
+
   function startSession() {
     pool = [];
     const served = {};
     const record = (skill, i) => { (served[skill.id] = served[skill.id] || new Set()).add(i); };
-    if (mode === "drill") {
-      getDrillSkills().forEach((skill) => {
+
+    if (mode === "teaching") {
+      getTeachingSkills().forEach((skill) => {
         skill.items.forEach((item, i) => {
           record(skill, i);
           pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
         });
       });
+      // add pools
+      selectedPoolSkills().forEach((skill) => {
+        sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
+          record(skill, i);
+          pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band || "Pool", item });
+        });
+      });
+      if (pool.length === 0) return;
+      lastServed = served;
+      shuffle(pool);
+      attempts = {}; correctEver = {}; firstPass = {}; log = [];
+      currentSet = [...pool]; nextSet = []; idx = 0; round = 1;
+
+      // start with vocab preteach for the target cell
+      startVocabPreteach();
     } else {
       activeTargets().forEach((skill) => {
         sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
@@ -306,45 +323,115 @@
           pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
         });
       });
-    }
-    // add selected practice pools (sampled in both modes)
-    selectedPoolSkills().forEach((skill) => {
-      sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
-        record(skill, i);
-        pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band || "Pool", item });
+      selectedPoolSkills().forEach((skill) => {
+        sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
+          record(skill, i);
+          pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band || "Pool", item });
+        });
       });
-    });
-    if (pool.length === 0) return;
-    lastServed = served;   // remember this round's picks so the next avoids them
-    shuffle(pool);
-    attempts = {}; correctEver = {}; firstPass = {}; log = [];
-    currentSet = [...pool]; nextSet = []; idx = 0; round = 1;
-    if (mode === "drill") {
-      showPreteach();
-    } else {
+      if (pool.length === 0) return;
+      lastServed = served;
+      shuffle(pool);
+      attempts = {}; correctEver = {}; firstPass = {}; log = [];
+      currentSet = [...pool]; nextSet = []; idx = 0; round = 1;
       show("task");
       showItem();
     }
   }
+
+  /* ---------------- VOCAB PRETEACH (teaching mode) ---------------- */
+
+  function startVocabPreteach() {
+    if (!drillTarget) { startSkillPreteach(); return; }
+    const targetSkill = drillableAt(drillTarget.category, drillTarget.bandIndex);
+    if (!targetSkill || !targetSkill.vocab || !targetSkill.vocab.length) {
+      startSkillPreteach();
+      return;
+    }
+    teachPhase = "vocab";
+    vocabQueue = targetSkill.vocab.slice();
+    vocabIdx = 0;
+    show("preteach");
+    showVocabCard();
+  }
+
+  function showVocabCard() {
+    const v = vocabQueue[vocabIdx];
+    const total = vocabQueue.length;
+    $("preteachPhase").textContent = "Vocabulary";
+    $("preteachProgress").textContent = `Term ${vocabIdx + 1} of ${total}`;
+    $("preteachBar").style.width = Math.round(((vocabIdx + 1) / total) * 100) + "%";
+
+    const targetSkill = drillableAt(drillTarget.category, drillTarget.bandIndex);
+    const skillLabel = targetSkill ? `${targetSkill.category} · ${targetSkill.band} · ${targetSkill.name}` : "";
+
+    $("preteachContent").innerHTML =
+      `<div class="skill-tag">${escapeHtmlE(skillLabel)}</div>` +
+      `<div class="teach-phase">Learn this term</div>` +
+      `<div class="teach-term">${escapeHtmlE(v.term)}</div>` +
+      `<div class="teach-def">${escapeHtmlE(v.def)}</div>` +
+      `<div class="teach-example">${v.example}</div>`;
+
+    $("preteachNextBtn").textContent = vocabIdx < total - 1 ? "Next term" : "Continue";
+  }
+
+  function onPreteachNext() {
+    if (teachPhase === "vocab") {
+      vocabIdx++;
+      if (vocabIdx < vocabQueue.length) {
+        showVocabCard();
+      } else {
+        startSkillPreteach();
+      }
+    } else if (teachPhase === "skill") {
+      show("task");
+      showItem();
+    }
+  }
+
+  /* ---------------- SKILL PRETEACH (teaching mode) ---------------- */
+
+  function startSkillPreteach() {
+    teachPhase = "skill";
+    const skills = getTeachingSkills();
+    $("preteachPhase").textContent = "Skill overview";
+    $("preteachProgress").textContent = `${skills.length} skill${skills.length === 1 ? "" : "s"} in this cycle`;
+    $("preteachBar").style.width = "100%";
+
+    $("preteachContent").innerHTML = skills.map((s) => {
+      const bi = window.BANDS.indexOf(s.band);
+      let label, cls;
+      if (bi < drillTarget.bandIndex) { label = "Review"; cls = "review"; }
+      else if (bi === drillTarget.bandIndex) { label = "Target"; cls = "target"; }
+      else { label = "Stretch"; cls = "stretch"; }
+      const links = ((s.resources && s.resources.sheets) || []).map((sh) =>
+        `<a href="${sh.url}" target="_blank" rel="noopener">${escapeHtmlE(resourceLabel(sh))}</a>`).join("");
+      const linksRow = links ? `<div class="preteach-links">Learn more: ${links}</div>` : "";
+      return `<div class="preteach-card${cls === "target" ? " preteach-target" : ""}">
+        <span class="preteach-band">${s.band}</span>
+        <span class="preteach-label ${cls}">${label}</span>
+        <div class="preteach-name">${linkifyGlossary(escapeHtmlE(s.name))}</div>
+        <div class="preteach-example">"${escapeHtmlE(s.example)}"</div>
+        ${linksRow}
+      </div>`;
+    }).join("");
+
+    $("preteachNextBtn").textContent = "Start practising";
+    show("preteach");
+  }
+
+  /* ---------------- SHOW ITEM (task screen) ---------------- */
 
   function showItem() {
     graded = false;
     const entry = currentSet[idx];
     const type = window.TASK_TYPES[entry.item.type] || window.TASK_TYPES.produce;
 
-    // Linkify glossary terms in the live prompt — but NOT for recognition
-    // tasks (identify/choose), where defining the named term would give the
-    // answer away ("find the verb"). Explanations are always linkified later.
     const promptText = entry.item.prompt || type.label;
     const recognition = entry.item.type === "identify" || entry.item.type === "choose";
     $("promptText").innerHTML = recognition
       ? escapeHtmlE(promptText)
       : linkifyGlossary(escapeHtmlE(promptText));
-    // The skill tag orients the learner. On recognition items we hide the
-    // specific cell NAME, because it often spells out the answer ("Present
-    // Perfect" above a 'name the tense' question). Category + band stay (and
-    // the category term is still clickable for a definition). On productive
-    // items the learner writes the answer, so the full name is fine.
     const tagText = recognition
       ? `${entry.category} · ${entry.band}`
       : `${entry.category} · ${entry.band} · ${entry.skillName}`;
@@ -360,7 +447,6 @@
     $("checkBtn").style.display = "";
     $("nextBtn").style.display = "none";
 
-    // progress
     const done = pool.length - countNotMastered();
     $("remainText").textContent = `${countNotMastered()} to master`;
     $("roundText").textContent = round === 1 ? "Main round" : `Mastery round ${round - 1}`;
@@ -372,7 +458,7 @@
     const entry = currentSet[idx];
     const type = window.TASK_TYPES[entry.item.type] || window.TASK_TYPES.produce;
     const response = type.collect($("taskArea"));
-    if (response === null) return; // nothing entered yet
+    if (response === null) return;
 
     const result = type.check(entry.item, response);
     if (type.mark) type.mark($("taskArea"), entry.item, result);
@@ -399,7 +485,6 @@
   function onNext() {
     idx++;
     if (idx >= currentSet.length) {
-      // close out the round
       nextSet = pool.filter((e) => !correctEver[e.uid]);
       if (nextSet.length > 0) {
         currentSet = shuffle(nextSet.slice());
@@ -408,7 +493,11 @@
         idx = 0;
         showItem();
       } else {
-        endSession();
+        if (mode === "teaching") {
+          endTeachingSession();
+        } else {
+          endSession();
+        }
       }
     } else {
       showItem();
@@ -417,7 +506,158 @@
 
   function countNotMastered() { return pool.filter((e) => !correctEver[e.uid]).length; }
 
-  /* ---------------- REPORT ---------------- */
+  /* ---------------- TEACHING MODE: PLACEMENT ---------------- */
+
+  function endTeachingSession() {
+    const total = pool.length;
+    const firstRight = pool.filter((e) => firstPass[e.uid]).length;
+    const totalAttempts = Object.values(attempts).reduce((a, b) => a + b, 0);
+
+    // per-skill breakdown
+    const bySkill = {};
+    pool.forEach((e) => {
+      const s = bySkill[e.skillId] = bySkill[e.skillId] ||
+        { name: e.skillName, cat: e.category, band: e.band, total: 0, right: 0, tags: {} };
+      s.total++;
+      if (firstPass[e.uid]) s.right++;
+      (e.item.tags || []).forEach((tag) => {
+        const t = s.tags[tag] = s.tags[tag] || { total: 0, right: 0 };
+        t.total++;
+        if (firstPass[e.uid]) t.right++;
+      });
+    });
+
+    // adaptive placement logic
+    const { category, bandIndex } = drillTarget;
+    const belowSkill = drillableAt(category, bandIndex - 1);
+    const targetSkill = drillableAt(category, bandIndex);
+    const aboveSkill = drillableAt(category, bandIndex + 1);
+
+    const mastered = (skill) => skill && bySkill[skill.id] && bySkill[skill.id].right === bySkill[skill.id].total;
+    const belowOk = !belowSkill || mastered(belowSkill);
+    const targetOk = mastered(targetSkill);
+    const aboveOk = !aboveSkill || mastered(aboveSkill);
+
+    let nextBand = bandIndex;
+    let msg = "";
+
+    if (belowOk && targetOk && aboveOk) {
+      // mastered everything — jump up two if possible, else one
+      const jump2 = nextDrillableAbove(category, bandIndex + 1);
+      const jump1 = nextDrillableAbove(category, bandIndex);
+      if (jump2 !== null) {
+        nextBand = jump2;
+        msg = `Outstanding! You mastered all three levels. Moving to ${window.BANDS[jump2]} with a review of ${window.BANDS[bandIndex + 1]} first.`;
+      } else if (jump1 !== null) {
+        nextBand = jump1;
+        msg = `Excellent! You mastered everything. Moving up to ${window.BANDS[jump1]}.`;
+      } else {
+        nextBand = null;
+        msg = `You've mastered the whole strand! Nothing higher to practise.`;
+      }
+    } else if (!belowOk) {
+      // failed the level below — drop down
+      const dropTo = bandIndex - 1;
+      if (dropTo >= 0 && drillableAt(category, dropTo)) {
+        nextBand = dropTo;
+        msg = `Let's strengthen the foundation. Dropping to ${window.BANDS[dropTo]} to build up from there.`;
+      } else {
+        nextBand = bandIndex;
+        msg = `Some tricky spots. Let's try this level again with the preteach.`;
+      }
+    } else if (belowOk && targetOk && !aboveOk) {
+      // beat target but not above — move up one
+      const up = nextDrillableAbove(category, bandIndex);
+      if (up !== null) {
+        nextBand = up;
+        msg = `Great work on ${window.BANDS[bandIndex]}! Moving to ${window.BANDS[up]} — you'll get the vocabulary and skill preteach first.`;
+      } else {
+        nextBand = null;
+        msg = `Almost there! You've reached the top of the strand.`;
+      }
+    } else {
+      // target not mastered — stay
+      nextBand = bandIndex;
+      msg = `Nearly there. Let's have another go at ${window.BANDS[bandIndex]} with a refresher.`;
+    }
+
+    // show placement screen
+    $("placementSummary").innerHTML =
+      `<div class="big-stat">${firstRight}/${total}</div>` +
+      `<div class="stat-label">correct first try</div>` +
+      `<p class="muted">Mastered all ${total} after ${totalAttempts} total attempt${totalAttempts === 1 ? "" : "s"}.</p>`;
+
+    // per-skill rows
+    const scoreCls = (right, tot) => {
+      const pct = Math.round((right / tot) * 100);
+      return pct === 100 ? "ok" : pct >= 50 ? "mid" : "low";
+    };
+    let skillRows = Object.values(bySkill).map((s) => {
+      let row = `<div class="skill-row">
+        <span class="skill-name">${escapeHtmlE(`${s.cat} · ${s.band} · ${s.name}`)}</span>
+        <span class="skill-score ${scoreCls(s.right, s.total)}">${s.right}/${s.total}</span>
+      </div>`;
+      const tags = Object.entries(s.tags);
+      if (tags.length > 1) {
+        row += tags.map(([tag, t]) =>
+          `<div class="subskill-row">
+            <span class="subskill-name">${escapeHtmlE(tag)}</span>
+            <span class="skill-score ${scoreCls(t.right, t.total)}">${t.right}/${t.total}</span>
+          </div>`).join("");
+      }
+      return row;
+    }).join("");
+
+    // build placement rubric (just for this strand)
+    let rubricHtml = "";
+    const head = `<div class="matrix-row matrix-head"><div class="matrix-cell rowlabel"></div>` +
+      window.BANDS.map((b) => `<div class="matrix-cell colhead">${b}</div>`).join("") + `</div>`;
+    let rowHtml = `<div class="matrix-row"><div class="matrix-cell rowlabel">${escapeHtmlE(category)}</div>`;
+    window.BANDS.forEach((band, i) => {
+      const skill = cellAt(category, i);
+      if (!skill || !skill.introduced) {
+        rowHtml += `<div class="matrix-cell empty"><span class="dash">—</span></div>`;
+        return;
+      }
+      const st = cellStatusFor(skill, bySkill);
+      let cls = "matrix-cell";
+      let mark = "";
+      if (st.kind === "mastered") { cls += " rpt-mastered"; mark = `<span class="rpt-mark ok">✓</span>`; }
+      else if (st.kind === "missed") { cls += " rpt-missed"; mark = `<span class="rpt-mark bad">✗</span>`; }
+      else if (st.kind === "partial") { cls += " rpt-partial"; }
+      else { cls += " rpt-none"; }
+      if (nextBand !== null && i === nextBand) cls += " rpt-next";
+      rowHtml += `<div class="${cls}">${mark}<span class="cell-name">${escapeHtmlE(skill.name)}</span>` +
+        (nextBand !== null && i === nextBand ? `<span class="rpt-next-tag">next ▸</span>` : "") + `</div>`;
+    });
+    rowHtml += `</div>`;
+    rubricHtml = head + rowHtml;
+
+    $("placementRubric").innerHTML = rubricHtml;
+    $("placementMsg").innerHTML = msg;
+
+    // wire continue button
+    const contBtn = $("placementContinueBtn");
+    if (nextBand !== null) {
+      contBtn.style.display = "";
+      contBtn.textContent = `Continue to ${window.BANDS[nextBand]}`;
+      contBtn.onclick = () => {
+        drillTarget = { category, bandIndex: nextBand };
+        buildMatrix();
+        startSession();
+      };
+    } else {
+      contBtn.style.display = "none";
+    }
+
+    // also store for teacher export
+    lastReport = { bySkill, firstRight, total, totalAttempts };
+    buildTeacherExport(firstRight, total, totalAttempts, bySkill);
+
+    show("placement");
+  }
+
+  /* ---------------- REPORT (revision mode) ---------------- */
 
   function endSession() {
     show("report");
@@ -430,7 +670,6 @@
       `<div class="stat-label">correct first try</div>` +
       `<p class="muted">Mastered all ${total} after ${totalAttempts} total attempt${totalAttempts === 1 ? "" : "s"}.</p>`;
 
-    // per-skill breakdown, with per-tag sub-skill stats for bundled cells
     const bySkill = {};
     pool.forEach((e) => {
       const s = bySkill[e.skillId] = bySkill[e.skillId] ||
@@ -453,7 +692,6 @@
                 <span class="skill-name">${linkifyGlossary(escapeHtmlE(`${s.cat} · ${s.band} · ${s.name}`))}</span>
                 <span class="skill-score ${scoreCls(s.right, s.total)}">${s.right}/${s.total}</span>
               </div>`;
-      // bundled cell: more than one sub-skill tag -> show which half was missed
       const tags = Object.entries(s.tags);
       if (tags.length > 1) {
         row += tags.map(([tag, t]) =>
@@ -466,7 +704,6 @@
     }).join("");
     $("reportSkills").innerHTML = `<h3>By skill (first try)</h3>${rows}`;
 
-    // remediation hook: skills below 100% first-try, route to resources if mapped
     const weak = Object.entries(bySkill).filter(([, s]) => s.right < s.total);
     if (weak.length) {
       let html = `<h3>Practise next</h3>`;
@@ -486,21 +723,16 @@
       $("reportRemediation").innerHTML = `<p class="muted">Every selected skill correct first try. Nothing to reteach.</p>`;
     }
 
-    advanceSelection(bySkill);     // bump mastered cells up a band for next time
-    buildReportRubric(bySkill);    // the annotated grid, with the next selection shown
-    runReportReveal();             // hold the score, then reveal + light up the grid
+    advanceSelection(bySkill);
+    buildReportRubric(bySkill);
+    runReportReveal();
     lastReport = { bySkill, firstRight, total, totalAttempts };
     buildTeacherExport(firstRight, total, totalAttempts, bySkill);
   }
 
-  // Level-up reveal. The score stat holds alone for a beat, then the rubric
-  // and breakdowns fade in, the cells mastered this round pop green one by one,
-  // and the next-selection outline arrives last. Strips the colour classes the
-  // rubric was built with and re-applies them on a timeline — this all runs in
-  // endSession's turn, so the browser paints the "pre" state first (no flash).
   function runReportReveal() {
     const sections = [
-      document.querySelector("#reportScreen h3"),   // "Your rubric now"
+      document.querySelector("#reportScreen h3"),
       $("reportRubricHint"), $("reportRubric"), $("reportRubricLegend"),
       $("reportRemediation"), $("reportSkills"),
     ].filter(Boolean);
@@ -530,16 +762,12 @@
     return null;
   }
 
-  // Where this session fully mastered a cell, move the selection up one band so
-  // "Revise again" naturally carries the learner forward (master C2 -> aim C3).
   function advanceSelection(bySkill) {
     const mastered = (skill) => skill && bySkill[skill.id] && bySkill[skill.id].right === bySkill[skill.id].total;
-    if (mode === "drill" && drillTarget) {
+    if (mode === "teaching" && drillTarget) {
       const sk = cellAt(drillTarget.category, drillTarget.bandIndex);
       if (mastered(sk)) {
         const nb = nextDrillableAbove(drillTarget.category, drillTarget.bandIndex);
-        // climb to the next band, or drop the target entirely once the top
-        // (C4/C4+) is cleared — there's nothing higher to revise.
         if (nb !== null) drillTarget = { category: drillTarget.category, bandIndex: nb };
         else drillTarget = null;
       }
@@ -548,7 +776,6 @@
         const sk = cellAt(cat, rowLevel[cat]);
         if (mastered(sk)) {
           const nb = nextDrillableAbove(cat, rowLevel[cat]);
-          // climb a band, or deselect the strand once the top is mastered.
           if (nb !== null) rowLevel[cat] = nb;
           else delete rowLevel[cat];
         }
@@ -556,8 +783,6 @@
     }
   }
 
-  // mastered (all first-try right) | partial (a bundled cell with one sub-skill
-  // clean and another not) | missed | none (cell wasn't in this session).
   function cellStatusFor(skill, bySkill) {
     const s = bySkill[skill.id];
     if (!s) return { kind: "none" };
@@ -569,7 +794,6 @@
     return { kind: "missed" };
   }
 
-  // Read-only grid mirroring the selector, annotated with results + next pick.
   function buildReportRubric(bySkill) {
     const wrap = $("reportRubric");
     if (!wrap) return;
@@ -595,7 +819,7 @@
         if (!skill || !skill.introduced) { cell.classList.add("empty"); cell.innerHTML = `<span class="dash">—</span>`; row.appendChild(cell); return; }
 
         const st = cellStatusFor(skill, bySkill);
-        const isNext = (mode === "drill")
+        const isNext = (mode === "teaching")
           ? (drillTarget && drillTarget.category === cat && drillTarget.bandIndex === i)
           : (rowLevel[cat] === i);
 
@@ -621,7 +845,7 @@
       `<b style="color:var(--wrong)">✗</b> another go · grey = not included this round`;
   }
 
-  /* ---- exportable progress summary (CSV for import, TSV row for a form/sheet) ---- */
+  /* ---- exportable progress summary ---- */
   function csvCell(v) {
     const s = String(v == null ? "" : v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -700,31 +924,6 @@
       .catch(() => { $("copyNote").textContent = "Copy failed — select the report text manually."; });
   }
 
-  /* ---------------- preteach (skill drill) ---------------- */
-
-  function showPreteach() {
-    const skills = getDrillSkills();
-    const content = $("preteachContent");
-    content.innerHTML = skills.map((s) => {
-      const bi = window.BANDS.indexOf(s.band);
-      let label, cls;
-      if (bi < drillTarget.bandIndex) { label = "Review"; cls = "review"; }
-      else if (bi === drillTarget.bandIndex) { label = "Target"; cls = "target"; }
-      else { label = "Stretch"; cls = "stretch"; }
-      const links = ((s.resources && s.resources.sheets) || []).map((sh) =>
-        `<a href="${sh.url}" target="_blank" rel="noopener">${escapeHtmlE(resourceLabel(sh))}</a>`).join("");
-      const linksRow = links ? `<div class="preteach-links">Learn more: ${links}</div>` : "";
-      return `<div class="preteach-card${cls === "target" ? " preteach-target" : ""}">
-        <span class="preteach-band">${s.band}</span>
-        <span class="preteach-label ${cls}">${label}</span>
-        <div class="preteach-name">${linkifyGlossary(escapeHtmlE(s.name))}</div>
-        <div class="preteach-example">"${escapeHtmlE(s.example)}"</div>
-        ${linksRow}
-      </div>`;
-    }).join("");
-    show("preteach");
-  }
-
   /* ---------------- helpers ---------------- */
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -734,7 +933,6 @@
     return arr;
   }
   function stripTags(s) { return (s || "").replace(/<[^>]*>/g, ""); }
-  // A readable stimulus for the teacher log, whatever shape the item is.
   function stimulusOf(item) {
     if (item.sentence) return stripTags(item.sentence);
     if (item.before !== undefined || item.after !== undefined) return stripTags((item.before || "") + " ___ " + (item.after || ""));
@@ -743,7 +941,6 @@
     if (item.pairs) return item.pairs.map((p) => p.sentence).join(" / ");
     return stripTags(item.prompt || "");
   }
-  // A readable response for the teacher log (match returns index pairs).
   function responseText(item, response) {
     if (item.type === "match" && Array.isArray(response)) {
       return response.map(([s, m]) => `${item.pairs[s].sentence} = ${item.pairs[m].meaning}`).join("; ");
@@ -753,19 +950,13 @@
   function escapeHtmlE(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
   // ---- glossary auto-linking ----
-  // Wrap any known grammar term (longest first, whole-word, case-insensitive)
-  // in a clickable .gloss button. INPUT MUST ALREADY BE HTML-ESCAPED plain text
-  // (no tags) so we never wrap inside an attribute or split a tag.
   let glossRe = null;
   function glossRegex() {
     if (glossRe !== null) return glossRe;
     const keys = Object.keys(window.GLOSSARY || {}).sort((a, b) => b.length - a.length);
     if (!keys.length) { glossRe = false; return glossRe; }
-    // escape regex specials, then let any hyphen in a key match any dash
-    // (so "subject-verb agreement" also matches "Subject–Verb Agreement").
     const alt = keys.map((k) =>
       k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/-/g, "[-–—]")).join("|");
-    // trailing s? so plurals link too ("Prepositions", "Verbs", "clauses").
     glossRe = new RegExp("(?<![\\w-])(?:" + alt + ")s?(?![\\w-])", "gi");
     return glossRe;
   }
@@ -775,10 +966,25 @@
     re.lastIndex = 0;
     return escapedText.replace(re, (m) => {
       let key = m.toLowerCase().replace(/[–—]/g, "-");
-      if (!window.GLOSSARY[key] && key.endsWith("s")) key = key.slice(0, -1);  // de-pluralise
+      if (!window.GLOSSARY[key] && key.endsWith("s")) key = key.slice(0, -1);
       if (!window.GLOSSARY[key]) return m;
       return `<button type="button" class="gloss" data-term="${key}">${m}</button>`;
     });
+  }
+
+  // Resource label helpers
+  function whPageLabel(url) {
+    try {
+      const seg = decodeURIComponent((url.split("/").pop() || "").replace(/\.aspx$/i, ""));
+      const page = seg.replace(/^CS\W+/, "").replace(/-/g, " ").trim();
+      return page ? "Writing Hub: " + page : "Writing Hub";
+    } catch (e) { return "Writing Hub"; }
+  }
+  function resourceLabel(sh) {
+    const name = sh.name || "";
+    if (/sharepoint\.com/i.test(sh.url || "") && !/^(writing hub|khan|abc|arc)\b/i.test(name))
+      return "Writing Hub: " + name;
+    return name;
   }
 
   /* ---------------- boot ---------------- */
@@ -787,6 +993,7 @@
     screens.task = $("taskScreen");
     screens.report = $("reportScreen");
     screens.preteach = $("preteachScreen");
+    screens.placement = $("placementScreen");
 
     buildModeToggle();
     buildMatrix();
@@ -799,9 +1006,12 @@
     });
     $("selectNoneBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; lastServed = {}; buildMatrix(); });
     $("startBtn").addEventListener("click", startSession);
-    $("preteachStartBtn").addEventListener("click", () => { show("task"); showItem(); });
 
-    // task area emits gh:ready when an answer is entered, gh:submit on Enter
+    // preteach screen buttons
+    $("preteachNextBtn").addEventListener("click", onPreteachNext);
+    $("preteachQuitBtn").addEventListener("click", () => show("select"));
+
+    // task area
     $("taskArea").addEventListener("gh:ready", () => { if (!graded) $("checkBtn").disabled = false; });
     $("taskArea").addEventListener("gh:submit", () => { if (!graded) onCheck(); });
 
@@ -809,38 +1019,21 @@
     $("nextBtn").addEventListener("click", onNext);
     $("quitBtn").addEventListener("click", () => show("select"));
 
+    // report screen buttons
     $("copyBtn").addEventListener("click", copyTeacher);
     $("downloadCsvBtn").addEventListener("click", downloadCsv);
     $("copyTsvBtn").addEventListener("click", copyTsv);
-    // Revise again runs the (already advanced) selection; Adjust reopens the
-    // interactive selector pre-set to it; Start over clears everything.
     $("reviseAgainBtn").addEventListener("click", () => { startSession(); });
     $("adjustBtn").addEventListener("click", () => { buildMatrix(); show("select"); });
     $("restartBtn").addEventListener("click", () => { rowLevel = {}; drillTarget = null; selectedPools = {}; lastServed = {}; buildMatrix(); show("select"); });
+
+    // placement screen buttons
+    $("placementSelectBtn").addEventListener("click", () => { buildMatrix(); show("select"); });
 
     wireGlossaryPopover();
   });
 
   /* ---------------- glossary popover ---------------- */
-  // Turn a Writing Hub page URL into a Khan-style "Writing Hub: <Page>" label
-  // so the link names its specific page instead of a vague generic "Writing Hub".
-  function whPageLabel(url) {
-    try {
-      const seg = decodeURIComponent((url.split("/").pop() || "").replace(/\.aspx$/i, ""));
-      const page = seg.replace(/^CS\W+/, "").replace(/-/g, " ").trim();
-      return page ? "Writing Hub: " + page : "Writing Hub";
-    } catch (e) { return "Writing Hub"; }
-  }
-
-  // Resource links read "Source: Page". Khan/ABC bake the source into the name;
-  // SharePoint (Writing Hub) page names don't, so prefix them to match.
-  function resourceLabel(sh) {
-    const name = sh.name || "";
-    if (/sharepoint\.com/i.test(sh.url || "") && !/^(writing hub|khan|abc|arc)\b/i.test(name))
-      return "Writing Hub: " + name;
-    return name;
-  }
-
   function wireGlossaryPopover() {
     const pop = $("glossPop");
     if (!pop) return;

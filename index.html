@@ -147,7 +147,7 @@
   .report-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
   #copyNote{text-align:center;font-size:12px;color:var(--muted);margin-top:8px;min-height:14px}
 
-  /* ---- preteach (skill drill) ---- */
+  /* ---- preteach (teaching mode) ---- */
   .preteach-card{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:10px;background:var(--paper)}
   .preteach-card.preteach-target{border:2px solid var(--accent)}
   .preteach-band{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
@@ -160,6 +160,24 @@
   .preteach-links{font-size:12px;color:var(--muted);margin-top:8px}
   .preteach-links a{color:var(--accent);margin-right:10px;text-decoration:none;font-weight:600}
   .preteach-links a:hover{text-decoration:underline}
+
+  /* ---- teaching mode: vocab preteach ---- */
+  .teach-phase{font-family:Georgia,serif;font-size:14px;font-weight:700;color:var(--accent);
+       text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:4px}
+  .teach-term{font-family:Georgia,serif;font-size:22px;font-weight:700;text-align:center;margin:8px 0}
+  .teach-def{font-size:15px;color:var(--muted);text-align:center;line-height:1.5;margin-bottom:14px}
+  .teach-example{font-size:18px;font-weight:700;text-align:center;background:var(--bg);
+       border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0 14px;line-height:1.4}
+  .teach-example b{color:var(--accent);text-decoration:underline;text-underline-offset:4px}
+  .vocab-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+  .vocab-opt{font-size:15px;font-weight:600;text-align:center;padding:14px 16px;border-radius:10px;
+       border:2px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .vocab-opt:hover{border-color:var(--accent)}
+  .vocab-opt.correct{background:var(--okbg);border-color:var(--correct);color:var(--correct)}
+  .vocab-opt.incorrect{background:var(--badbg);border-color:var(--wrong);color:var(--wrong)}
+  .teach-progress{font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px}
+  .placement-msg{font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.5;
+       padding:18px;margin:16px 0;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
 
   /* ---- order (word sequencing: tap words between bank and sentence line) ---- */
   .order-line{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:54px;
@@ -264,19 +282,33 @@
       <button class="btn btn-primary" id="startBtn" disabled>Start practising</button>
     </div>
     <p class="muted" style="text-align:center;margin-top:14px" id="helpText">
-      Click the highest level you've <b>mastered</b> in a row — it turns green, lower levels go faint green,
-      and the next band up (marked <b>drill ▸</b>) is what you'll practise. Click the strand name to start from C1.
-      Each run pulls a random couple of questions per skill.
+      Click any skill to focus on it. You'll learn the key vocabulary first, see worked examples, then practise that skill plus the level below (review) and above (stretch).
     </p>
   </section>
 
-  <!-- ============ PRETEACH (skill drill) ============ -->
+  <!-- ============ PRETEACH: vocab then skill (teaching mode) ============ -->
   <section class="screen" id="preteachScreen">
-    <div class="report-title">Skill Drill</div>
-    <p class="subtitle">Review these examples, then start practising</p>
+    <div class="progress-row">
+      <span id="preteachPhase">Vocabulary</span>
+      <button class="exit-btn" id="preteachQuitBtn">Exit</button>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="preteachBar"></div></div>
+    <div class="teach-progress" id="preteachProgress"></div>
     <div id="preteachContent"></div>
     <div class="start-bar">
-      <button class="btn btn-primary" id="preteachStartBtn">Start practising</button>
+      <button class="btn btn-primary" id="preteachNextBtn">Next</button>
+    </div>
+  </section>
+
+  <!-- ============ PLACEMENT (teaching mode result) ============ -->
+  <section class="screen" id="placementScreen">
+    <div class="report-title">Results</div>
+    <div id="placementSummary"></div>
+    <div class="matrix" id="placementRubric"></div>
+    <div id="placementMsg" class="placement-msg"></div>
+    <div class="report-actions">
+      <button class="btn btn-primary" id="placementContinueBtn">Continue to next level</button>
+      <button class="btn btn-ghost" id="placementSelectBtn">Back to selector</button>
     </div>
   </section>
 
