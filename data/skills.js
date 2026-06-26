@@ -64,7 +64,30 @@ window.SKILLS = [
     {term:"subject",def:"The person or thing doing the action in a sentence.",example:"<b>The dog</b> chased the cat."},
     {term:"verb",def:"The doing or being word — it tells you what happens.",example:"The dog <b>chased</b> the cat."},
     {term:"object",def:"The person or thing receiving the action.",example:"The dog chased <b>the cat</b>."},
-  ], items:[
+  ],
+  worked:[
+    { text:"The dog chased the cat.", note:"The basic pattern: <b>subject</b> + <b>verb</b> + <b>object</b>." },
+    { text:"My brother plays guitar.", note:"Different words, same subject-verb-object order." },
+    { text:"She reads books every night.", note:"Extra detail (every night) can follow the object." },
+    { text:"Tom and Sam built a fort.", note:"The subject can be more than one person." },
+  ],
+  sort:{
+    prompt:"Drag each part into Subject, Verb, or Object.",
+    zones:["Subject","Verb","Object"],
+    modelled:[
+      { text:"The dog", zone:"Subject", explain:"This names who does the action — it is the subject." },
+      { text:"chased", zone:"Verb", explain:"This is the action word — it is the verb." },
+      { text:"the cat", zone:"Object", explain:"This receives the action — it is the object." },
+    ],
+    items:[
+      { text:"My brother", zone:"Subject" }, { text:"plays", zone:"Verb" }, { text:"guitar", zone:"Object" },
+      { text:"The teacher", zone:"Subject" }, { text:"collected", zone:"Verb" }, { text:"the homework", zone:"Object" },
+      { text:"She", zone:"Subject" }, { text:"reads", zone:"Verb" }, { text:"books", zone:"Object" },
+      { text:"The children", zone:"Subject" }, { text:"kicked", zone:"Verb" }, { text:"the ball", zone:"Object" },
+      { text:"My friend", zone:"Subject" }, { text:"wrote", zone:"Verb" }, { text:"a letter", zone:"Object" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Find the verb", sentence:"The dog chased the cat.", options:["The dog","chased","the cat","dog chased"], answer:"chased", explain:"The verb is the action word: chased.", tags:["svo"] },
       { type:"identify", prompt:"Find the subject", sentence:"My brother plays guitar after school.", options:["My brother","plays","guitar","after school"], answer:"My brother", explain:"The subject is who does the action: my brother.", tags:["svo"] },
       { type:"identify", prompt:"Is this a complete sentence?", sentence:"<b>She reads books every night.</b>", options:["Yes — subject + verb + rest","No — missing a subject","No — missing a verb","No — it is a fragment"], answer:"Yes — subject + verb + rest", explain:"She (subject) reads (verb) books every night — complete SVO.", tags:["svo"] },
@@ -84,7 +107,34 @@ window.SKILLS = [
   vocab:[
     {term:"coordinating conjunction",def:"A joining word that links two equal ideas: and, but, or, so, yet.",example:"She likes maths <b>and</b> science."},
     {term:"compound sentence",def:"Two complete ideas joined by a coordinating conjunction.",example:"<b>He was tired, but he kept working.</b>"},
-  ], items:[
+  ],
+  worked:[
+    { text:"He ran fast and won the race.", note:"<b>and</b> joins two things he did (addition)." },
+    { text:"She was tired, but she kept working.", note:"<b>but</b> joins two ideas that contrast — note the comma." },
+    { text:"We can stay or we can go.", note:"<b>or</b> offers a choice between two ideas." },
+    { text:"It rained, so we stayed inside.", note:"<b>so</b> shows the result of the first idea." },
+  ],
+  sort:{
+    prompt:"Each connective does a job. Drag each sentence to what its connective shows.",
+    zones:["Addition","Contrast","Choice","Result"],
+    modelled:[
+      { text:"She likes tea and coffee.", zone:"Addition", explain:"and adds a second idea — that is addition." },
+      { text:"He was tired, but he kept working.", zone:"Contrast", explain:"but signals the opposite of what you expect — that is contrast." },
+      { text:"We can walk or take the bus.", zone:"Choice", explain:"or gives you two options — that is choice." },
+      { text:"It rained, so we stayed in.", zone:"Result", explain:"so shows what happened as a result." },
+    ],
+    items:[
+      { text:"I was hungry, so I made lunch.", zone:"Result" },
+      { text:"He ran fast and won the race.", zone:"Addition" },
+      { text:"Do you want tea or coffee?", zone:"Choice" },
+      { text:"It was cold, but we went out.", zone:"Contrast" },
+      { text:"The bus was late, so we walked.", zone:"Result" },
+      { text:"She sings and she dances.", zone:"Addition" },
+      { text:"You can call or text me.", zone:"Choice" },
+      { text:"I tried hard, but I lost.", zone:"Contrast" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Which word shows the two ideas pull in opposite directions?", sentence:"She likes maths ___ she hates science.", options:["and","but","or","so"], answer:"but", explain:"But joins two ideas that contrast.", tags:["coordination"] },
       { type:"identify", prompt:"Which word offers a choice between two options?", sentence:"We can walk ___ take the bus.", options:["and","but","or","so"], answer:"or", explain:"Or gives a choice between two options.", tags:["coordination"] },
       { type:"identify", prompt:"Which word shows that staying inside was the result?", sentence:"It was raining, ___ we stayed inside.", options:["and","but","or","so"], answer:"so", explain:"So shows a result or consequence.", tags:["coordination"] },
@@ -107,7 +157,32 @@ window.SKILLS = [
     {term:"subordinate clause",def:"A clause that cannot stand alone — it needs a main clause to make sense.",example:"<b>Although it was raining</b>, we went out."},
     {term:"subordinating conjunction",def:"A word that introduces a subordinate clause: because, although, when, if, while.",example:"We stayed inside <b>because</b> it was cold."},
     {term:"main clause",def:"The part of the sentence that makes sense on its own.",example:"Although it was raining, <b>we went out</b>."},
-  ], items:[
+  ],
+  worked:[
+    { text:"Although it was raining, we went out.", note:"Subordinate clause first, then the main clause — comma between." },
+    { text:"We went out although it was raining.", note:"Same meaning, main clause first — no comma needed." },
+    { text:"Because she was late, she missed the bus.", note:"<b>because</b> gives the reason." },
+    { text:"When the bell rang, the students stood up.", note:"<b>when</b> marks the time." },
+  ],
+  sort:{
+    prompt:"Drag each clause to where it belongs. A main clause makes sense alone; a subordinate clause leaves you hanging.",
+    zones:["Main clause","Subordinate clause"],
+    modelled:[
+      { text:"we went out", zone:"Main clause", explain:"This makes complete sense on its own — it is a main clause." },
+      { text:"Although it was raining", zone:"Subordinate clause", explain:"This leaves you waiting for more — it is a subordinate clause." },
+    ],
+    items:[
+      { text:"Because it was hot", zone:"Subordinate clause" },
+      { text:"we went swimming", zone:"Main clause" },
+      { text:"the students stood up", zone:"Main clause" },
+      { text:"When the bell rang", zone:"Subordinate clause" },
+      { text:"After she finished her homework", zone:"Subordinate clause" },
+      { text:"she went outside", zone:"Main clause" },
+      { text:"He wore a jacket", zone:"Main clause" },
+      { text:"because it was cold", zone:"Subordinate clause" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Which word gives the reason they went swimming?", sentence:"Because it was hot, we went swimming.", options:["Because","it was","hot","we went"], answer:"Because", explain:"Because introduces the reason clause (subordinate clause).", tags:["subordination"] },
       { type:"identify", prompt:"Which word signals the contrast with leaving early?", sentence:"She left early although she wanted to stay.", options:["She","early","although","wanted"], answer:"although", explain:"Although introduces a contrast clause.", tags:["subordination"] },
       { type:"identify", prompt:"Which part is the subordinate clause — the one that leaves you hanging?", sentence:"When the bell rang, the students stood up.", options:["When the bell rang","the students stood up"], answer:"When the bell rang", explain:"A subordinate clause can't stand alone: 'When the bell rang' leaves you waiting for what happened. 'The students stood up' is the main clause and works by itself.", tags:["subordination"] },
@@ -119,7 +194,30 @@ window.SKILLS = [
   vocab:[
     {term:"cleft sentence",def:"A sentence split into two parts to put extra focus on one piece of information.",example:"<b>It was Mia</b> who solved the problem."},
     {term:"emphasis",def:"Drawing special attention to one part of a sentence.",example:"It was <b>the rain</b> that ruined the picnic."},
-  ], items:[
+  ],
+  worked:[
+    { text:"It was Mia who solved the problem.", note:"It was + <b>Mia</b> (focus) + who... — emphasises who did it." },
+    { text:"It was the rain that ruined the picnic.", note:"Same frame, emphasising a thing instead of a person." },
+    { text:"It was in Melbourne that they met.", note:"You can emphasise a place too." },
+    { text:"What she wanted was a new phone.", note:"What ... was ... is another way to add emphasis." },
+  ],
+  sort:{
+    prompt:"A cleft sentence is reshaped to stress one idea. Drag each sentence to Cleft or Plain.",
+    zones:["Cleft sentence","Plain sentence"],
+    modelled:[
+      { text:"It was Mia who solved it.", zone:"Cleft sentence", explain:"It was ... who ... reshapes the sentence to stress Mia — that is a cleft." },
+      { text:"Mia solved it.", zone:"Plain sentence", explain:"Plain word order, no special stress — a plain sentence." },
+    ],
+    items:[
+      { text:"It was the rain that ruined the picnic.", zone:"Cleft sentence" },
+      { text:"The rain ruined the picnic.", zone:"Plain sentence" },
+      { text:"What she wanted was a phone.", zone:"Cleft sentence" },
+      { text:"She wanted a phone.", zone:"Plain sentence" },
+      { text:"It was in Melbourne that they met.", zone:"Cleft sentence" },
+      { text:"They met in Melbourne.", zone:"Plain sentence" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"What type of sentence is this?", sentence:"<b>It was</b> the rain <b>that</b> ruined the picnic.", options:["cleft sentence","passive sentence","conditional sentence","simple sentence"], answer:"cleft sentence", explain:"It was ... that ... splits the sentence to emphasise the rain.", tags:["cleft"] },
       { type:"identify", prompt:"What is being emphasised?", sentence:"It was Priya who broke the window.", options:["Priya","the window","broke","who"], answer:"Priya", explain:"The cleft structure puts Priya in the focus position.", tags:["cleft"] },
       { type:"identify", prompt:"What type of sentence is this?", sentence:"<b>What she wanted</b> was a new phone.", options:["cleft sentence","simple sentence","passive sentence","conditional sentence"], answer:"cleft sentence", explain:"What ... was ... is a pseudo-cleft that emphasises a new phone.", tags:["cleft"] },

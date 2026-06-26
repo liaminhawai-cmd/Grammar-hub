@@ -42,11 +42,22 @@
   // Teaching opens with a Learning Intention / Success Criteria slide, then
   // runs an on-rails metalanguage sequence (I-do cards, then a gated check
   // you must pass), and only then unlocks the skill task.
-  let teachPhase = "intention"; // "intention" | "vocab-teach" | "vocab-check" | "skill"
+  // Phases: intention -> metalanguage (drag-sort I do/we do/you do, or the
+  // vocab-teach/vocab-check fallback for cells without sort data) ->
+  // skill-model (stepped worked examples) -> skill (level cards) -> task.
+  let teachPhase = "intention";
   let vocabQueue = [];          // vocab terms for the target cell (I-do cards)
   let vocabIdx = 0;
   let metaChecks = [];          // on-rails recognition checks (one per term)
   let metaIdx = 0;
+  let mlIdoIdx = 0;             // index into sort.modelled (I do)
+  let workedIdx = 0;            // index into worked[] (skill modelling)
+  let sortBank = [];           // shuffled sort items for we do / you do
+  let sortIdx = 0;
+  let sortStreak = 0;
+  let sortErrors = 0;
+  const WEDO_COUNT = 4;        // guided-practice items before the mastery check
+  const YOUDO_TARGET = 5;      // correct-in-a-row to unlock the skill
 
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
@@ -300,8 +311,10 @@
     const record = (skill, i) => { (served[skill.id] = served[skill.id] || new Set()).add(i); };
 
     if (mode === "teaching") {
+      // Sample a couple of items per level so a round stays short; the
+      // mastery loop still brings missed ones back until they're correct.
       getTeachingSkills().forEach((skill) => {
-        skill.items.forEach((item, i) => {
+        sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
           record(skill, i);
           pool.push({ uid: skill.id + "#" + i, skillId: skill.id, skillName: skill.name, category: skill.category, band: skill.band, item });
         });
@@ -526,6 +539,19 @@
       ? `<div class="li-box"><div class="li-eyebrow">Now you can</div>
            <div class="li-text" style="font-size:17px">${linkifyGlossary(escapeHtmlE(g.skillGoal))}</div></div>` : "";
 
+    // Worked examples model the structure across its variations and
+    // permutations — the richer modelling the single example can't show.
+    const worked = (target && target.worked && target.worked.length)
+      ? target.worked
+      : (target ? [{ text: target.example }] : []);
+    const workedHtml = worked.length
+      ? `<div class="li-eyebrow" style="margin-top:6px">Worked examples — the variations</div>
+         <div class="worked-list">` +
+         worked.map((w) => `<div class="worked-row"><div class="worked-text">${w.text}</div>` +
+           (w.note ? `<div class="worked-note">${w.note}</div>` : ``) + `</div>`).join("") +
+         `</div>` : "";
+    const cardsHead = `<div class="li-eyebrow" style="margin-top:14px">This cycle covers</div>`;
+
     const cards = skills.map((s) => {
       const bi = window.BANDS.indexOf(s.band);
       let label, cls;
@@ -544,19 +570,25 @@
       </div>`;
     }).join("");
 
-    $("preteachContent").innerHTML = banner + goalLine + cards;
+    $("preteachContent").innerHTML = banner + goalLine + workedHtml + cardsHead + cards;
     $("preteachNextBtn").style.display = "";
     $("preteachNextBtn").textContent = "Start skill practice";
     show("preteach");
   }
 
-  // Next-button dispatcher across the preteach sub-phases. The vocab-check
-  // phase is excluded on purpose — it advances only when answered correctly.
+  // Next-button dispatcher across the preteach sub-phases. The interactive
+  // phases (vocab-check, ml-wedo, ml-youdo) are excluded on purpose — they
+  // advance only when the learner answers/sorts correctly.
   function onPreteachNext() {
+    const target = targetCell();
     if (teachPhase === "intention") {
-      const target = targetCell();
-      if (target && (target.vocab || []).length) startVocabTeach();
+      if (target && target.sort) startMlIDo();
+      else if (target && (target.vocab || []).length) startVocabTeach();
       else startSkillPreteach();
+    } else if (teachPhase === "ml-ido") {
+      mlIdoIdx++;
+      if (mlIdoIdx < target.sort.modelled.length) renderMlIDo();
+      else startMlWeDo();
     } else if (teachPhase === "vocab-teach") {
       vocabIdx++;
       if (vocabIdx < vocabQueue.length) renderVocabTeach();
@@ -564,6 +596,154 @@
     } else if (teachPhase === "skill") {
       show("task");
       showItem();
+    }
+  }
+
+  /* ---------------- METALANGUAGE: drag-and-drop sorting ----------------
+     Ported from the word-class sorter: gradual release across I do (watch a
+     sort modelled with a think-aloud), We do (guided practice, reteach on a
+     wrong drop), and You do (a mastery streak you must hit to unlock the
+     skill). Pointer-event drag; a wrong/missed drop snaps the tile back. */
+
+  function zoneAtPoint(zones, x, y) {
+    for (const z of zones) {
+      const r = z.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return z;
+    }
+    return null;
+  }
+
+  function makeDraggable(tileEl, zonesContainer, callbacks) {
+    let startX, startY, dragging = false;
+    tileEl.addEventListener("pointerdown", (e) => {
+      if (tileEl.dataset.placed === "true") return;
+      dragging = true;
+      tileEl.setPointerCapture(e.pointerId);
+      startX = e.clientX; startY = e.clientY;
+      tileEl.classList.add("dragging");
+    });
+    tileEl.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      tileEl.style.transform = "translate(" + (e.clientX - startX) + "px," + (e.clientY - startY) + "px)";
+      const zones = zonesContainer.querySelectorAll(".zone");
+      zones.forEach((z) => z.classList.remove("over"));
+      const t = zoneAtPoint(zones, e.clientX, e.clientY);
+      if (t) t.classList.add("over");
+    });
+    tileEl.addEventListener("pointerup", (e) => {
+      if (!dragging) return;
+      dragging = false;
+      tileEl.classList.remove("dragging");
+      const zones = zonesContainer.querySelectorAll(".zone");
+      zones.forEach((z) => z.classList.remove("over"));
+      const t = zoneAtPoint(zones, e.clientX, e.clientY);
+      tileEl.style.transform = "";
+      if (t) callbacks.onDrop(t);
+    });
+  }
+
+  function startMlIDo() {
+    teachPhase = "ml-ido";
+    mlIdoIdx = 0;
+    renderMlIDo();
+  }
+
+  function renderMlIDo() {
+    const sort = targetCell().sort;
+    const m = sort.modelled[mlIdoIdx];
+    const total = sort.modelled.length;
+    $("preteachPhase").textContent = "Sorting · I do";
+    $("preteachProgress").textContent = `Example ${mlIdoIdx + 1} of ${total}`;
+    $("preteachBar").style.width = Math.round(12 + ((mlIdoIdx + 1) / total) * 22) + "%";
+    const zonesHtml = sort.zones.map((z) => {
+      const here = z === m.zone;
+      return `<div class="zone${here ? " correct" : ""}"><div class="zone-label">${escapeHtmlE(z)}</div>` +
+        (here ? `<div class="rested">${escapeHtmlE(m.text)}</div>` : ``) + `</div>`;
+    }).join("");
+    $("preteachContent").innerHTML =
+      `<div class="teach-phase">Watch how I sort this</div>` +
+      `<div class="sort-prompt">${escapeHtmlE(sort.prompt)}</div>` +
+      `<div class="zones">${zonesHtml}</div>` +
+      `<div class="teach-feedback good">${escapeHtmlE(m.explain)}</div>`;
+    $("preteachNextBtn").style.display = "";
+    $("preteachNextBtn").textContent = mlIdoIdx < total - 1 ? "Next example" : "Your turn (We do)";
+  }
+
+  function startMlWeDo() {
+    teachPhase = "ml-wedo";
+    sortBank = shuffle(targetCell().sort.items.slice()).slice(0, WEDO_COUNT);
+    sortIdx = 0;
+    renderSortPractice();
+  }
+
+  function startMlYouDo() {
+    teachPhase = "ml-youdo";
+    sortBank = shuffle(targetCell().sort.items.slice());
+    sortIdx = 0; sortStreak = 0; sortErrors = 0;
+    renderSortPractice();
+  }
+
+  // Hint for a wrong drop: reuse the matching zone's modelled think-aloud.
+  function sortReteach(item) {
+    const m = (targetCell().sort.modelled || []).find((x) => x.zone === item.zone);
+    return m ? escapeHtmlE(m.explain) : "";
+  }
+
+  function renderSortPractice() {
+    const youdo = teachPhase === "ml-youdo";
+    const sort = targetCell().sort;
+    if (sortIdx >= sortBank.length) { sortBank = shuffle(sort.items.slice()); sortIdx = 0; }
+    const item = sortBank[sortIdx];
+
+    $("preteachPhase").textContent = youdo ? "Sorting · you do" : "Sorting · we do";
+    if (youdo) {
+      $("preteachProgress").textContent = "Keep your streak going";
+      $("preteachBar").style.width = Math.round(58 + (Math.min(sortStreak, YOUDO_TARGET) / YOUDO_TARGET) * 20) + "%";
+    } else {
+      $("preteachProgress").textContent = `Sort ${sortIdx + 1} of ${sortBank.length}`;
+      $("preteachBar").style.width = Math.round(36 + ((sortIdx + 1) / sortBank.length) * 20) + "%";
+    }
+    $("preteachNextBtn").style.display = "none";
+
+    const zonesHtml = sort.zones.map((z) =>
+      `<div class="zone" data-zone="${escapeHtmlE(z)}"><div class="zone-label">${escapeHtmlE(z)}</div></div>`).join("");
+    $("preteachContent").innerHTML =
+      `<div class="teach-phase">${youdo ? "Sort it yourself" : "Now you try"}</div>` +
+      `<div class="sort-prompt">${escapeHtmlE(sort.prompt)}</div>` +
+      `<div class="sort-stage"><span class="sort-tile" id="sortTile">${escapeHtmlE(item.text)}</span></div>` +
+      `<div class="zones" id="sortZones">${zonesHtml}</div>` +
+      `<div class="teach-feedback" id="sortFeedback"></div>` +
+      `<div class="sort-streak" id="sortStreak">${youdo ? `Correct in a row: ${sortStreak} / ${YOUDO_TARGET}` : ``}</div>`;
+
+    makeDraggable($("sortTile"), $("sortZones"), { onDrop: (zoneEl) => onSortDrop(zoneEl, $("sortTile"), item) });
+  }
+
+  function onSortDrop(zoneEl, tile, item) {
+    const fb = $("sortFeedback");
+    const youdo = teachPhase === "ml-youdo";
+    if (zoneEl.dataset.zone === item.zone) {
+      tile.dataset.placed = "true";
+      tile.classList.add("placed");
+      zoneEl.classList.add("correct");
+      zoneEl.insertAdjacentHTML("beforeend", `<div class="rested">${escapeHtmlE(item.text)}</div>`);
+      fb.className = "teach-feedback good";
+      fb.textContent = `✓ Yes — that belongs in “${item.zone}”.`;
+      if (youdo) {
+        sortStreak++;
+        const sEl = $("sortStreak"); if (sEl) sEl.textContent = `Correct in a row: ${sortStreak} / ${YOUDO_TARGET}`;
+        if (sortStreak >= YOUDO_TARGET && sortErrors <= 1) { setTimeout(startSkillPreteach, 950); return; }
+      }
+      setTimeout(() => {
+        sortIdx++;
+        if (!youdo && sortIdx >= sortBank.length) { startMlYouDo(); return; }
+        renderSortPractice();
+      }, 850);
+    } else {
+      zoneEl.classList.add("over");
+      setTimeout(() => zoneEl.classList.remove("over"), 300);
+      fb.className = "teach-feedback bad";
+      fb.innerHTML = `Not quite — that belongs in “${escapeHtmlE(item.zone)}”. ${sortReteach(item)} Try again.`;
+      if (youdo) sortErrors++;
     }
   }
 
