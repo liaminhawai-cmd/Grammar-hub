@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Class Sorting — Noun, Verb, Adjective</title>
+<style>
+  :root {
+    --accent: #8C072D;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: Aptos, Arial, Helvetica, sans-serif;
+    color: #000;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+  h1.page-title {
+    color: var(--accent);
+    font-size: 1.6rem;
+    margin: 0 0 4px;
+  }
+  .phase-heading {
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+  }
+  .progress {
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+  }
+  .sentence-display {
+    font-size: 1.4rem;
+    line-height: 2.4;
+    margin: 20px 0;
+  }
+  .sentence-display .word {
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .sentence-display .word.active {
+    color: var(--accent);
+    font-weight: bold;
+  }
+  .explanation-box {
+    min-height: 70px;
+    font-size: 1.1rem;
+    margin: 16px 0;
+    line-height: 1.5;
+  }
+  button {
+    font-family: Aptos, Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    padding: 12px 22px;
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
+    border-radius: 6px;
+    cursor: pointer;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  button:hover:not(:disabled) {
+    background: #f2f2f2;
+  }
+  button:disabled {
+    color: #888;
+    border-color: #ccc;
+    cursor: not-allowed;
+  }
+  button.accent {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .hint-text {
+    font-size: 1.05rem;
+    margin: 10px 0;
+  }
+  /* Sentence context display for We Do / You Do / Harder — words sit inline
+     as plain text, except the word(s) that are draggable tiles. */
+  .sentence-context {
+    margin: 24px 0;
+    min-height: 70px;
+    font-size: 1.3rem;
+    line-height: 2.6;
+  }
+  .sentence-context .word {
+    padding: 2px 2px;
+  }
+  .tile {
+    touch-action: none;
+    user-select: none;
+    font-size: 1.15rem;
+    padding: 10px 16px;
+    border: 2px solid #000;
+    border-radius: 8px;
+    background: #fff;
+    cursor: grab;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    transition: transform 0.22s ease;
+    margin: 4px 2px;
+  }
+  .tile.dragging {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+    cursor: grabbing;
+    z-index: 50;
+    transition: none;
+  }
+  .tile[data-placed="true"] {
+    visibility: hidden;
+  }
+  /* Drop zones */
+  .zones {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+  }
+  .zone {
+    flex: 1 1 150px;
+    min-height: 110px;
+    border: 1px solid #000;
+    border-radius: 0;
+    padding: 10px;
+    text-align: center;
+  }
+  .zone-label {
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .zone.over {
+    border: 2px solid var(--accent);
+  }
+  .feedback-box {
+    min-height: 60px;
+    font-size: 1.1rem;
+    margin: 14px 0;
+    line-height: 1.5;
+  }
+  .streak-line {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+  .completion-screen {
+    text-align: center;
+    padding: 40px 10px;
+  }
+  .completion-screen h2 {
+    color: var(--accent);
+  }
+  .hidden {
+    display: none !important;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1 class="page-title">Word Classes: Noun, Verb, Adjective</h1>
+
+  <!-- ================= PHASE 1: I DO ================= -->
+  <section id="phase-i-do">
+    <h2 class="phase-heading">I Do</h2>
+    <div class="progress" id="i-do-progress"></div>
+    <div class="sentence-display" id="i-do-sentence"></div>
+    <div class="explanation-box" id="i-do-explanation"></div>
+    <div class="btn-row">
+      <button id="i-do-next" class="accent">Next</button>
+    </div>
+  </section>
+
+  <!-- ================= PHASE 2: WE DO ================= -->
+  <section id="phase-we-do" class="hidden">
+    <h2 class="phase-heading">We Do</h2>
+    <div class="progress" id="we-do-progress"></div>
+    <div id="we-do-sentence"></div>
+    <div class="zones" id="we-do-zones"></div>
+    <div class="feedback-box" id="we-do-feedback"></div>
+    <div class="hint-text hidden" id="we-do-hint-text">Does this word name something, show an action, or describe something?</div>
+    <div class="btn-row">
+      <button id="we-do-hint">Hint</button>
+    </div>
+  </section>
+
+  <!-- ================= PHASE 3: YOU DO ================= -->
+  <section id="phase-you-do" class="hidden">
+    <h2 class="phase-heading">You Do</h2>
+    <div class="progress" id="you-do-progress"></div>
+    <div class="streak-line" id="you-do-streak"></div>
+    <div id="you-do-sentence"></div>
+    <div class="zones" id="you-do-zones"></div>
+    <div class="feedback-box" id="you-do-feedback"></div>
+  </section>
+
+  <!-- ================= COMPLETION SCREEN (You Do) ================= -->
+  <section id="phase-complete" class="hidden">
+    <div class="completion-screen">
+      <h2>You've got this!</h2>
+      <p>You correctly sorted 8 words in a row with no more than 1 mistake.</p>
+      <div class="btn-row" style="justify-content:center;">
+        <button id="try-harder-btn" class="accent">Try a harder set</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PHASE 4: HARDER SET ================= -->
+  <section id="phase-harder" class="hidden">
+    <h2 class="phase-heading">Harder Set</h2>
+    <div class="progress" id="harder-progress"></div>
+    <div class="streak-line" id="harder-streak"></div>
+    <div id="harder-sentence"></div>
+    <div class="zones" id="harder-zones"></div>
+    <div class="feedback-box" id="harder-feedback"></div>
+  </section>
+
+  <!-- ================= COMPLETION SCREEN (Harder) ================= -->
+  <section id="phase-harder-complete" class="hidden">
+    <div class="completion-screen">
+      <h2>Excellent work!</h2>
+      <p>You correctly sorted 8 words in a row on the harder set, with no more than 1 mistake.</p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =====================================================================
+   CONTENT — EDIT THESE ARRAYS TO CHANGE THE SENTENCES USED IN EACH PHASE
+   =====================================================================
+
+   Each sentence is a list of word objects:
+     { text: "the word as it appears", cls: "noun" | "verb" | "adjective" | "other" }
+
+   Word class "other" covers small words (the, a, and, quietly, etc.) that
+   are not part of this activity. They appear as plain context in I Do,
+   and as plain text or distractor tiles in We Do / You Do / Harder — they
+   are never the *target* of a drag task.
+
+   You can add, remove, or change sentences freely. Keep the same format:
+   an array of sentence-arrays, each made of word objects.
+
+   TASK TYPES generated automatically from each sentence:
+   - "Sort the highlighted word" — one word becomes a tile, dropped into
+     one of three zones (Noun / Verb / Adjective).
+   - "Find the only ___" — every word becomes a tile and there is a single
+     zone for one word class. This is only generated automatically when a
+     sentence has exactly one word of that class, so the task is never
+     ambiguous.
+*/
+
+// ---------- PHASE 1: I DO (worked examples) ----------
+// 2 sentences, each word shown one at a time with a think-aloud explanation.
+const I_DO_SENTENCES = [
+  [
+    { text: "The",      cls: "other" },
+    { text: "old",       cls: "adjective", explain: "I know this describes something — it tells me more about the man. That makes it an adjective." },
+    { text: "man",       cls: "noun",      explain: "I know this names a person. It is not an action and it is not describing — it is the person himself. That makes it a noun." },
+    { text: "tells",     cls: "verb",      explain: "I know this shows what is happening — the man is doing something. That makes it a verb, not a person, place, or thing." },
+    { text: "a",         cls: "other" },
+    { text: "story.",    cls: "noun",      explain: "I know this names a thing. It is not an action and it is not describing — it is the thing being told. That makes it a noun." }
+  ],
+  [
+    { text: "Edward",    cls: "noun",      explain: "I know this names a person. It is not an action and it is not describing — it is who is doing the cutting. That makes it a noun." },
+    { text: "cuts",      cls: "verb",      explain: "I know this shows what is happening — Edward is doing something right now. That makes it a verb." },
+    { text: "the",       cls: "other" },
+    { text: "tall",      cls: "adjective", explain: "I know this describes something — it tells me more about the bushes. That makes it an adjective." },
+    { text: "bushes",    cls: "noun",      explain: "I know this names a thing. It is not an action and it is not describing — it is the thing being cut. That makes it a noun." },
+    { text: "carefully.",cls: "other" }
+  ]
+];
+
+// ---------- PHASE 2: WE DO (guided practice) ----------
+// A wider bank of sentences. Order and word/task choice are shuffled at
+// runtime, so students do not see the same sequence twice.
+const WE_DO_SENTENCES = [
+  [
+    { text: "The",     cls: "other" },
+    { text: "young",    cls: "adjective" },
+    { text: "boy",      cls: "noun" },
+    { text: "builds",   cls: "verb" },
+    { text: "a",        cls: "other" },
+    { text: "robot.",   cls: "noun" }
+  ],
+  [
+    { text: "Edward",   cls: "noun" },
+    { text: "shapes",   cls: "verb" },
+    { text: "the",      cls: "other" },
+    { text: "green",    cls: "adjective" },
+    { text: "hedge.",   cls: "noun" }
+  ],
+  [
+    { text: "The",      cls: "other" },
+    { text: "brave",     cls: "adjective" },
+    { text: "girl",      cls: "noun" },
+    { text: "rides",     cls: "verb" },
+    { text: "a",         cls: "other" },
+    { text: "bicycle.",  cls: "noun" }
+  ],
+  [
+    { text: "Edward",   cls: "noun" },
+    { text: "trims",     cls: "verb" },
+    { text: "a",         cls: "other" },
+    { text: "tall",      cls: "adjective" },
+    { text: "tree.",     cls: "noun" }
+  ]
+];
+
+// ---------- PHASE 3: YOU DO (independent mastery check) ----------
+// Fresh sentences, different words again.
+const YOU_DO_SENTENCES = [
+  [
+    { text: "The",      cls: "other" },
+    { text: "quiet",     cls: "adjective" },
+    { text: "neighbour", cls: "noun" },
+    { text: "watches",   cls: "verb" },
+    { text: "Edward.",   cls: "noun" }
+  ],
+  [
+    { text: "Edward",   cls: "noun" },
+    { text: "trims",     cls: "verb" },
+    { text: "the",       cls: "other" },
+    { text: "strange",   cls: "adjective" },
+    { text: "topiary.",  cls: "noun" }
+  ],
+  [
+    { text: "A",         cls: "other" },
+    { text: "small",     cls: "adjective" },
+    { text: "dog",       cls: "noun" },
+    { text: "barks",     cls: "verb" },
+    { text: "loudly.",   cls: "other" }
+  ],
+  [
+    { text: "The",       cls: "other" },
+    { text: "curious",   cls: "adjective" },
+    { text: "girl",      cls: "noun" },
+    { text: "visits",    cls: "verb" },
+    { text: "Edward.",   cls: "noun" }
+  ],
+  [
+    { text: "Edward",    cls: "noun" },
+    { text: "carves",    cls: "verb" },
+    { text: "a",         cls: "other" },
+    { text: "wooden",    cls: "adjective" },
+    { text: "swan.",     cls: "noun" }
+  ],
+  [
+    { text: "The",       cls: "other" },
+    { text: "nervous",   cls: "adjective" },
+    { text: "boy",       cls: "noun" },
+    { text: "holds",     cls: "verb" },
+    { text: "a",         cls: "other" },
+    { text: "flower.",   cls: "noun" }
+  ]
+];
+
+// ---------- PHASE 3 (RETRY SET): used if the student makes 2+ errors ----------
+// Same difficulty, different words, so the student gets fresh repetition.
+const YOU_DO_RETRY_SENTENCES = [
+  [
+    { text: "The",     cls: "other" },
+    { text: "kind",     cls: "adjective" },
+    { text: "woman",    cls: "noun" },
+    { text: "smiles",   cls: "verb" },
+    { text: "at",       cls: "other" },
+    { text: "Edward.",  cls: "noun" }
+  ],
+  [
+    { text: "Edward",   cls: "noun" },
+    { text: "carves",   cls: "verb" },
+    { text: "a",        cls: "other" },
+    { text: "tall",     cls: "adjective" },
+    { text: "statue.",  cls: "noun" }
+  ],
+  [
+    { text: "The",       cls: "other" },
+    { text: "children",  cls: "noun" },
+    { text: "watch",     cls: "verb" },
+    { text: "a",         cls: "other" },
+    { text: "bright",    cls: "adjective" },
+    { text: "sculpture.",cls: "noun" }
+  ],
+  [
+    { text: "A",          cls: "other" },
+    { text: "gentle",     cls: "adjective" },
+    { text: "breeze",     cls: "noun" },
+    { text: "moves",      cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "leaves.",    cls: "noun" }
+  ],
+  [
+    { text: "Edward",     cls: "noun" },
+    { text: "paints",     cls: "verb" },
+    { text: "a",          cls: "other" },
+    { text: "wooden",     cls: "adjective" },
+    { text: "fence.",     cls: "noun" }
+  ],
+  [
+    { text: "The",        cls: "other" },
+    { text: "happy",      cls: "adjective" },
+    { text: "crowd",      cls: "noun" },
+    { text: "claps",      cls: "verb" },
+    { text: "loudly.",    cls: "other" }
+  ]
+];
+
+// ---------- PHASE 5: HARDER SET ----------
+// More sentences per item, and several sentences deliberately contain two
+// nouns or two adjectives. The "find the only ___" task only ever appears
+// when a class occurs exactly once, so on these sentences students will
+// mostly see the "sort the highlighted word" task instead — that is what
+// makes this set harder, not new word classes.
+const HARDER_SENTENCES = [
+  [
+    { text: "The",       cls: "other" },
+    { text: "tall",       cls: "adjective" },
+    { text: "quiet",      cls: "adjective" },
+    { text: "man",        cls: "noun" },
+    { text: "trims",      cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "green",      cls: "adjective" },
+    { text: "hedge.",     cls: "noun" }
+  ],
+  [
+    { text: "Edward",    cls: "noun" },
+    { text: "and",        cls: "other" },
+    { text: "the",        cls: "other" },
+    { text: "boy",        cls: "noun" },
+    { text: "build",      cls: "verb" },
+    { text: "a",          cls: "other" },
+    { text: "strange",    cls: "adjective" },
+    { text: "machine.",   cls: "noun" }
+  ],
+  [
+    { text: "The",       cls: "other" },
+    { text: "old",        cls: "adjective" },
+    { text: "neighbours", cls: "noun" },
+    { text: "quietly",    cls: "other" },
+    { text: "watch",      cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "strange",    cls: "adjective" },
+    { text: "garden.",    cls: "noun" }
+  ],
+  [
+    { text: "Edward",    cls: "noun" },
+    { text: "carefully",  cls: "other" },
+    { text: "shapes",     cls: "verb" },
+    { text: "a",          cls: "other" },
+    { text: "tall",       cls: "adjective" },
+    { text: "green",      cls: "adjective" },
+    { text: "statue.",    cls: "noun" }
+  ],
+  [
+    { text: "The",       cls: "other" },
+    { text: "brave",      cls: "adjective" },
+    { text: "girl",       cls: "noun" },
+    { text: "and",        cls: "other" },
+    { text: "the",        cls: "other" },
+    { text: "dog",        cls: "noun" },
+    { text: "explore",    cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "dark",       cls: "adjective" },
+    { text: "forest.",    cls: "noun" }
+  ],
+  [
+    { text: "Edward",    cls: "noun" },
+    { text: "quietly",    cls: "other" },
+    { text: "trims",      cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "old",        cls: "adjective" },
+    { text: "twisted",    cls: "adjective" },
+    { text: "branches.",  cls: "noun" }
+  ]
+];
+
+// ---------- HARDER SET (RETRY): used if the student makes 2+ errors ----------
+const HARDER_RETRY_SENTENCES = [
+  [
+    { text: "The",       cls: "other" },
+    { text: "shy",         cls: "adjective" },
+    { text: "boy",         cls: "noun" },
+    { text: "and",         cls: "other" },
+    { text: "the",         cls: "other" },
+    { text: "small",       cls: "adjective" },
+    { text: "dog",         cls: "noun" },
+    { text: "cross",       cls: "verb" },
+    { text: "the",         cls: "other" },
+    { text: "busy",        cls: "adjective" },
+    { text: "street.",     cls: "noun" }
+  ],
+  [
+    { text: "Edward",    cls: "noun" },
+    { text: "gently",     cls: "other" },
+    { text: "paints",     cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "old",        cls: "adjective" },
+    { text: "broken",     cls: "adjective" },
+    { text: "fence.",     cls: "noun" }
+  ],
+  [
+    { text: "The",       cls: "other" },
+    { text: "clever",     cls: "adjective" },
+    { text: "girl",       cls: "noun" },
+    { text: "builds",     cls: "verb" },
+    { text: "a",          cls: "other" },
+    { text: "tall",       cls: "adjective" },
+    { text: "wooden",     cls: "adjective" },
+    { text: "tower.",     cls: "noun" }
+  ],
+  [
+    { text: "Edward",    cls: "noun" },
+    { text: "and",        cls: "other" },
+    { text: "the",        cls: "other" },
+    { text: "children",   cls: "noun" },
+    { text: "plant",      cls: "verb" },
+    { text: "bright",     cls: "adjective" },
+    { text: "flowers",    cls: "noun" },
+    { text: "together.",  cls: "other" }
+  ],
+  [
+    { text: "The",       cls: "other" },
+    { text: "tired",      cls: "adjective" },
+    { text: "man",        cls: "noun" },
+    { text: "slowly",     cls: "other" },
+    { text: "closes",     cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "heavy",      cls: "adjective" },
+    { text: "gate.",      cls: "noun" }
+  ],
+  [
+    { text: "Edward",    cls: "noun" },
+    { text: "boldly",     cls: "other" },
+    { text: "trims",      cls: "verb" },
+    { text: "the",        cls: "other" },
+    { text: "tangled",    cls: "adjective" },
+    { text: "green",      cls: "adjective" },
+    { text: "vines.",     cls: "noun" }
+  ]
+];
+
+/* ===================================================================== */
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// ---------- Helper: function-first explanation generator ----------
+function functionFirstExplanation(cls) {
+  const map = {
+    noun:      "This names a person, place, or thing — not an action, not a description. That makes it a noun.",
+    verb:      "This shows what is happening, an action — not a person, place, or thing. That makes it a verb.",
+    adjective: "This describes something, tells us more about it — not an action, not a thing. That makes it an adjective."
+  };
+  return map[cls];
+}
+
+function wrongDropExplanation(actualCls) {
+  const map = {
+    noun:      "This word names something — a person, place, or thing. It does not show an action, and it does not describe. So it is a noun.",
+    verb:      "This word shows an action, what is happening — not a thing. So it is a verb.",
+    adjective: "This word describes something — it does not name a thing and it does not show an action. So it is an adjective.",
+    other:     "This is a small linking word. It does not name a thing, show an action, or describe something on its own."
+  };
+  return map[actualCls];
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr;
+}
+
+/* Builds a shuffled, mixed list of practice items from a bank of sentences.
+   Two task types come out of each sentence:
+   - "triple": one taggable word becomes a tile, sorted into Noun/Verb/Adjective.
+   - "single": all words become tiles, sorted into a single zone for one word
+     class — only generated when that class occurs exactly once in the
+     sentence, so the task is never ambiguous. */
+function buildItems(sentences) {
+  const items = [];
+  sentences.forEach((sentence) => {
+    sentence.forEach((word, wordIdx) => {
+      if (word.cls !== "other") {
+        items.push({ type: "triple", sentence, wordIdx });
+      }
+    });
+    ["noun", "verb", "adjective"].forEach((cls) => {
+      const count = sentence.filter((w) => w.cls === cls).length;
+      if (count === 1) {
+        items.push({ type: "single", sentence, targetCls: cls });
+      }
+    });
+  });
+  return shuffle(items);
+}
+
+/* =====================================================================
+   PHASE 1: I DO
+   ===================================================================== */
+(function setupIDo() {
+  const steps = [];
+  I_DO_SENTENCES.forEach((sentence) => {
+    sentence.forEach((word, wIdx) => {
+      if (word.cls !== "other") steps.push({ sentence, wIdx });
+    });
+  });
+
+  let stepIndex = 0;
+  const sentenceEl = document.getElementById("i-do-sentence");
+  const explanationEl = document.getElementById("i-do-explanation");
+  const progressEl = document.getElementById("i-do-progress");
+  const nextBtn = document.getElementById("i-do-next");
+
+  function render() {
+    const step = steps[stepIndex];
+    sentenceEl.innerHTML = "";
+    step.sentence.forEach((word, idx) => {
+      const span = document.createElement("span");
+      span.className = "word" + (idx === step.wIdx ? " active" : "");
+      span.textContent = word.text + " ";
+      sentenceEl.appendChild(span);
+    });
+    explanationEl.textContent = step.sentence[step.wIdx].explain;
+    progressEl.textContent = "Example " + (stepIndex + 1) + " of " + steps.length;
+    nextBtn.textContent = (stepIndex === steps.length - 1) ? "Start We Do" : "Next";
+  }
+
+  nextBtn.addEventListener("click", () => {
+    if (stepIndex < steps.length - 1) {
+      stepIndex++;
+      render();
+    } else {
+      document.getElementById("phase-i-do").classList.add("hidden");
+      document.getElementById("phase-we-do").classList.remove("hidden");
+      startWeDo();
+    }
+  });
+
+  render();
+})();
+
+/* =====================================================================
+   DRAG ENGINE (pointer events)
+   Uses a CSS transform to move a tile visually while it stays in its
+   original place in the document flow — so the rest of the sentence does
+   not reflow while dragging, and a wrong/missed drop can snap back.
+   ===================================================================== */
+function makeDraggable(tileEl, zonesContainer, callbacks) {
+  let startX, startY, dragging = false;
+
+  tileEl.addEventListener("pointerdown", (e) => {
+    if (tileEl.dataset.placed === "true") return;
+    dragging = true;
+    tileEl.setPointerCapture(e.pointerId);
+    startX = e.clientX;
+    startY = e.clientY;
+    tileEl.classList.add("dragging");
+  });
+
+  tileEl.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    tileEl.style.transform = "translate(" + dx + "px, " + dy + "px)";
+
+    const zones = zonesContainer.querySelectorAll(".zone");
+    zones.forEach((z) => z.classList.remove("over"));
+    const target = zoneAtPoint(zones, e.clientX, e.clientY);
+    if (target) target.classList.add("over");
+  });
+
+  tileEl.addEventListener("pointerup", (e) => {
+    if (!dragging) return;
+    dragging = false;
+    tileEl.classList.remove("dragging");
+    const zones = zonesContainer.querySelectorAll(".zone");
+    zones.forEach((z) => z.classList.remove("over"));
+    const target = zoneAtPoint(zones, e.clientX, e.clientY);
+
+    tileEl.style.transform = "";
+
+    if (target) {
+      callbacks.onDrop(target);
+    } else {
+      callbacks.onMiss();
+    }
+  });
+
+  function zoneAtPoint(zones, x, y) {
+    for (const z of zones) {
+      const r = z.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return z;
+    }
+    return null;
+  }
+}
+
+function makeZoneEl(cls) {
+  const z = document.createElement("div");
+  z.className = "zone";
+  z.dataset.class = cls;
+  const label = document.createElement("div");
+  label.className = "zone-label";
+  label.textContent = capitalize(cls);
+  z.appendChild(label);
+  return z;
+}
+
+/* Renders one practice item (triple or single task type) into the given
+   sentence/zones containers, and wires up drag behaviour. `callbacks` is
+   { onCorrect(message), onWrong(message) }. */
+function renderItem(item, sentenceEl, zonesEl, callbacks) {
+  sentenceEl.innerHTML = "";
+  zonesEl.innerHTML = "";
+
+  if (item.type === "triple") {
+    const word = item.sentence[item.wordIdx];
+    const wrap = document.createElement("div");
+    wrap.className = "sentence-context";
+    let tile = null;
+    item.sentence.forEach((w, idx) => {
+      if (idx === item.wordIdx) {
+        tile = document.createElement("span");
+        tile.className = "tile";
+        tile.textContent = w.text;
+        wrap.appendChild(tile);
+        wrap.appendChild(document.createTextNode(" "));
+      } else {
+        const span = document.createElement("span");
+        span.className = "word";
+        span.textContent = w.text + " ";
+        wrap.appendChild(span);
+      }
+    });
+    sentenceEl.appendChild(wrap);
+
+    ["noun", "verb", "adjective"].forEach((cls) => zonesEl.appendChild(makeZoneEl(cls)));
+
+    makeDraggable(tile, zonesEl, {
+      onDrop: (zoneEl) => {
+        const chosen = zoneEl.dataset.class;
+        if (chosen === word.cls) {
+          tile.dataset.placed = "true";
+          callbacks.onCorrect(functionFirstExplanation(word.cls));
+        } else {
+          callbacks.onWrong(wrongDropExplanation(word.cls));
+        }
+      },
+      onMiss: () => {}
+    });
+
+  } else {
+    // "single" task: every word is a tile, one zone for the target class.
+    const instr = document.createElement("div");
+    instr.className = "hint-text";
+    instr.textContent = "Find the only word that is a " + item.targetCls + " and drag it into the box.";
+    sentenceEl.appendChild(instr);
+
+    const wrap = document.createElement("div");
+    wrap.className = "sentence-context";
+    sentenceEl.appendChild(wrap);
+
+    zonesEl.appendChild(makeZoneEl(item.targetCls));
+
+    const tiles = [];
+    item.sentence.forEach((w) => {
+      const tile = document.createElement("span");
+      tile.className = "tile";
+      tile.textContent = w.text;
+      wrap.appendChild(tile);
+      wrap.appendChild(document.createTextNode(" "));
+      tiles.push({ tileEl: tile, word: w });
+    });
+
+    let resolved = false;
+    tiles.forEach(({ tileEl, word }) => {
+      makeDraggable(tileEl, zonesEl, {
+        onDrop: () => {
+          if (resolved) return;
+          if (word.cls === item.targetCls) {
+            resolved = true;
+            tiles.forEach((t) => { t.tileEl.dataset.placed = "true"; });
+            callbacks.onCorrect(functionFirstExplanation(word.cls));
+          } else {
+            callbacks.onWrong(wrongDropExplanation(word.cls));
+          }
+        },
+        onMiss: () => {}
+      });
+    });
+  }
+}
+
+/* =====================================================================
+   PHASE 2: WE DO — steps through every item once, in shuffled order.
+   ===================================================================== */
+let weDoItems = [];
+let weDoIndex = 0;
+
+function startWeDo() {
+  weDoItems = buildItems(WE_DO_SENTENCES);
+  weDoIndex = 0;
+  renderWeDoItem();
+}
+
+function renderWeDoItem() {
+  const sentenceEl = document.getElementById("we-do-sentence");
+  const zonesEl = document.getElementById("we-do-zones");
+  const progressEl = document.getElementById("we-do-progress");
+  const feedbackEl = document.getElementById("we-do-feedback");
+  const hintTextEl = document.getElementById("we-do-hint-text");
+
+  feedbackEl.textContent = "";
+  hintTextEl.classList.add("hidden");
+
+  if (weDoIndex >= weDoItems.length) {
+    document.getElementById("phase-we-do").classList.add("hidden");
+    document.getElementById("phase-you-do").classList.remove("hidden");
+    youDoEngine.start(false);
+    return;
+  }
+
+  progressEl.textContent = "Word " + (weDoIndex + 1) + " of " + weDoItems.length;
+
+  renderItem(weDoItems[weDoIndex], sentenceEl, zonesEl, {
+    onCorrect: (msg) => {
+      feedbackEl.textContent = msg;
+      setTimeout(() => {
+        weDoIndex++;
+        renderWeDoItem();
+      }, 1400);
+    },
+    onWrong: (msg) => {
+      feedbackEl.textContent = msg;
+    }
+  });
+}
+
+document.getElementById("we-do-hint").addEventListener("click", () => {
+  document.getElementById("we-do-hint-text").classList.remove("hidden");
+});
+
+/* =====================================================================
+   MASTERY ENGINE — shared by You Do and the Harder set.
+   Mastery-gated, not time-gated: 8 consecutive correct drops with no more
+   than 1 error completes the set. 2+ errors before reaching the target
+   restarts on a fresh "retry" sentence bank at the same difficulty.
+   ===================================================================== */
+function createMasteryEngine(cfg) {
+  const MASTERY_TARGET = 8;
+  const MAX_ERRORS_ALLOWED = 1;
+
+  let currentSentences = cfg.primarySentences;
+  let items = [];
+  let idx = 0;
+  let streak = 0;
+  let errors = 0;
+
+  function start(useRetry) {
+    currentSentences = useRetry ? cfg.retrySentences : cfg.primarySentences;
+    items = buildItems(currentSentences);
+    idx = 0;
+    streak = 0;
+    errors = 0;
+    render();
+  }
+
+  function render() {
+    const sentenceEl = document.getElementById(cfg.sentenceElId);
+    const zonesEl = document.getElementById(cfg.zonesElId);
+    const progressEl = document.getElementById(cfg.progressElId);
+    const feedbackEl = document.getElementById(cfg.feedbackElId);
+    const streakEl = document.getElementById(cfg.streakElId);
+
+    feedbackEl.textContent = "";
+
+    if (idx >= items.length) {
+      items = buildItems(currentSentences);
+      idx = 0;
+    }
+
+    progressEl.textContent = "Word " + (streak + errors + 1);
+    streakEl.textContent = "Correct in a row: " + streak + " / " + MASTERY_TARGET +
+      "   (mistakes this attempt: " + errors + ")";
+
+    renderItem(items[idx], sentenceEl, zonesEl, {
+      onCorrect: (msg) => {
+        streak++;
+        feedbackEl.textContent = msg;
+        if (streak >= MASTERY_TARGET && errors <= MAX_ERRORS_ALLOWED) {
+          setTimeout(cfg.onMastery, 900);
+          return;
+        }
+        setTimeout(() => {
+          idx++;
+          render();
+        }, 900);
+      },
+      onWrong: (msg) => {
+        errors++;
+        feedbackEl.textContent = "Not quite. " + msg;
+        if (errors >= 2) {
+          setTimeout(() => start(true), 1600);
+        }
+      }
+    });
+  }
+
+  return { start };
+}
+
+const youDoEngine = createMasteryEngine({
+  primarySentences: YOU_DO_SENTENCES,
+  retrySentences: YOU_DO_RETRY_SENTENCES,
+  sentenceElId: "you-do-sentence",
+  zonesElId: "you-do-zones",
+  progressElId: "you-do-progress",
+  feedbackElId: "you-do-feedback",
+  streakElId: "you-do-streak",
+  onMastery: showCompletion
+});
+
+const harderEngine = createMasteryEngine({
+  primarySentences: HARDER_SENTENCES,
+  retrySentences: HARDER_RETRY_SENTENCES,
+  sentenceElId: "harder-sentence",
+  zonesElId: "harder-zones",
+  progressElId: "harder-progress",
+  feedbackElId: "harder-feedback",
+  streakElId: "harder-streak",
+  onMastery: showHarderCompletion
+});
+
+function showCompletion() {
+  document.getElementById("phase-you-do").classList.add("hidden");
+  document.getElementById("phase-complete").classList.remove("hidden");
+}
+
+function showHarderCompletion() {
+  document.getElementById("phase-harder").classList.add("hidden");
+  document.getElementById("phase-harder-complete").classList.remove("hidden");
+}
+
+document.getElementById("try-harder-btn").addEventListener("click", () => {
+  document.getElementById("phase-complete").classList.add("hidden");
+  document.getElementById("phase-harder").classList.remove("hidden");
+  harderEngine.start(false);
+});
+</script>
+</body>
+</html>
