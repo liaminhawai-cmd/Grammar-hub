@@ -38,10 +38,15 @@
   let lastServed = {};    // skillId -> Set of item indices served last round
   const SAMPLE_PER_SKILL = 2;
 
-  // ---- teaching mode state ----
-  let teachPhase = "vocab";   // "vocab" | "skill" | "assess"
-  let vocabQueue = [];        // vocab items to preteach
+  // ---- teaching mode preteach state ----
+  // Teaching opens with a Learning Intention / Success Criteria slide, then
+  // runs an on-rails metalanguage sequence (I-do cards, then a gated check
+  // you must pass), and only then unlocks the skill task.
+  let teachPhase = "intention"; // "intention" | "vocab-teach" | "vocab-check" | "skill"
+  let vocabQueue = [];          // vocab terms for the target cell (I-do cards)
   let vocabIdx = 0;
+  let metaChecks = [];          // on-rails recognition checks (one per term)
+  let metaIdx = 0;
 
   function show(name) {
     Object.values(screens).forEach((s) => s.classList.remove("active"));
@@ -314,8 +319,8 @@
       attempts = {}; correctEver = {}; firstPass = {}; log = [];
       currentSet = [...pool]; nextSet = []; idx = 0; round = 1;
 
-      // start with vocab preteach for the target cell
-      startVocabPreteach();
+      // open the teaching cycle: learning goals -> metalanguage -> skill
+      startTeaching();
     } else {
       activeTargets().forEach((skill) => {
         sampleItems(skill, SAMPLE_PER_SKILL).forEach(({ item, i }) => {
@@ -339,66 +344,189 @@
     }
   }
 
-  /* ---------------- VOCAB PRETEACH (teaching mode) ---------------- */
+  /* ---------------- TEACHING PRETEACH (gradual release) ----------------
+     Flow driven through one screen (#preteachScreen), four sub-phases:
+       intention   -> learning intention + success criteria (metalanguage
+                      goal first, skill goal locked until it's met)
+       vocab-teach -> I-do cards: each key term modelled in a sentence
+       vocab-check -> you-do, ON RAILS: pick the named term to proceed; a
+                      wrong answer reteaches and you stay until you get it
+       skill       -> I-do skill modelling, then the skill task unlocks
+     Revision mode never enters here, so it never sees metalanguage. */
 
-  function startVocabPreteach() {
-    if (!drillTarget) { startSkillPreteach(); return; }
-    const targetSkill = drillableAt(drillTarget.category, drillTarget.bandIndex);
-    if (!targetSkill || !targetSkill.vocab || !targetSkill.vocab.length) {
-      startSkillPreteach();
-      return;
-    }
-    teachPhase = "vocab";
-    vocabQueue = targetSkill.vocab.slice();
-    vocabIdx = 0;
-    show("preteach");
-    showVocabCard();
+  function targetCell() { return drillTarget ? drillableAt(drillTarget.category, drillTarget.bandIndex) : null; }
+
+  // Oxford-comma list join for the metalanguage success criterion.
+  function listJoin(arr) {
+    if (arr.length <= 1) return arr[0] || "";
+    if (arr.length === 2) return arr[0] + " and " + arr[1];
+    return arr.slice(0, -1).join(", ") + ", and " + arr[arr.length - 1];
   }
 
-  function showVocabCard() {
-    const v = vocabQueue[vocabIdx];
-    const total = vocabQueue.length;
-    $("preteachPhase").textContent = "Vocabulary";
-    $("preteachProgress").textContent = `Term ${vocabIdx + 1} of ${total}`;
-    $("preteachBar").style.width = Math.round(((vocabIdx + 1) / total) * 100) + "%";
+  // LI + the two success criteria for a cell. The metalanguage goal is built
+  // from the cell's vocab terms so it never drifts; LI and skill goal come
+  // from window.GOALS, with a plain fallback if a cell isn't mapped yet.
+  function goalFor(skill) {
+    const g = (window.GOALS && window.GOALS[skill.id]) || {};
+    const terms = (skill.vocab || []).map((v) => v.term);
+    const fallback = "I can use " + skill.name.toLowerCase() + ".";
+    return {
+      li: g.li || fallback,
+      vocabGoal: terms.length ? "I can recognise " + listJoin(terms) + "." : "",
+      skillGoal: g.skill || fallback,
+      terms,
+    };
+  }
 
-    const targetSkill = drillableAt(drillTarget.category, drillTarget.bandIndex);
-    const skillLabel = targetSkill ? `${targetSkill.category} · ${targetSkill.band} · ${targetSkill.name}` : "";
+  // Distractor pool for metalanguage checks: every term used anywhere.
+  function allVocabTerms() {
+    const set = new Set();
+    window.SKILLS.forEach((s) => (s.vocab || []).forEach((v) => set.add(v.term)));
+    return Array.from(set);
+  }
+
+  // One recognition check per term: definition + example, options are the
+  // term plus sibling terms (preferred) then global terms, capped at four.
+  function buildMetaChecks(skill) {
+    const siblings = (skill.vocab || []).map((v) => v.term);
+    const global = allVocabTerms();
+    return (skill.vocab || []).map((v) => {
+      const opts = new Set([v.term]);
+      shuffle(siblings.filter((t) => t !== v.term)).forEach((t) => { if (opts.size < 4) opts.add(t); });
+      shuffle(global.filter((t) => !opts.has(t))).forEach((t) => { if (opts.size < 4) opts.add(t); });
+      return { term: v.term, def: v.def, example: v.example, options: shuffle(Array.from(opts)) };
+    });
+  }
+
+  function startTeaching() {
+    const target = targetCell();
+    if (!target) { startSkillPreteach(); return; }
+    teachPhase = "intention";
+    show("preteach");
+    renderIntention(target);
+  }
+
+  function renderIntention(target) {
+    const g = goalFor(target);
+    const hasVocab = g.terms.length > 0;
+    $("preteachPhase").textContent = "Learning goals";
+    $("preteachProgress").textContent = `${target.category} · ${target.band} · ${target.name}`;
+    $("preteachBar").style.width = "8%";
+
+    const chips = hasVocab
+      ? `<div class="li-eyebrow" style="margin-top:16px">Key words to know first</div>
+         <div class="term-chips">${g.terms.map((t) => `<span class="term-chip">${escapeHtmlE(t)}</span>`).join("")}</div>`
+      : "";
+    const metaItem = hasVocab
+      ? `<div class="sc-item"><span class="sc-step">1</span><div class="sc-body">
+           <span class="sc-tag">Metalanguage — do this first</span>
+           <span class="sc-goal">${linkifyGlossary(escapeHtmlE(g.vocabGoal))}</span></div></div>`
+      : "";
+    const skillStep = hasVocab ? "2" : "1";
+    const skillLockCls = hasVocab ? " locked" : "";
+    const skillTag = hasVocab ? "Skill — unlocks after step 1" : "Skill";
 
     $("preteachContent").innerHTML =
-      `<div class="skill-tag">${escapeHtmlE(skillLabel)}</div>` +
-      `<div class="teach-phase">Learn this term</div>` +
-      `<div class="teach-term">${escapeHtmlE(v.term)}</div>` +
-      `<div class="teach-def">${escapeHtmlE(v.def)}</div>` +
-      `<div class="teach-example">${v.example}</div>`;
+      `<div class="li-box"><div class="li-eyebrow">Learning intention</div>
+         <div class="li-text">${linkifyGlossary(escapeHtmlE(g.li))}</div></div>` +
+      `<div class="li-eyebrow">Success criteria</div>
+       <div class="sc-list">${metaItem}
+         <div class="sc-item${skillLockCls}"><span class="sc-step">${skillStep}</span><div class="sc-body">
+           <span class="sc-tag">${skillTag}</span>
+           <span class="sc-goal">${linkifyGlossary(escapeHtmlE(g.skillGoal))}</span></div></div>
+       </div>` + chips;
 
-    $("preteachNextBtn").textContent = vocabIdx < total - 1 ? "Next term" : "Continue";
+    $("preteachNextBtn").style.display = "";
+    $("preteachNextBtn").textContent = hasVocab ? "Start: learn the words" : "Start the skill";
   }
 
-  function onPreteachNext() {
-    if (teachPhase === "vocab") {
-      vocabIdx++;
-      if (vocabIdx < vocabQueue.length) {
-        showVocabCard();
-      } else {
-        startSkillPreteach();
-      }
-    } else if (teachPhase === "skill") {
-      show("task");
-      showItem();
+  function startVocabTeach() {
+    const target = targetCell();
+    teachPhase = "vocab-teach";
+    vocabQueue = (target.vocab || []).slice();
+    vocabIdx = 0;
+    renderVocabTeach();
+  }
+
+  function renderVocabTeach() {
+    const v = vocabQueue[vocabIdx];
+    const total = vocabQueue.length;
+    $("preteachPhase").textContent = "Vocabulary · I do";
+    $("preteachProgress").textContent = `Word ${vocabIdx + 1} of ${total}`;
+    $("preteachBar").style.width = Math.round(10 + ((vocabIdx + 1) / total) * 35) + "%";
+    $("preteachContent").innerHTML =
+      `<div class="teach-phase">Learn this word</div>` +
+      `<div class="teach-term">${escapeHtmlE(v.term)}</div>` +
+      `<div class="teach-def">${linkifyGlossary(escapeHtmlE(v.def))}</div>` +
+      `<div class="teach-example">${v.example}</div>`;
+    $("preteachNextBtn").style.display = "";
+    $("preteachNextBtn").textContent = vocabIdx < total - 1 ? "Next word" : "Check what you know";
+  }
+
+  function startVocabCheck() {
+    teachPhase = "vocab-check";
+    metaChecks = buildMetaChecks(targetCell());
+    metaIdx = 0;
+    renderVocabCheck();
+  }
+
+  function renderVocabCheck() {
+    const c = metaChecks[metaIdx];
+    const total = metaChecks.length;
+    $("preteachPhase").textContent = "Vocabulary · you do";
+    $("preteachProgress").textContent = `Check ${metaIdx + 1} of ${total}`;
+    $("preteachBar").style.width = Math.round(45 + ((metaIdx + 1) / total) * 30) + "%";
+    // On rails: there is no Next button here — you advance by answering right.
+    $("preteachNextBtn").style.display = "none";
+    $("preteachContent").innerHTML =
+      `<div class="teach-phase">Which word is this?</div>` +
+      `<div class="teach-def">${escapeHtmlE(c.def)}</div>` +
+      `<div class="teach-example">${c.example}</div>` +
+      `<div class="vocab-opts" id="metaOpts">` +
+        c.options.map((o) => `<button type="button" class="vocab-opt" data-opt="${escapeHtmlE(o)}">${escapeHtmlE(o)}</button>`).join("") +
+      `</div>` +
+      `<div class="teach-feedback" id="metaFeedback"></div>`;
+    $("metaOpts").querySelectorAll(".vocab-opt").forEach((btn) => {
+      btn.addEventListener("click", () => onMetaPick(btn, c));
+    });
+  }
+
+  function onMetaPick(btn, c) {
+    const fb = $("metaFeedback");
+    if (btn.dataset.opt === c.term) {
+      btn.classList.add("correct");
+      $("metaOpts").querySelectorAll(".vocab-opt").forEach((b) => { b.disabled = true; if (b !== btn) b.classList.add("dim"); });
+      fb.className = "teach-feedback good";
+      fb.textContent = `✓ Yes — that's the ${c.term}.`;
+      setTimeout(() => {
+        metaIdx++;
+        if (metaIdx < metaChecks.length) renderVocabCheck();
+        else startSkillPreteach();
+      }, 950);
+    } else {
+      btn.classList.add("incorrect");
+      btn.disabled = true;
+      fb.className = "teach-feedback bad";
+      fb.innerHTML = "Not quite. " + linkifyGlossary(escapeHtmlE(c.def)) + " Try again.";
     }
   }
-
-  /* ---------------- SKILL PRETEACH (teaching mode) ---------------- */
 
   function startSkillPreteach() {
     teachPhase = "skill";
     const skills = getTeachingSkills();
-    $("preteachPhase").textContent = "Skill overview";
-    $("preteachProgress").textContent = `${skills.length} skill${skills.length === 1 ? "" : "s"} in this cycle`;
-    $("preteachBar").style.width = "100%";
+    const target = targetCell();
+    const g = target ? goalFor(target) : null;
+    $("preteachPhase").textContent = "Skill · I do";
+    $("preteachProgress").textContent = `${skills.length} level${skills.length === 1 ? "" : "s"} this cycle`;
+    $("preteachBar").style.width = "82%";
 
-    $("preteachContent").innerHTML = skills.map((s) => {
+    const banner = (target && (target.vocab || []).length)
+      ? `<div class="teach-banner">✓ Metalanguage done — now the skill</div>` : "";
+    const goalLine = g
+      ? `<div class="li-box"><div class="li-eyebrow">Now you can</div>
+           <div class="li-text" style="font-size:17px">${linkifyGlossary(escapeHtmlE(g.skillGoal))}</div></div>` : "";
+
+    const cards = skills.map((s) => {
       const bi = window.BANDS.indexOf(s.band);
       let label, cls;
       if (bi < drillTarget.bandIndex) { label = "Review"; cls = "review"; }
@@ -416,8 +544,27 @@
       </div>`;
     }).join("");
 
-    $("preteachNextBtn").textContent = "Start practising";
+    $("preteachContent").innerHTML = banner + goalLine + cards;
+    $("preteachNextBtn").style.display = "";
+    $("preteachNextBtn").textContent = "Start skill practice";
     show("preteach");
+  }
+
+  // Next-button dispatcher across the preteach sub-phases. The vocab-check
+  // phase is excluded on purpose — it advances only when answered correctly.
+  function onPreteachNext() {
+    if (teachPhase === "intention") {
+      const target = targetCell();
+      if (target && (target.vocab || []).length) startVocabTeach();
+      else startSkillPreteach();
+    } else if (teachPhase === "vocab-teach") {
+      vocabIdx++;
+      if (vocabIdx < vocabQueue.length) renderVocabTeach();
+      else startVocabCheck();
+    } else if (teachPhase === "skill") {
+      show("task");
+      showItem();
+    }
   }
 
   /* ---------------- SHOW ITEM (task screen) ---------------- */

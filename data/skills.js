@@ -516,3 +516,53 @@ window.CATEGORIES = [
 
 // Flat practice pools (rendered separately from the rubric; UI is a roadmap item).
 window.POOLS = ["Prepositions","Articles"];
+
+/* ===================================================================
+   GOALS — Learning Intention + Success Criteria per cell (teaching mode)
+   -------------------------------------------------------------------
+   Teaching mode opens with an LI/SC slide. Success criteria split into:
+     - a metalanguage goal ("I can recognise ..."), auto-built from the
+       cell's vocab terms at runtime, gated by an on-rails check; and
+     - a skill goal ("I can ..."), authored here per cell.
+   `li` is the overarching learning intention. The vocab/metalanguage SC
+   is generated from skill.vocab so it never drifts from the term list.
+   =================================================================== */
+window.GOALS = {
+  "sentence-c1": { li:"I can build a simple sentence.", skill:"I can put a subject, verb, and object in the right order." },
+  "sentence-c2": { li:"I can join two ideas into one compound sentence.", skill:"I can use a coordinating conjunction (and, but, or, so) to join two simple sentences." },
+  "sentence-c3": { li:"I can add detail with a subordinate clause.", skill:"I can use a subordinating conjunction to attach a subordinate clause to a main clause." },
+  "sentence-c4": { li:"I can rewrite a sentence to emphasise one idea.", skill:"I can use a cleft structure (It was ... who/that ...) to add emphasis." },
+
+  "tense-c1": { li:"I can talk about now, routines, and the past.", skill:"I can choose present simple, present continuous, or past simple to fit the situation." },
+  "tense-c2": { li:"I can link a past action to now.", skill:"I can form the present perfect with have/has + past participle." },
+  "tense-c3": { li:"I can show which past action happened first.", skill:"I can use the past perfect and past continuous to order past events." },
+  "tense-c4": { li:"I can talk about actions across future time.", skill:"I can use the future progressive and future perfect to describe future actions." },
+
+  "modality-c1": { li:"I can express rules and ability.", skill:"I can use must for obligation and can for ability." },
+  "modality-c2": { li:"I can express possibility and permission.", skill:"I can use may and might for possibility and permission." },
+  "modality-c3": { li:"I can talk about the past with modals.", skill:"I can use modal + have + past participle (should have, must have)." },
+  "modality-c4": { li:"I can speculate about ongoing past actions.", skill:"I can use modal + have been + verb-ing to speculate about the past." },
+
+  "cond-c1": { li:"I can state facts and general truths with if.", skill:"I can use the zero conditional (if + present, present)." },
+  "cond-c2": { li:"I can talk about likely future results.", skill:"I can use the first conditional (if + present, will + base verb)." },
+  "cond-c3": { li:"I can talk about imaginary situations now.", skill:"I can use the second conditional (if + past, would + base verb)." },
+  "cond-c4": { li:"I can imagine a different past.", skill:"I can use the third and mixed conditionals to talk about an unreal past." },
+
+  "passive-c1": { li:"I can see when the subject receives the action.", skill:"I can recognise and form a basic passive (be + past participle)." },
+  "passive-c2": { li:"I can use the passive in the present and the past.", skill:"I can form present and past passive sentences." },
+  "passive-c4": { li:"I can report what people say impersonally.", skill:"I can use passive reporting (is said to, is believed to)." },
+
+  "relative-c1": { li:"I can add information about a noun.", skill:"I can use who and which to start a relative clause." },
+  "relative-c2": { li:"I can tell essential from extra information.", skill:"I can punctuate defining and non-defining relative clauses correctly." },
+  "relative-c4": { li:"I can shorten relative clauses.", skill:"I can use reduced relative clauses with participles." },
+
+  "agree-c1": { li:"I can match my verb to my subject.", skill:"I can make the verb agree with a singular or plural subject." },
+  "agree-c2": { li:"I can form regular and irregular plurals.", skill:"I can spell regular and irregular plural nouns." },
+  "agree-c3": { li:"I can use the right quantifier for the noun.", skill:"I can use much/many and a little/a few with countable and uncountable nouns." },
+  "agree-c4": { li:"I can handle tricky subjects.", skill:"I can make verbs agree with collective and complex subjects." },
+
+  "question-c1": { li:"I can ask yes/no questions and make negatives.", skill:"I can use do/does/did to form yes/no questions and negatives." },
+  "question-c2": { li:"I can ask for specific information.", skill:"I can form wh- questions with the right question word." },
+  "question-c3": { li:"I can check information with question tags.", skill:"I can add a correct question tag to a statement." },
+  "question-c4": { li:"I can ask politely and indirectly.", skill:"I can form indirect questions using statement word order." },
+};

@@ -179,6 +179,31 @@
   .placement-msg{font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.5;
        padding:18px;margin:16px 0;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
 
+  /* ---- teaching mode: learning intention + success criteria slide ---- */
+  .li-box{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:6px 0 16px}
+  .li-eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+  .li-text{font-family:Georgia,serif;font-size:20px;line-height:1.35;color:var(--ink)}
+  .sc-list{display:flex;flex-direction:column;gap:10px;margin:10px 0 4px}
+  .sc-item{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line-soft);
+       border-radius:10px;background:var(--paper)}
+  .sc-item.locked{opacity:.6}
+  .sc-step{flex:0 0 auto;width:26px;height:26px;border-radius:99px;display:flex;align-items:center;justify-content:center;
+       font-size:12px;font-weight:800;background:var(--accent);color:#fff}
+  .sc-item.locked .sc-step{background:var(--line);color:var(--muted)}
+  .sc-item.done .sc-step{background:var(--correct)}
+  .sc-body{flex:1}
+  .sc-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);display:block;margin-bottom:2px}
+  .sc-goal{font-size:15px;font-weight:600;line-height:1.4}
+  .term-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .term-chip{font-size:13px;font-weight:700;padding:5px 12px;border-radius:14px;background:var(--paper);
+       border:1px solid var(--line);color:var(--accent)}
+  .teach-banner{text-align:center;font-size:13px;font-weight:700;color:var(--correct);background:var(--okbg);
+       border:1px solid #cfe3d2;border-radius:10px;padding:10px 14px;margin:0 0 14px}
+  .teach-feedback{font-size:14px;line-height:1.5;margin:12px 0 0;padding:12px 14px;border-radius:10px;min-height:18px}
+  .teach-feedback.good{background:var(--okbg);color:#234e2c}
+  .teach-feedback.bad{background:var(--badbg);color:#7a2020}
+  .vocab-opt.dim{opacity:.45}
+
   /* ---- order (word sequencing: tap words between bank and sentence line) ---- */
   .order-line{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:54px;
        padding:12px;border:2px dashed var(--line);border-radius:10px;background:var(--bg);margin:6px 0}
