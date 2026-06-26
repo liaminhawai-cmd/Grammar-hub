@@ -128,7 +128,7 @@
       label: "Gap fill",
 
       render(item) {
-        const cue = item.cue ? `<div class="cue">(${esc(item.cue)})</div>` : "";
+        const cue = item.cue ? `<div class="cue gap-cue">(${esc(item.cue)})</div>` : "";
         return `${cue}
                 <div class="stimulus gap">
                   <span>${esc(item.before)}</span>
