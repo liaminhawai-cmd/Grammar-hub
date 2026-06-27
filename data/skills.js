@@ -232,7 +232,32 @@ window.SKILLS = [
     {term:"present simple",def:"A tense for habits, facts, and routines — no -ing, no helping verb.",example:"She <b>works</b> at the hospital."},
     {term:"present continuous",def:"A tense for actions happening right now: am/is/are + verb-ing.",example:"They <b>are watching</b> a film."},
     {term:"past simple",def:"A tense for finished actions in the past, usually verb + ed.",example:"Yesterday she <b>walked</b> to school."},
-  ], items:[
+  ],
+  worked:[
+    { text:"I live in Melbourne.", note:"<b>Present simple</b> — a fact that stays true." },
+    { text:"I am learning English.", note:"<b>Present continuous</b> — happening around now (am + -ing)." },
+    { text:"Yesterday I watched a film.", note:"<b>Past simple</b> — finished, with a past time word." },
+  ],
+  sort:{
+    prompt:"Drag each sentence to its tense.",
+    zones:["Present simple","Present continuous","Past simple"],
+    modelled:[
+      { text:"She works at a bank.", zone:"Present simple", explain:"A habit or fact — no -ing, no helper. That is present simple." },
+      { text:"They are eating lunch.", zone:"Present continuous", explain:"Happening right now — am/is/are + -ing. That is present continuous." },
+      { text:"We visited Rome.", zone:"Past simple", explain:"Finished in the past — verb + ed. That is past simple." },
+    ],
+    items:[
+      { text:"He plays football.", zone:"Present simple" },
+      { text:"I am reading.", zone:"Present continuous" },
+      { text:"She walked home.", zone:"Past simple" },
+      { text:"The sun rises in the east.", zone:"Present simple" },
+      { text:"They are watching TV.", zone:"Present continuous" },
+      { text:"We cooked dinner.", zone:"Past simple" },
+      { text:"She is sleeping.", zone:"Present continuous" },
+      { text:"I finished my work.", zone:"Past simple" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Name the tense", sentence:"She <b>works</b> at the hospital.",        options:["present simple","present continuous","past simple","present perfect"], answer:"present simple",      explain:"Verb + s for a habit or fact = present simple.", tags:["present-simple"] },
       { type:"identify", prompt:"Name the tense", sentence:"They <b>are watching</b> a film right now.", options:["present simple","present continuous","past continuous","present perfect"], answer:"present continuous", explain:"am/is/are + verb-ing = present continuous.", tags:["present-continuous"] },
       { type:"identify", prompt:"Name the tense", sentence:"Yesterday she <b>walked</b> to school.",     options:["present simple","past simple","present continuous","present perfect"], answer:"past simple",         explain:"Regular verb + ed for a finished past action = past simple.", tags:["past-simple"] },
@@ -247,7 +272,31 @@ window.SKILLS = [
   vocab:[
     {term:"present perfect",def:"A tense that links a past action to now: have/has + past participle.",example:"She <b>has lived</b> in Sydney for three years."},
     {term:"past participle",def:"The verb form used after have/has — often ends in -ed or is irregular (gone, seen, written).",example:"I have <b>visited</b> Japan."},
-  ], items:[
+  ],
+  worked:[
+    { text:"I have visited Japan.", note:"<b>Present perfect</b> — the experience matters now, no time given." },
+    { text:"She has lived here for three years.", note:"Still true now — use <b>for</b> with present perfect." },
+    { text:"He has just finished.", note:"<b>just</b> signals a very recent action — present perfect." },
+  ],
+  sort:{
+    prompt:"Present perfect links to now; past simple is finished. Drag each sentence to its tense.",
+    zones:["Present perfect","Past simple"],
+    modelled:[
+      { text:"She has lived here for years.", zone:"Present perfect", explain:"Links the past to now — have/has + participle. That is present perfect." },
+      { text:"She lived here in 2010.", zone:"Past simple", explain:"Finished, with a specific past time. That is past simple." },
+    ],
+    items:[
+      { text:"I have finished my homework.", zone:"Present perfect" },
+      { text:"I finished it an hour ago.", zone:"Past simple" },
+      { text:"They have visited Japan.", zone:"Present perfect" },
+      { text:"They visited Japan last year.", zone:"Past simple" },
+      { text:"He has just arrived.", zone:"Present perfect" },
+      { text:"He arrived yesterday.", zone:"Past simple" },
+      { text:"We have known her for ages.", zone:"Present perfect" },
+      { text:"We met her in 2019.", zone:"Past simple" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Name the tense", sentence:"She <b>has lived</b> in Sydney for three years.", options:["present perfect","past simple","present simple","past perfect"], answer:"present perfect", explain:"has/have + past participle = present perfect.", tags:["present-perfect"] },
       { type:"identify", prompt:"Name the tense", sentence:"They <b>have never eaten</b> sushi.", options:["present perfect","past simple","present continuous","past perfect"], answer:"present perfect", explain:"have + never + past participle = present perfect (experience).", tags:["present-perfect"] },
       { type:"identify", prompt:"Name the tense", sentence:"I <b>have just finished</b> my homework.", options:["present perfect","past simple","present continuous","future simple"], answer:"present perfect", explain:"have + just + past participle = present perfect (recent event).", tags:["present-perfect"] },
@@ -264,7 +313,32 @@ window.SKILLS = [
     {term:"past perfect",def:"A tense for an action finished before another past event: had + past participle.",example:"She <b>had finished</b> dinner before the guests arrived."},
     {term:"past perfect progressive",def:"A tense showing an ongoing action before another past event: had been + verb-ing.",example:"They <b>had been playing</b> for an hour when it rained."},
     {term:"past continuous",def:"A tense for an action in progress in the past: was/were + verb-ing.",example:"He <b>was reading</b> when the phone rang."},
-  ], items:[
+  ],
+  worked:[
+    { text:"He had been waiting when I arrived.", note:"<b>Past perfect</b> — happening before another past event." },
+    { text:"She had finished before the guests came.", note:"Past perfect marks the <b>earlier</b> action." },
+    { text:"I was cooking when the phone rang.", note:"<b>Past continuous</b> (was + -ing) interrupted by a past simple action." },
+  ],
+  sort:{
+    prompt:"Drag each sentence to its past tense.",
+    zones:["Past perfect","Past continuous","Past simple"],
+    modelled:[
+      { text:"She had left before I arrived.", zone:"Past perfect", explain:"The earlier of two past actions — had + participle. That is past perfect." },
+      { text:"He was reading when I called.", zone:"Past continuous", explain:"In progress in the past — was/were + -ing. That is past continuous." },
+      { text:"I called him.", zone:"Past simple", explain:"A single finished past action. That is past simple." },
+    ],
+    items:[
+      { text:"They had eaten before we came.", zone:"Past perfect" },
+      { text:"We were watching TV.", zone:"Past continuous" },
+      { text:"She closed the door.", zone:"Past simple" },
+      { text:"He had finished his work.", zone:"Past perfect" },
+      { text:"I was sleeping at noon.", zone:"Past continuous" },
+      { text:"The bell rang.", zone:"Past simple" },
+      { text:"She had already gone.", zone:"Past perfect" },
+      { text:"They were playing outside.", zone:"Past continuous" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Name the tense", sentence:"She <b>had finished</b> dinner before the guests arrived.", options:["past perfect","past simple","present perfect","past continuous"], answer:"past perfect", explain:"had + past participle = past perfect (earlier past event).", tags:["past-perfect"] },
       { type:"identify", prompt:"Name the tense", sentence:"They <b>had been playing</b> for an hour when it started raining.", options:["past perfect progressive","past continuous","present perfect","past perfect"], answer:"past perfect progressive", explain:"had been + verb-ing = past perfect progressive.", tags:["past-perfect-progressive"] },
       { type:"identify", prompt:"Name the tense", sentence:"He <b>was reading</b> when the phone rang.", options:["past continuous","past simple","past perfect","present continuous"], answer:"past continuous", explain:"was/were + verb-ing = past continuous (action in progress in the past).", tags:["past-continuous"] },
@@ -276,7 +350,29 @@ window.SKILLS = [
   vocab:[
     {term:"future progressive",def:"A tense for an action ongoing at a future time: will be + verb-ing.",example:"This time next week, I <b>will be flying</b> to London."},
     {term:"future perfect",def:"A tense for an action completed before a future point: will have + past participle.",example:"By Friday, she <b>will have completed</b> the project."},
-  ], items:[
+  ],
+  worked:[
+    { text:"By next year, she will be working in Sydney.", note:"<b>Future progressive</b> — ongoing at that future time." },
+    { text:"By Friday, I will have finished the report.", note:"<b>Future perfect</b> — done before that future point." },
+    { text:"At 10am tomorrow we will be travelling.", note:"will be + -ing for an action in progress later." },
+  ],
+  sort:{
+    prompt:"Drag each sentence to its future tense.",
+    zones:["Future progressive","Future perfect"],
+    modelled:[
+      { text:"This time tomorrow I will be flying.", zone:"Future progressive", explain:"In progress at a future time — will be + -ing. That is future progressive." },
+      { text:"By Friday I will have finished.", zone:"Future perfect", explain:"Completed before a future point — will have + participle. That is future perfect." },
+    ],
+    items:[
+      { text:"At 8pm we will be eating dinner.", zone:"Future progressive" },
+      { text:"By next year she will have graduated.", zone:"Future perfect" },
+      { text:"I will be working all morning.", zone:"Future progressive" },
+      { text:"By June they will have moved.", zone:"Future perfect" },
+      { text:"This time next week I will be relaxing.", zone:"Future progressive" },
+      { text:"By then he will have left.", zone:"Future perfect" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Name the tense", sentence:"This time next week, I <b>will be flying</b> to London.", options:["future progressive","future perfect","present continuous","future simple"], answer:"future progressive", explain:"will be + verb-ing = future progressive (ongoing at a future time).", tags:["future-progressive"] },
       { type:"identify", prompt:"Name the tense", sentence:"By Friday, she <b>will have completed</b> the project.", options:["future perfect","future progressive","present perfect","past perfect"], answer:"future perfect", explain:"will have + past participle = future perfect (done before a future point).", tags:["future-perfect"] },
       { type:"identify", prompt:"Name the tense", sentence:"At 9 pm tonight, they <b>will be watching</b> the match.", options:["future progressive","future simple","present continuous","future perfect"], answer:"future progressive", explain:"will be + verb-ing = future progressive.", tags:["future-progressive"] },
@@ -291,7 +387,29 @@ window.SKILLS = [
     {term:"modal verb",def:"A helping verb that shows ability, obligation, permission, or possibility (can, must, may, might, should, could, would).",example:"You <b>must</b> wear a seatbelt."},
     {term:"obligation",def:"Something you have to do — a rule or requirement.",example:"You <b>must</b> wear a helmet when cycling."},
     {term:"ability",def:"Something you are able to do — a skill or capability.",example:"She <b>can</b> speak three languages."},
-  ], items:[
+  ],
+  worked:[
+    { text:"You must wear a helmet.", note:"<b>must</b> — a strong obligation or rule." },
+    { text:"She can swim well.", note:"<b>can</b> — ability, something you are able to do." },
+    { text:"I can ride a bike.", note:"can + base verb shows what you are able to do." },
+  ],
+  sort:{
+    prompt:"Drag each sentence to what its modal shows.",
+    zones:["Obligation","Ability"],
+    modelled:[
+      { text:"You must wear a seatbelt.", zone:"Obligation", explain:"must = you have to. That is obligation." },
+      { text:"She can swim.", zone:"Ability", explain:"can = is able to. That is ability." },
+    ],
+    items:[
+      { text:"You must stop at a red light.", zone:"Obligation" },
+      { text:"He can play piano.", zone:"Ability" },
+      { text:"Students must wear uniform.", zone:"Obligation" },
+      { text:"I can speak French.", zone:"Ability" },
+      { text:"You must finish your work.", zone:"Obligation" },
+      { text:"They can run fast.", zone:"Ability" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"What does the modal show?", sentence:"You <b>must</b> wear a seatbelt.",     options:["obligation","ability","advice","possibility"], answer:"obligation", explain:"must = a rule / strong obligation.", tags:["must"] },
       { type:"identify", prompt:"What does the modal show?", sentence:"She <b>can</b> speak three languages.", options:["obligation","ability","advice","possibility"], answer:"ability",    explain:"can = ability.", tags:["can"] },
       { type:"gapfill",  prompt:"Add the modal (obligation)", before:"You", after:"wear a helmet when cycling.", cue:"must / can", accept:["must"], explain:"A rule = must.", tags:["must"] },
@@ -303,7 +421,29 @@ window.SKILLS = [
   vocab:[
     {term:"possibility",def:"Something that could happen but is not certain.",example:"It <b>might</b> rain tomorrow."},
     {term:"permission",def:"Being allowed to do something, given by an authority.",example:"You <b>may</b> leave the room now."},
-  ], items:[
+  ],
+  worked:[
+    { text:"It might rain tomorrow.", note:"<b>might</b> — a possibility, not certain." },
+    { text:"You may borrow my pen.", note:"<b>may</b> — giving permission." },
+    { text:"She may know the answer.", note:"may also shows possibility." },
+  ],
+  sort:{
+    prompt:"Drag each sentence to what its modal shows.",
+    zones:["Possibility","Permission"],
+    modelled:[
+      { text:"It might rain later.", zone:"Possibility", explain:"might = maybe. That is possibility." },
+      { text:"You may leave now.", zone:"Permission", explain:"may = allowed to. That is permission." },
+    ],
+    items:[
+      { text:"She might be late.", zone:"Possibility" },
+      { text:"You may sit down.", zone:"Permission" },
+      { text:"It may snow tonight.", zone:"Possibility" },
+      { text:"Students may use the library.", zone:"Permission" },
+      { text:"They might win.", zone:"Possibility" },
+      { text:"You may go now.", zone:"Permission" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"What does the modal show?", sentence:"She <b>might</b> come to the party.", options:["possibility","obligation","ability","advice"], answer:"possibility", explain:"Might = something is possible but not certain.", tags:["might"] },
       { type:"identify", prompt:"What does the modal show?", sentence:"You <b>may</b> leave the room now.", options:["permission","possibility","ability","obligation"], answer:"permission", explain:"May from a teacher or authority = giving permission.", tags:["may"] },
       { type:"identify", prompt:"What does the modal show?", sentence:"It <b>may</b> snow tonight.", options:["possibility","permission","ability","obligation"], answer:"possibility", explain:"May + weather prediction = possibility.", tags:["may"] },
@@ -316,7 +456,29 @@ window.SKILLS = [
     {term:"modal perfect",def:"A modal verb + have + past participle — talks about the past from now.",example:"She <b>should have studied</b> harder."},
     {term:"regret",def:"Wishing something in the past had been different.",example:"He <b>should have called</b> his mum."},
     {term:"deduction",def:"A strong conclusion based on evidence.",example:"She <b>must have forgotten</b> her keys."},
-  ], items:[
+  ],
+  worked:[
+    { text:"She should have studied harder.", note:"<b>should have</b> — looking back with regret." },
+    { text:"He must have missed the bus.", note:"<b>must have</b> — a confident conclusion about the past." },
+    { text:"They must have known the truth.", note:"must have + participle = a strong deduction." },
+  ],
+  sort:{
+    prompt:"Drag each sentence to what its modal shows.",
+    zones:["Regret","Deduction"],
+    modelled:[
+      { text:"I should have studied.", zone:"Regret", explain:"should have = I wish I had. That is regret." },
+      { text:"She must have forgotten.", zone:"Deduction", explain:"must have = I'm sure she did. That is deduction." },
+    ],
+    items:[
+      { text:"You should have called.", zone:"Regret" },
+      { text:"He must have left early.", zone:"Deduction" },
+      { text:"We should have booked tickets.", zone:"Regret" },
+      { text:"They must have been tired.", zone:"Deduction" },
+      { text:"I should have listened.", zone:"Regret" },
+      { text:"She must have seen it.", zone:"Deduction" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"What does the modal perfect show?", sentence:"He <b>should have called</b> his mum.", options:["regret about the past","future plan","present ability","permission"], answer:"regret about the past", explain:"Should have + past participle = it was the right thing but he did not do it.", tags:["should-have"] },
       { type:"identify", prompt:"What does the modal perfect show?", sentence:"She <b>must have forgotten</b> her keys.", options:["deduction about the past","obligation","permission","advice"], answer:"deduction about the past", explain:"Must have + past participle = a strong conclusion about what happened.", tags:["must-have"] },
       { type:"identify", prompt:"What does the modal perfect show?", sentence:"They <b>could have won</b> the game.", options:["past possibility that did not happen","present ability","future possibility","obligation"], answer:"past possibility that did not happen", explain:"Could have + past participle = it was possible but did not happen.", tags:["could-have"] },
@@ -328,7 +490,29 @@ window.SKILLS = [
   vocab:[
     {term:"modal perfect progressive",def:"Modal + have been + verb-ing — speculation about an ongoing past action.",example:"She <b>must have been sleeping</b> when I called."},
     {term:"speculation",def:"An uncertain guess about what was or is happening.",example:"He <b>might have been working</b> when the fire started."},
-  ], items:[
+  ],
+  worked:[
+    { text:"You might have been speeding.", note:"modal + have been + -ing — guessing about an ongoing <b>past</b> action." },
+    { text:"He must be joking.", note:"modal + be + -ing — guessing about <b>now</b>." },
+    { text:"They could have been sleeping.", note:"uncertain about a past action in progress." },
+  ],
+  sort:{
+    prompt:"These modals guess about an ongoing action. Drag each to its time.",
+    zones:["Happening now","Happening in the past"],
+    modelled:[
+      { text:"She must be sleeping.", zone:"Happening now", explain:"must be + -ing — a guess about right now." },
+      { text:"She must have been sleeping.", zone:"Happening in the past", explain:"must have been + -ing — a guess about the past." },
+    ],
+    items:[
+      { text:"He must be working.", zone:"Happening now" },
+      { text:"He must have been working.", zone:"Happening in the past" },
+      { text:"They might be waiting.", zone:"Happening now" },
+      { text:"They might have been waiting.", zone:"Happening in the past" },
+      { text:"She could be studying.", zone:"Happening now" },
+      { text:"She could have been studying.", zone:"Happening in the past" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Name the modal form", sentence:"She <b>must have been sleeping</b> when I called.", options:["modal perfect progressive","modal perfect","past continuous","present perfect progressive"], answer:"modal perfect progressive", explain:"must have been + verb-ing = deduction about an ongoing past action.", tags:["modal-perfect-progressive"] },
       { type:"identify", prompt:"Name the modal form", sentence:"They <b>could have been waiting</b> for hours.", options:["modal perfect progressive","past perfect progressive","modal perfect","future progressive"], answer:"modal perfect progressive", explain:"could have been + verb-ing = past possibility of an ongoing action.", tags:["modal-perfect-progressive"] },
       { type:"identify", prompt:"What does this show?", sentence:"He <b>might have been working</b> when the fire started.", options:["speculation about an ongoing past action","a future plan","a present habit","an obligation"], answer:"speculation about an ongoing past action", explain:"Might have been + verb-ing = uncertain guess about what was happening.", tags:["modal-perfect-progressive"] },
@@ -342,7 +526,29 @@ window.SKILLS = [
   vocab:[
     {term:"conditional",def:"A sentence with an if-clause that describes what happens under certain conditions.",example:"<b>If</b> you heat ice, it melts."},
     {term:"zero conditional",def:"If + present, present — for facts and things that are always true.",example:"If you heat ice, it <b>melts</b>."},
-  ], items:[
+  ],
+  worked:[
+    { text:"If you heat ice, it melts.", note:"<b>Zero conditional</b> — if + present, present. Always true." },
+    { text:"If you press this button, the light turns on.", note:"A general cause and effect." },
+    { text:"Plants die if they get no water.", note:"The result can come first — no comma then." },
+  ],
+  sort:{
+    prompt:"A conditional has two parts. Drag each part to where it belongs.",
+    zones:["If-clause","Result clause"],
+    modelled:[
+      { text:"If you heat ice", zone:"If-clause", explain:"This sets the condition — it starts with if. That is the if-clause." },
+      { text:"it melts", zone:"Result clause", explain:"This is what always happens. That is the result clause." },
+    ],
+    items:[
+      { text:"If you mix blue and yellow", zone:"If-clause" },
+      { text:"you get green", zone:"Result clause" },
+      { text:"If you drop it", zone:"If-clause" },
+      { text:"it breaks", zone:"Result clause" },
+      { text:"If you don't water plants", zone:"If-clause" },
+      { text:"they die", zone:"Result clause" },
+    ],
+  },
+  items:[
       { type:"gapfill", prompt:"Write the correct form", before:"If you heat ice, it", after:".", cue:"melt", accept:["melts"], explain:"Zero conditional: present + present for facts.", tags:["zero"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If you press this button, the light", after:".", cue:"turn on", accept:["turns on"], explain:"Zero conditional: a general truth, present + present.", tags:["zero"] },
       { type:"identify", prompt:"Which conditional?", sentence:"If water reaches 100 degrees, it <b>boils</b>.", options:["zero conditional","first conditional","second conditional","third conditional"], answer:"zero conditional", explain:"Always-true scientific fact, present + present = zero conditional.", tags:["zero"] },
@@ -356,7 +562,29 @@ window.SKILLS = [
     {term:"first conditional",def:"If + present simple, will + base verb — for real, likely future situations.",example:"If I study, I <b>will pass</b>."},
     {term:"if-clause",def:"The part of a conditional sentence that starts with if — it sets the condition.",example:"<b>If it rains</b>, we will stay inside."},
     {term:"result clause",def:"The part that says what happens if the condition is met.",example:"If it rains, <b>we will stay inside</b>."},
-  ], items:[
+  ],
+  worked:[
+    { text:"If I study, I will pass.", note:"<b>First conditional</b> — if + present, will + verb. A real future possibility." },
+    { text:"We will cancel if it rains.", note:"Result first, condition second — no comma then." },
+    { text:"If you heat water to 100°C, it will boil.", note:"A likely, specific result." },
+  ],
+  sort:{
+    prompt:"Drag each part of these first conditionals to where it belongs.",
+    zones:["If-clause","Result clause"],
+    modelled:[
+      { text:"If I study hard", zone:"If-clause", explain:"The condition, in present simple. That is the if-clause." },
+      { text:"I will pass", zone:"Result clause", explain:"The likely result, with will. That is the result clause." },
+    ],
+    items:[
+      { text:"If it rains", zone:"If-clause" },
+      { text:"we will stay inside", zone:"Result clause" },
+      { text:"If you hurry", zone:"If-clause" },
+      { text:"you will catch the bus", zone:"Result clause" },
+      { text:"If she calls", zone:"If-clause" },
+      { text:"I will answer", zone:"Result clause" },
+    ],
+  },
+  items:[
       { type:"gapfill",  prompt:"Write the correct form", before:"If I study, I", after:"the test.",      cue:"pass", accept:["will pass","ll pass"], explain:"First conditional: if + present, will + base verb.", tags:["first"] },
       { type:"gapfill",  prompt:"Write the correct form", before:"If it", after:", we will stay inside.", cue:"rain", accept:["rains"], explain:"The if-clause uses the present simple: rains.", tags:["first"] },
       { type:"gapfill",  prompt:"Write the correct form", before:"If you do not hurry, we", after:"the bus.", cue:"miss", accept:["will miss","ll miss"], explain:"Result clause of a first conditional = will + base verb: will miss.", tags:["first"] },
@@ -370,7 +598,29 @@ window.SKILLS = [
   vocab:[
     {term:"second conditional",def:"If + past simple, would + base verb — for imaginary or unlikely situations now.",example:"If I <b>had</b> a million dollars, I <b>would travel</b>."},
     {term:"unreal",def:"Describing a situation that is imagined, not actual.",example:"If she <b>were</b> taller, she would play basketball."},
-  ], items:[
+  ],
+  worked:[
+    { text:"If I were taller, I would play basketball.", note:"<b>Second conditional</b> — unreal now. Note 'were' for all subjects." },
+    { text:"If I had more time, I would learn guitar.", note:"Imaginary present — if + past, would + verb." },
+    { text:"If she knew the answer, she would tell you.", note:"Unlikely or imagined, not a real plan." },
+  ],
+  sort:{
+    prompt:"One is imaginary now, one is a real future chance. Drag each to its type.",
+    zones:["Second conditional","First conditional"],
+    modelled:[
+      { text:"If I won the lottery, I would travel.", zone:"Second conditional", explain:"Imaginary — if + past, would. That is the second conditional." },
+      { text:"If I win the raffle, I will celebrate.", zone:"First conditional", explain:"A real chance — if + present, will. That is the first conditional." },
+    ],
+    items:[
+      { text:"If I were rich, I would help.", zone:"Second conditional" },
+      { text:"If it rains, we will stay in.", zone:"First conditional" },
+      { text:"If she studied, she would pass.", zone:"Second conditional" },
+      { text:"If she studies, she will pass.", zone:"First conditional" },
+      { text:"If I had wings, I would fly.", zone:"Second conditional" },
+      { text:"If you call me, I will come.", zone:"First conditional" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Which conditional?", sentence:"If I <b>had</b> a million dollars, I <b>would travel</b> the world.", options:["second conditional","first conditional","zero conditional","third conditional"], answer:"second conditional", explain:"If + past simple, would + base = second conditional (unreal present).", tags:["second"] },
       { type:"identify", prompt:"Which conditional?", sentence:"If she <b>were</b> taller, she <b>would play</b> basketball.", options:["second conditional","first conditional","third conditional","zero conditional"], answer:"second conditional", explain:"If + were, would + base = second conditional (imaginary situation).", tags:["second"] },
       { type:"identify", prompt:"Is this real or imaginary?", sentence:"If I <b>won</b> the lottery, I <b>would buy</b> a house.", options:["imaginary (unlikely)","real (likely)","always true","past regret"], answer:"imaginary (unlikely)", explain:"Second conditional describes situations the speaker considers unlikely.", tags:["second"] },
@@ -382,7 +632,29 @@ window.SKILLS = [
   vocab:[
     {term:"third conditional",def:"If + past perfect, would have + past participle — imagining a different past.",example:"If she <b>had studied</b>, she <b>would have passed</b>."},
     {term:"mixed conditional",def:"Combines time frames — a past cause with a present result (or vice versa).",example:"If I <b>had known</b>, I <b>would be</b> there now."},
-  ], items:[
+  ],
+  worked:[
+    { text:"If he had left earlier, he would have caught the train.", note:"<b>Third conditional</b> — imagining a different past." },
+    { text:"If she had studied, she would have passed.", note:"if + past perfect, would have + participle." },
+    { text:"If I had known then, I would be there now.", note:"<b>Mixed</b> — past cause, present result." },
+  ],
+  sort:{
+    prompt:"One imagines a different past, one imagines now. Drag each to its type.",
+    zones:["Third conditional","Second conditional"],
+    modelled:[
+      { text:"If he had left earlier, he would have caught the train.", zone:"Third conditional", explain:"Unreal past — if + past perfect, would have. That is the third conditional." },
+      { text:"If he left now, he would catch the train.", zone:"Second conditional", explain:"Unreal present — if + past, would. That is the second conditional." },
+    ],
+    items:[
+      { text:"If I had studied, I would have passed.", zone:"Third conditional" },
+      { text:"If I studied, I would pass.", zone:"Second conditional" },
+      { text:"If they had known, they would have come.", zone:"Third conditional" },
+      { text:"If they knew, they would come.", zone:"Second conditional" },
+      { text:"If she had asked, I would have helped.", zone:"Third conditional" },
+      { text:"If she asked, I would help.", zone:"Second conditional" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Which conditional?", sentence:"If she <b>had studied</b>, she <b>would have passed</b>.", options:["third conditional","second conditional","first conditional","zero conditional"], answer:"third conditional", explain:"If + past perfect, would have + past participle = third conditional (unreal past).", tags:["third"] },
       { type:"identify", prompt:"Which conditional?", sentence:"If I <b>had known</b>, I <b>would be</b> there now.", options:["mixed conditional","third conditional","second conditional","first conditional"], answer:"mixed conditional", explain:"If + past perfect, would + base = mixed (past cause, present result).", tags:["mixed"] },
       { type:"identify", prompt:"Is this about the past or present?", sentence:"If they <b>had left</b> earlier, they <b>would have arrived</b> on time.", options:["unreal past","unreal present","real future","always true"], answer:"unreal past", explain:"Third conditional imagines a different past that did not happen.", tags:["third"] },
@@ -396,7 +668,29 @@ window.SKILLS = [
   vocab:[
     {term:"active voice",def:"The subject does the action.",example:"<b>My grandmother</b> made the cake."},
     {term:"passive voice",def:"The subject receives the action — formed with be + past participle.",example:"The cake <b>was made</b> by my grandmother."},
-  ], items:[
+  ],
+  worked:[
+    { text:"The letter was sent yesterday.", note:"<b>Passive</b> — focus on the letter, not who sent it." },
+    { text:"The window was broken.", note:"be + past participle, the doer is not mentioned." },
+    { text:"My grandmother made the cake. → The cake was made by my grandmother.", note:"Active becomes passive; the object moves to the front." },
+  ],
+  sort:{
+    prompt:"In active voice the subject does the action; in passive it receives it. Drag each sentence.",
+    zones:["Active voice","Passive voice"],
+    modelled:[
+      { text:"The chef cooked the meal.", zone:"Active voice", explain:"The subject does the action. That is active voice." },
+      { text:"The meal was cooked.", zone:"Passive voice", explain:"The subject receives the action — be + participle. That is passive voice." },
+    ],
+    items:[
+      { text:"The dog chased the cat.", zone:"Active voice" },
+      { text:"The cat was chased.", zone:"Passive voice" },
+      { text:"Someone stole my bike.", zone:"Active voice" },
+      { text:"My bike was stolen.", zone:"Passive voice" },
+      { text:"The team won the game.", zone:"Active voice" },
+      { text:"The game was won.", zone:"Passive voice" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Active or passive?", sentence:"The cake <b>was made</b> by my grandmother.", options:["passive","active"], answer:"passive", explain:"was + past participle = passive voice (the subject receives the action).", tags:["passive-intro"] },
       { type:"identify", prompt:"Active or passive?", sentence:"My grandmother <b>made</b> the cake.", options:["active","passive"], answer:"active", explain:"The subject does the action = active voice.", tags:["passive-intro"] },
       { type:"identify", prompt:"Active or passive?", sentence:"The window <b>was broken</b> during the storm.", options:["passive","active"], answer:"passive", explain:"was broken = passive (the window received the action).", tags:["passive-intro"] },
@@ -410,7 +704,29 @@ window.SKILLS = [
   vocab:[
     {term:"present passive",def:"Is/are + past participle — a passive action in the present.",example:"These shoes <b>are made</b> in Italy."},
     {term:"past passive",def:"Was/were + past participle — a passive action in the past.",example:"The bridge <b>was built</b> in 1932."},
-  ], items:[
+  ],
+  worked:[
+    { text:"These shoes are made in Italy.", note:"<b>Present passive</b> — are + made." },
+    { text:"The bridge was built last year.", note:"<b>Past passive</b> — was + built." },
+    { text:"The results are announced tomorrow.", note:"Present passive can refer to a scheduled event." },
+  ],
+  sort:{
+    prompt:"Drag each passive sentence to its tense.",
+    zones:["Present passive","Past passive"],
+    modelled:[
+      { text:"These cars are made in Japan.", zone:"Present passive", explain:"is/are + participle. That is present passive." },
+      { text:"This bridge was built in 1932.", zone:"Past passive", explain:"was/were + participle. That is past passive." },
+    ],
+    items:[
+      { text:"The rooms are cleaned daily.", zone:"Present passive" },
+      { text:"The house was sold last week.", zone:"Past passive" },
+      { text:"English is spoken here.", zone:"Present passive" },
+      { text:"The cake was eaten.", zone:"Past passive" },
+      { text:"These shirts are made by hand.", zone:"Present passive" },
+      { text:"The letter was delivered.", zone:"Past passive" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Present passive or past passive?", sentence:"These shoes <b>are made</b> in Italy.", options:["present passive","past passive","present perfect passive","active voice"], answer:"present passive", explain:"are + past participle = present passive.", tags:["present-passive"] },
       { type:"identify", prompt:"Present passive or past passive?", sentence:"The bridge <b>was built</b> in 1932.", options:["past passive","present passive","past perfect passive","active voice"], answer:"past passive", explain:"was + past participle = past passive.", tags:["past-passive"] },
       { type:"identify", prompt:"Present passive or past passive?", sentence:"Rice <b>is grown</b> in many Asian countries.", options:["present passive","past passive","present continuous passive","active voice"], answer:"present passive", explain:"is + past participle = present passive (general fact).", tags:["present-passive"] },
@@ -423,7 +739,29 @@ window.SKILLS = [
   vocab:[
     {term:"passive reporting",def:"Is said/believed/thought + to — reports what people say without naming them.",example:"The manager <b>is said to have resigned</b>."},
     {term:"reporting verb",def:"A verb used to pass on what others say: say, believe, think, report.",example:"He <b>is believed</b> to be very wealthy."},
-  ], items:[
+  ],
+  worked:[
+    { text:"The manager is said to have resigned.", note:"<b>Passive reporting</b> — impersonal, no named source." },
+    { text:"The suspect is believed to be abroad.", note:"is believed to — common in news writing." },
+    { text:"It is thought that prices will rise.", note:"'It is thought that...' is another reporting frame." },
+  ],
+  sort:{
+    prompt:"Passive reporting tells what people say without naming them. Drag each sentence.",
+    zones:["Passive reporting","Direct statement"],
+    modelled:[
+      { text:"He is said to be very rich.", zone:"Passive reporting", explain:"is said to — reports what people say. That is passive reporting." },
+      { text:"People say he is very rich.", zone:"Direct statement", explain:"A plain active statement with a clear subject. That is a direct statement." },
+    ],
+    items:[
+      { text:"She is believed to be talented.", zone:"Passive reporting" },
+      { text:"Everyone believes she is talented.", zone:"Direct statement" },
+      { text:"The manager is thought to have resigned.", zone:"Passive reporting" },
+      { text:"People think the manager resigned.", zone:"Direct statement" },
+      { text:"He is known to be honest.", zone:"Passive reporting" },
+      { text:"We know he is honest.", zone:"Direct statement" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"What structure is this?", sentence:"The manager <b>is said to have resigned</b>.", options:["passive reporting","past passive","present perfect passive","active reporting"], answer:"passive reporting", explain:"is said to have = passive report of what people say happened.", tags:["passive-reporting"] },
       { type:"identify", prompt:"What structure is this?", sentence:"The team <b>is believed to be</b> the strongest in the league.", options:["passive reporting","present passive","past passive","active voice"], answer:"passive reporting", explain:"is believed to be = passive reporting structure.", tags:["passive-reporting"] },
       { type:"identify", prompt:"What structure is this?", sentence:"She <b>is thought to have left</b> the country.", options:["passive reporting","past perfect passive","present perfect passive","modal perfect"], answer:"passive reporting", explain:"is thought to have + past participle = passive report about a past action.", tags:["passive-reporting"] },
@@ -437,7 +775,29 @@ window.SKILLS = [
   vocab:[
     {term:"relative clause",def:"A clause that gives more information about a noun, starting with who, which, or that.",example:"The teacher <b>who teaches maths</b> is kind."},
     {term:"relative pronoun",def:"A word that introduces a relative clause: who (people), which (things), that (both).",example:"The boy <b>who</b> won the race is my friend."},
-  ], items:[
+  ],
+  worked:[
+    { text:"That's the woman who helped me.", note:"<b>who</b> introduces a clause about a person." },
+    { text:"This is the phone which I bought.", note:"<b>which</b> introduces a clause about a thing." },
+    { text:"The student that sits there is new.", note:"<b>that</b> can replace who or which in defining clauses." },
+  ],
+  sort:{
+    prompt:"who is for people, which is for things. Drag each relative clause.",
+    zones:["who (people)","which (things)"],
+    modelled:[
+      { text:"the woman who helped me", zone:"who (people)", explain:"who is for people. This describes a person." },
+      { text:"the book which I read", zone:"which (things)", explain:"which is for things. This describes a thing." },
+    ],
+    items:[
+      { text:"the man who called", zone:"who (people)" },
+      { text:"the car which broke down", zone:"which (things)" },
+      { text:"the teacher who teaches us", zone:"who (people)" },
+      { text:"the house which we bought", zone:"which (things)" },
+      { text:"the girl who won", zone:"who (people)" },
+      { text:"the dog which barked", zone:"which (things)" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Which relative pronoun fits?", sentence:"That is the boy ___ won the race.", options:["who","which","that","where"], answer:"who", explain:"Who refers to a person.", tags:["who"] },
       { type:"identify", prompt:"Which relative pronoun fits?", sentence:"She found the book ___ was on the table.", options:["which","who","where","when"], answer:"which", explain:"Which refers to a thing.", tags:["which"] },
       { type:"identify", prompt:"What does the relative clause describe?", sentence:"The teacher <b>who teaches maths</b> is very kind.", options:["the teacher","maths","kind","teaches"], answer:"the teacher", explain:"The relative clause tells us more about the teacher.", tags:["who"] },
@@ -449,7 +809,29 @@ window.SKILLS = [
   vocab:[
     {term:"defining relative clause",def:"A clause that identifies which person or thing — no commas, essential information.",example:"The girl <b>who sits next to me</b> is from Japan."},
     {term:"non-defining relative clause",def:"A clause that adds extra info about something already identified — uses commas.",example:"My sister<b>, who lives in Perth,</b> is visiting."},
-  ], items:[
+  ],
+  worked:[
+    { text:"The student who studies hard passes.", note:"<b>Defining</b> — no commas, says which student." },
+    { text:"My sister, who lives in Perth, called.", note:"<b>Non-defining</b> — commas, extra detail." },
+    { text:"The film that we saw was boring.", note:"A defining clause can use 'that'." },
+  ],
+  sort:{
+    prompt:"Defining clauses identify which one (no commas); non-defining add extra info (commas). Drag each.",
+    zones:["Defining (no commas)","Non-defining (commas)"],
+    modelled:[
+      { text:"The man who lives next door is kind.", zone:"Defining (no commas)", explain:"Tells you which man — essential, no commas. That is defining." },
+      { text:"My father, who is a doctor, is busy.", zone:"Non-defining (commas)", explain:"Extra info, not essential — commas. That is non-defining." },
+    ],
+    items:[
+      { text:"The book that I borrowed was great.", zone:"Defining (no commas)" },
+      { text:"Paris, which is in France, is lovely.", zone:"Non-defining (commas)" },
+      { text:"The girl who won is my friend.", zone:"Defining (no commas)" },
+      { text:"My car, which is red, is fast.", zone:"Non-defining (commas)" },
+      { text:"People who smoke risk their health.", zone:"Defining (no commas)" },
+      { text:"Mr Lee, who teaches maths, is away.", zone:"Non-defining (commas)" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Defining or non-defining?", sentence:"The girl <b>who sits next to me</b> is from Japan.", options:["defining","non-defining"], answer:"defining", explain:"No commas, identifies which girl = defining.", tags:["defining"] },
       { type:"identify", prompt:"Defining or non-defining?", sentence:"My sister<b>, who lives in Perth,</b> is visiting next week.", options:["non-defining","defining"], answer:"non-defining", explain:"Commas around the clause, adds extra info = non-defining.", tags:["non-defining"] },
       { type:"identify", prompt:"Defining or non-defining?", sentence:"The phone <b>that I bought last week</b> is already broken.", options:["defining","non-defining"], answer:"defining", explain:"No commas, tells us which phone = defining.", tags:["defining"] },
@@ -466,7 +848,29 @@ window.SKILLS = [
   vocab:[
     {term:"reduced relative clause",def:"A shorter form with the relative pronoun and be removed, leaving just a participle.",example:"The boy <b>sitting in the corner</b> is my cousin."},
     {term:"participle",def:"A verb form used as a modifier: -ing (present) or -ed/-en (past).",example:"The car <b>parked</b> outside belongs to my teacher."},
-  ], items:[
+  ],
+  worked:[
+    { text:"Students who live nearby walk to school. → Students living nearby walk to school.", note:"Reduce: drop 'who' and 'are' for the -ing form." },
+    { text:"The cake which was made by Mum is gone. → The cake made by Mum is gone.", note:"Reduce with the past participle." },
+    { text:"Anyone wanting a ticket should queue.", note:"Reduced relative clauses keep writing concise." },
+  ],
+  sort:{
+    prompt:"A reduced relative clause drops the pronoun and 'be'. Drag each to its form.",
+    zones:["Full relative clause","Reduced relative clause"],
+    modelled:[
+      { text:"the boy who is sitting there", zone:"Full relative clause", explain:"Has who + is. That is a full relative clause." },
+      { text:"the boy sitting there", zone:"Reduced relative clause", explain:"who + is removed, leaving the participle. That is reduced." },
+    ],
+    items:[
+      { text:"the man who is standing", zone:"Full relative clause" },
+      { text:"the man standing there", zone:"Reduced relative clause" },
+      { text:"the car which was parked outside", zone:"Full relative clause" },
+      { text:"the car parked outside", zone:"Reduced relative clause" },
+      { text:"the people who are waiting", zone:"Full relative clause" },
+      { text:"the people waiting outside", zone:"Reduced relative clause" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Full or reduced relative clause?", sentence:"The boy <b>sitting in the corner</b> is my cousin.", options:["reduced","full"], answer:"reduced", explain:"No relative pronoun + participle (-ing) = reduced clause.", tags:["reduced"] },
       { type:"identify", prompt:"Full or reduced relative clause?", sentence:"The book <b>that was written by her</b> won an award.", options:["full","reduced"], answer:"full", explain:"Contains the relative pronoun 'that' = full relative clause.", tags:["full"] },
       { type:"identify", prompt:"Full or reduced relative clause?", sentence:"The car <b>parked outside</b> belongs to my teacher.", options:["reduced","full"], answer:"reduced", explain:"No pronoun + past participle = reduced clause.", tags:["reduced"] },
@@ -481,7 +885,29 @@ window.SKILLS = [
     {term:"subject-verb agreement",def:"The verb must match the subject in number — singular subjects take singular verbs.",example:"She <b>walks</b>. They <b>walk</b>."},
     {term:"singular",def:"Referring to one person or thing.",example:"<b>He</b> plays the guitar."},
     {term:"plural",def:"Referring to more than one person or thing.",example:"<b>They</b> play the guitar."},
-  ], items:[
+  ],
+  worked:[
+    { text:"She walks to school.", note:"<b>Singular</b> subject + verb + s." },
+    { text:"They walk to school.", note:"<b>Plural</b> subject + verb, no s." },
+    { text:"The team plays well.", note:"A collective noun usually takes a singular verb." },
+  ],
+  sort:{
+    prompt:"Is the subject one or more than one? Drag each sentence by its subject.",
+    zones:["Singular subject","Plural subject"],
+    modelled:[
+      { text:"The dog barks.", zone:"Singular subject", explain:"One — the verb takes -s. That is a singular subject." },
+      { text:"The dogs bark.", zone:"Plural subject", explain:"More than one — no -s on the verb. That is a plural subject." },
+    ],
+    items:[
+      { text:"She runs fast.", zone:"Singular subject" },
+      { text:"They run fast.", zone:"Plural subject" },
+      { text:"My friend likes pizza.", zone:"Singular subject" },
+      { text:"My friends like pizza.", zone:"Plural subject" },
+      { text:"The cat sleeps.", zone:"Singular subject" },
+      { text:"The cats sleep.", zone:"Plural subject" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Correct or incorrect?", sentence:"She <b>walk</b> to school every day.", options:["incorrect","correct"], answer:"incorrect", explain:"Third person singular needs walks, not walk.", tags:["sv-agreement"] },
       { type:"identify", prompt:"Correct or incorrect?", sentence:"They <b>play</b> football on Saturdays.", options:["correct","incorrect"], answer:"correct", explain:"Plural subject (they) + base verb (play) = correct agreement.", tags:["sv-agreement"] },
       { type:"identify", prompt:"Correct or incorrect?", sentence:"The children <b>likes</b> ice cream.", options:["incorrect","correct"], answer:"incorrect", explain:"Children is plural; it should be like, not likes.", tags:["sv-agreement"] },
@@ -493,7 +919,31 @@ window.SKILLS = [
   vocab:[
     {term:"regular plural",def:"A plural formed by adding -s or -es to the noun.",example:"She bought two <b>dresses</b>."},
     {term:"irregular plural",def:"A plural that does not follow the -s/-es rule — it changes form.",example:"There are three <b>children</b> in the park."},
-  ], items:[
+  ],
+  worked:[
+    { text:"one cat, two cats", note:"<b>Regular plural</b> — add -s." },
+    { text:"one child, two children", note:"<b>Irregular plural</b> — a special form." },
+    { text:"one box, two boxes", note:"Add -es after s, x, ch, sh." },
+  ],
+  sort:{
+    prompt:"Regular plurals add -s/-es; irregular plurals change form. Drag each plural.",
+    zones:["Regular plural","Irregular plural"],
+    modelled:[
+      { text:"cats", zone:"Regular plural", explain:"Just add -s. That is a regular plural." },
+      { text:"children", zone:"Irregular plural", explain:"It changes form, not just + s. That is an irregular plural." },
+    ],
+    items:[
+      { text:"dogs", zone:"Regular plural" },
+      { text:"mice", zone:"Irregular plural" },
+      { text:"books", zone:"Regular plural" },
+      { text:"feet", zone:"Irregular plural" },
+      { text:"tables", zone:"Regular plural" },
+      { text:"people", zone:"Irregular plural" },
+      { text:"boxes", zone:"Regular plural" },
+      { text:"women", zone:"Irregular plural" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Regular or irregular plural?", sentence:"There are three <b>children</b> in the park.", options:["irregular","regular"], answer:"irregular", explain:"child -> children is an irregular plural.", tags:["irregular-plural"] },
       { type:"identify", prompt:"Regular or irregular plural?", sentence:"She bought two <b>dresses</b> for the party.", options:["regular","irregular"], answer:"regular", explain:"dress + es = regular plural.", tags:["regular-plural"] },
       { type:"identify", prompt:"Regular or irregular plural?", sentence:"The <b>mice</b> ran under the fridge.", options:["irregular","regular"], answer:"irregular", explain:"mouse -> mice is an irregular plural.", tags:["irregular-plural"] },
@@ -506,7 +956,31 @@ window.SKILLS = [
     {term:"countable noun",def:"A noun you can count with numbers — it has a plural form.",example:"She ate three <b>apples</b>."},
     {term:"uncountable noun",def:"A noun you cannot count with numbers — it has no plural form.",example:"Can I have some <b>water</b>?"},
     {term:"quantifier",def:"A word that tells how much or how many: much, many, a few, a little.",example:"There are not <b>many</b> chairs."},
-  ], items:[
+  ],
+  worked:[
+    { text:"many bottles", note:"Countable nouns use <b>many</b>." },
+    { text:"much water", note:"Uncountable nouns use <b>much</b>." },
+    { text:"a few coins / a little money", note:"a few = countable, a little = uncountable." },
+  ],
+  sort:{
+    prompt:"Can you count it with numbers? Drag each noun.",
+    zones:["Countable","Uncountable"],
+    modelled:[
+      { text:"apple", zone:"Countable", explain:"You can count it: one apple, two apples. That is countable." },
+      { text:"water", zone:"Uncountable", explain:"You can't say 'two waters'. That is uncountable." },
+    ],
+    items:[
+      { text:"book", zone:"Countable" },
+      { text:"rice", zone:"Uncountable" },
+      { text:"chair", zone:"Countable" },
+      { text:"milk", zone:"Uncountable" },
+      { text:"car", zone:"Countable" },
+      { text:"information", zone:"Uncountable" },
+      { text:"bottle", zone:"Countable" },
+      { text:"advice", zone:"Uncountable" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Countable or uncountable?", sentence:"Can I have some <b>water</b>?", options:["uncountable","countable"], answer:"uncountable", explain:"Water cannot be counted with a number; it is uncountable.", tags:["uncountable"] },
       { type:"identify", prompt:"Countable or uncountable?", sentence:"She ate three <b>apples</b>.", options:["countable","uncountable"], answer:"countable", explain:"Apples can be counted: one, two, three = countable.", tags:["countable"] },
       { type:"identify", prompt:"Correct or incorrect?", sentence:"There is <b>many</b> traffic on the road.", options:["incorrect","correct"], answer:"incorrect", explain:"Traffic is uncountable; use much, not many.", tags:["quantifier"] },
@@ -518,7 +992,29 @@ window.SKILLS = [
   vocab:[
     {term:"collective noun",def:"A noun for a group that can take a singular or plural verb depending on meaning.",example:"The team <b>is</b> playing well. (one unit)"},
     {term:"complex subject",def:"A subject made of two or more parts joined by and, or, or nor.",example:"Neither the teacher nor the students <b>were</b> happy."},
-  ], items:[
+  ],
+  worked:[
+    { text:"The team is winning.", note:"Collective noun as one unit — singular verb." },
+    { text:"The team are arguing.", note:"Same noun, seen as individuals — plural verb." },
+    { text:"Neither the teacher nor the students were ready.", note:"Complex subject — the verb agrees with the nearest part." },
+  ],
+  sort:{
+    prompt:"A collective noun is one group word; a complex subject has parts joined by and/or/nor. Drag each subject.",
+    zones:["Collective noun","Complex subject"],
+    modelled:[
+      { text:"the team", zone:"Collective noun", explain:"One word for a group. That is a collective noun." },
+      { text:"the teacher and the students", zone:"Complex subject", explain:"Two parts joined by and. That is a complex subject." },
+    ],
+    items:[
+      { text:"the family", zone:"Collective noun" },
+      { text:"neither Tom nor Sam", zone:"Complex subject" },
+      { text:"the committee", zone:"Collective noun" },
+      { text:"both the dog and the cat", zone:"Complex subject" },
+      { text:"the crowd", zone:"Collective noun" },
+      { text:"either tea or coffee", zone:"Complex subject" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Why is the singular verb 'is' used here?", sentence:"The team <b>is</b> playing well today.", options:["the team is acting as one unit","the team members are acting separately"], answer:"the team is acting as one unit", explain:"A singular verb treats the team as a single body working together.", tags:["collective"] },
       { type:"identify", prompt:"Why is the plural verb 'are' used here?", sentence:"The class <b>are</b> working on different projects.", options:["the class members are acting separately","the class is acting as one unit"], answer:"the class members are acting separately", explain:"A plural verb treats the class as individuals, each doing their own thing.", tags:["collective"] },
       { type:"identify", prompt:"Correct or incorrect?", sentence:"Neither the teacher nor the students <b>was</b> happy.", options:["incorrect","correct"], answer:"incorrect", explain:"The nearest subject (students) is plural, so use were.", tags:["complex-subject"] },
@@ -533,7 +1029,29 @@ window.SKILLS = [
     {term:"yes/no question",def:"A question answered with yes or no — the auxiliary comes before the subject.",example:"<b>Does</b> she like chocolate?"},
     {term:"negation",def:"Making a sentence negative, usually with not or n't after an auxiliary.",example:"He <b>doesn't</b> want to go."},
     {term:"auxiliary verb",def:"A helping verb (do, does, did, is, are, have, has) used in questions and negatives.",example:"<b>Do</b> they play tennis?"},
-  ], items:[
+  ],
+  worked:[
+    { text:"Do you like coffee?", note:"<b>Yes/No question</b> — Do + subject + verb." },
+    { text:"I don't like coffee.", note:"<b>Negative</b> — do + not + verb." },
+    { text:"Does he work here?", note:"Use <b>does</b> with he/she/it." },
+  ],
+  sort:{
+    prompt:"Drag each one to what it is.",
+    zones:["Yes/No question","Negative statement"],
+    modelled:[
+      { text:"Do you like it?", zone:"Yes/No question", explain:"Starts with an auxiliary, ends with ?. That is a yes/no question." },
+      { text:"I don't like it.", zone:"Negative statement", explain:"Auxiliary + n't in a statement. That is a negative statement." },
+    ],
+    items:[
+      { text:"Does she sing?", zone:"Yes/No question" },
+      { text:"She doesn't sing.", zone:"Negative statement" },
+      { text:"Did they win?", zone:"Yes/No question" },
+      { text:"They didn't win.", zone:"Negative statement" },
+      { text:"Are you ready?", zone:"Yes/No question" },
+      { text:"I am not ready.", zone:"Negative statement" },
+    ],
+  },
+  items:[
       { type:"choose", prompt:"Which one is a yes/no question (auxiliary before the subject)?", options:["Does she like chocolate","She likes chocolate","She doesn't like chocolate","Chocolate is her favourite"], answer:"Does she like chocolate", explain:"A yes/no question inverts the order: the auxiliary 'does' comes before the subject 'she'. The others all keep statement order.", tags:["yes-no"] },
       { type:"identify", prompt:"Correct or incorrect?", sentence:"He <b>don't</b> want to go.", options:["incorrect","correct"], answer:"incorrect", explain:"Third person singular needs doesn't, not don't.", tags:["negation"] },
       { type:"identify", prompt:"Correct or incorrect?", sentence:"<b>Do</b> they play tennis?", options:["correct","incorrect"], answer:"correct", explain:"Do + plural subject + base verb = correct yes/no question.", tags:["yes-no"] },
@@ -545,7 +1063,33 @@ window.SKILLS = [
   vocab:[
     {term:"wh- question",def:"A question starting with a wh- word: who, what, where, when, why, how.",example:"<b>Where</b> did you go yesterday?"},
     {term:"question word",def:"A word that asks for specific information: who (person), what (thing), where (place), when (time), why (reason), how (manner).",example:"<b>Why</b> were you late?"},
-  ], items:[
+  ],
+  worked:[
+    { text:"Where did she go?", note:"<b>where</b> asks about place." },
+    { text:"Why are you late?", note:"<b>why</b> asks about reason." },
+    { text:"How does it work?", note:"<b>how</b> asks about manner or method." },
+  ],
+  sort:{
+    prompt:"Each wh- word asks about something. Drag each question to what it asks about.",
+    zones:["Person (who)","Thing (what)","Place (where)","Time (when)"],
+    modelled:[
+      { text:"Who is she?", zone:"Person (who)", explain:"who asks about a person." },
+      { text:"What is that?", zone:"Thing (what)", explain:"what asks about a thing." },
+      { text:"Where do you live?", zone:"Place (where)", explain:"where asks about a place." },
+      { text:"When did it start?", zone:"Time (when)", explain:"when asks about a time." },
+    ],
+    items:[
+      { text:"Who called you?", zone:"Person (who)" },
+      { text:"What happened?", zone:"Thing (what)" },
+      { text:"Where is the station?", zone:"Place (where)" },
+      { text:"When are we leaving?", zone:"Time (when)" },
+      { text:"Who won the match?", zone:"Person (who)" },
+      { text:"What do you want?", zone:"Thing (what)" },
+      { text:"Where did they go?", zone:"Place (where)" },
+      { text:"When does it close?", zone:"Time (when)" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Which question word fits?", sentence:"___ did you buy that shirt?", options:["Where","What","When","Who"], answer:"Where", explain:"Where asks about place.", tags:["wh-question"] },
       { type:"identify", prompt:"Which question word fits?", sentence:"___ were you late?", options:["Why","When","How","Where"], answer:"Why", explain:"Why asks about reason.", tags:["wh-question"] },
       { type:"identify", prompt:"Correct or incorrect word order?", sentence:"<b>What does she want?</b>", options:["correct","incorrect"], answer:"correct", explain:"Wh-word + does + subject + base verb = correct order.", tags:["wh-question"] },
@@ -557,7 +1101,29 @@ window.SKILLS = [
   vocab:[
     {term:"question tag",def:"A short question added to the end of a statement to check or confirm.",example:"She is from Melbourne, <b>isn't she</b>?"},
     {term:"inversion",def:"Swapping the order of the subject and auxiliary verb to form a question.",example:"<b>Is she</b> from Melbourne?"},
-  ], items:[
+  ],
+  worked:[
+    { text:"You're coming, aren't you?", note:"Positive statement takes a <b>negative</b> tag." },
+    { text:"She isn't here, is she?", note:"Negative statement takes a <b>positive</b> tag." },
+    { text:"Let's go, shall we?", note:"'Let's' takes the tag 'shall we?'." },
+  ],
+  sort:{
+    prompt:"A question tag is added to a statement; a direct question inverts the verb. Drag each.",
+    zones:["Question tag","Direct question"],
+    modelled:[
+      { text:"It's cold, isn't it?", zone:"Question tag", explain:"A mini-question added to a statement. That is a question tag." },
+      { text:"Is it cold?", zone:"Direct question", explain:"Full inversion — verb before subject. That is a direct question." },
+    ],
+    items:[
+      { text:"You're coming, aren't you?", zone:"Question tag" },
+      { text:"Are you coming?", zone:"Direct question" },
+      { text:"She likes tea, doesn't she?", zone:"Question tag" },
+      { text:"Does she like tea?", zone:"Direct question" },
+      { text:"It's late, isn't it?", zone:"Question tag" },
+      { text:"Is it late?", zone:"Direct question" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Choose the question tag", sentence:"She is from Melbourne, ___?", options:["isn't she","is she","aren't she","does she"], answer:"isn't she", explain:"Positive statement + negative tag: is -> isn't she.", tags:["question-tag"] },
       { type:"identify", prompt:"Choose the question tag", sentence:"They don't like fish, ___?", options:["do they","don't they","are they","did they"], answer:"do they", explain:"Negative statement + positive tag: don't -> do they.", tags:["question-tag"] },
       { type:"identify", prompt:"Correct or incorrect tag?", sentence:"He can swim, <b>can he</b>?", options:["incorrect","correct"], answer:"incorrect", explain:"Positive statement needs a negative tag: can't he.", tags:["question-tag"] },
@@ -569,7 +1135,29 @@ window.SKILLS = [
   vocab:[
     {term:"indirect question",def:"A question embedded inside a polite phrase — uses statement word order, not inversion.",example:"Could you tell me <b>where the library is</b>?"},
     {term:"direct question",def:"A straightforward question with inverted word order.",example:"<b>Where is</b> the library?"},
-  ], items:[
+  ],
+  worked:[
+    { text:"Could you tell me where the station is?", note:"Indirect — note 'the station is', not 'is the station'." },
+    { text:"Do you know what time it is?", note:"No inversion inside an indirect question." },
+    { text:"I wonder why she left.", note:"Statement word order after 'I wonder'." },
+  ],
+  sort:{
+    prompt:"A direct question inverts the verb; an indirect question keeps statement order. Drag each.",
+    zones:["Direct question","Indirect question"],
+    modelled:[
+      { text:"Where is the station?", zone:"Direct question", explain:"Inverted — verb before subject. That is a direct question." },
+      { text:"Could you tell me where the station is?", zone:"Indirect question", explain:"Polite frame + statement order. That is an indirect question." },
+    ],
+    items:[
+      { text:"What time is it?", zone:"Direct question" },
+      { text:"Do you know what time it is?", zone:"Indirect question" },
+      { text:"Where does she live?", zone:"Direct question" },
+      { text:"Could you tell me where she lives?", zone:"Indirect question" },
+      { text:"When does it close?", zone:"Direct question" },
+      { text:"I wonder when it closes.", zone:"Indirect question" },
+    ],
+  },
+  items:[
       { type:"identify", prompt:"Direct or indirect question?", sentence:"<b>Could you tell me where the library is?</b>", options:["indirect","direct"], answer:"indirect", explain:"Polite opener + statement word order = indirect question.", tags:["indirect"] },
       { type:"identify", prompt:"Direct or indirect question?", sentence:"<b>Where is the library?</b>", options:["direct","indirect"], answer:"direct", explain:"Wh-word + inverted verb = direct question.", tags:["direct"] },
       { type:"identify", prompt:"Correct or incorrect word order?", sentence:"Do you know <b>where is she</b>?", options:["incorrect","correct"], answer:"incorrect", explain:"Indirect questions use statement order: where she is.", tags:["indirect"] },
