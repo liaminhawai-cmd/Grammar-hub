@@ -90,6 +90,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Put these words in subject-verb-object order.", sentence:"the ball / kicked / the boy", accept:["the boy kicked the ball"], explain:"Subject (the boy) + verb (kicked) + object (the ball).", tags:["svo"] },
       { type:"order", prompt:"Put the words in order to make a complete sentence.", words:["My","sister","plays","the","piano"], answer:"My sister plays the piano", explain:"Subject (My sister) + verb (plays) + object (the piano).", tags:["svo"] },
+      { type:"edit", prompt:"Change the meaning: add a comma so you are talking TO Grandma, not planning to eat her.", tokens:["Let's","eat","Grandma"], bank:[","], accept:["Let's eat, Grandma"], allowInsert:true, explain:"The comma of direct address: 'Let's eat, Grandma' invites Grandma to eat.", tags:["svo"] },
       { type:"identify", prompt:"Is this a complete sentence?", sentence:"<b>She reads books every night.</b>", options:["Yes — subject + verb + rest","No — missing a subject","No — missing a verb","No — it is a fragment"], answer:"Yes — subject + verb + rest", explain:"She (subject) reads (verb) books every night — complete SVO.", tags:["svo"] },
       { type:"identify", prompt:"Is this a complete sentence?", sentence:"<b>Running to the shops.</b>", options:["Yes — subject + verb + rest","No — missing a subject","No — missing a verb","No — it is a fragment"], answer:"No — missing a subject", explain:"There is no subject: who is running?", tags:["svo"] },
       { type:"gapfill", prompt:"Write a verb to complete the sentence", before:"The teacher", after:"the homework.", cue:"collect", accept:["collects","collected"], explain:"The teacher collects/collected the homework — verb completes the SVO.", tags:["svo"] },
@@ -447,6 +448,7 @@ window.SKILLS = [
       { type:"transform", prompt:"Rewrite to show it is possible but not certain (use 'might').", sentence:"It rains tonight.", accept:["it might rain tonight"], explain:"might = possible, not certain: it might rain tonight.", tags:["might"] },
       { type:"transform", prompt:"Rewrite to give permission (use 'may').", sentence:"You leave now.", accept:["you may leave now"], explain:"may = giving permission: you may leave now.", tags:["may"] },
       { type:"edit", prompt:"Fix the verb after the modal.", tokens:["It","might","rains","tomorrow"], bank:["rain","rained","raining"], accept:["It might rain tomorrow"], explain:"After a modal, use the base verb: might rain.", tags:["might"] },
+      { type:"edit", prompt:"Change the meaning from 'I'm certain' to 'maybe' (a guess).", tokens:["She","must","be","at","home"], bank:["might","can","will"], accept:["She might be at home"], explain:"'must' shows certainty; 'might' shows it is only possible.", tags:["might"] },
       { type:"gapfill", prompt:"Add the modal (possibility)", before:"He", after:"be late for class.", cue:"may / might", accept:["may","might"], explain:"Both may and might express possibility here.", tags:["may","might"] },
       { type:"gapfill", prompt:"Add the modal (permission)", before:"You", after:"use my calculator.", cue:"may / must", accept:["may"], explain:"Giving permission = may.", tags:["may"] },
       { type:"gapfill", prompt:"Add the modal (possibility)", before:"They", after:"move to Brisbane next year.", cue:"might / must", accept:["might"], explain:"Uncertain future plan = might (possibility, not obligation).", tags:["might"] },
@@ -532,20 +534,18 @@ window.SKILLS = [
     { text:"If you press this button, the light turns on.", note:"A general cause and effect." },
     { text:"Plants die if they get no water.", note:"The result can come first — no comma then." },
   ],
-  sort:{
-    prompt:"Read the verbs. Is it always true (zero) or one likely future (first)? The 'if' part can come first or last.",
-    zones:["Zero conditional (always true)","First conditional (likely future)"],
+  clausePick:{
     modelled:[
-      { text:"If you heat ice, it melts.", zone:"Zero conditional (always true)", explain:"present + present, always true — that is a zero conditional." },
-      { text:"If it rains tomorrow, we will cancel.", zone:"First conditional (likely future)", explain:"present + will, one future possibility — that is a first conditional." },
+      { words:["If","you","heat","ice",",","it","melts"], find:"condition", span:[0,3], explain:"'If you heat ice' is the condition — what has to happen first." },
+      { words:["Ice","melts","if","you","heat","it"], find:"result", span:[0,1], explain:"'Ice melts' is the result. Don't be fooled — here the 'if' part is at the end." },
     ],
     items:[
-      { text:"Ice melts if you heat it.", zone:"Zero conditional (always true)" },
-      { text:"We will cancel if it rains tomorrow.", zone:"First conditional (likely future)" },
-      { text:"If you mix blue and yellow, you get green.", zone:"Zero conditional (always true)" },
-      { text:"If I finish early, I will call you.", zone:"First conditional (likely future)" },
-      { text:"Plants die if they get no water.", zone:"Zero conditional (always true)" },
-      { text:"You will pass if you study hard.", zone:"First conditional (likely future)" },
+      { words:["If","you","drop","it",",","it","breaks"], find:"condition", span:[0,3] },
+      { words:["If","you","drop","it",",","it","breaks"], find:"result", span:[5,6] },
+      { words:["It","breaks","if","you","drop","it"], find:"condition", span:[2,5] },
+      { words:["It","breaks","if","you","drop","it"], find:"result", span:[0,1] },
+      { words:["Plants","die","if","they","get","no","water"], find:"condition", span:[2,6] },
+      { words:["If","they","get","no","water",",","plants","die"], find:"result", span:[6,7] },
     ],
   },
   items:[
@@ -568,20 +568,18 @@ window.SKILLS = [
     { text:"We will cancel if it rains.", note:"Result first, condition second — no comma then." },
     { text:"If you heat water to 100°C, it will boil.", note:"A likely, specific result." },
   ],
-  sort:{
-    prompt:"Read the verbs. Is it real and likely (first) or imaginary (second)? The 'if' part can come first or last.",
-    zones:["First conditional (real)","Second conditional (imaginary)"],
+  clausePick:{
     modelled:[
-      { text:"If I study, I will pass.", zone:"First conditional (real)", explain:"present + will — a real, likely future. That is a first conditional." },
-      { text:"If I won the lottery, I would travel.", zone:"Second conditional (imaginary)", explain:"past + would — imaginary now. That is a second conditional." },
+      { words:["If","I","study",",","I","will","pass"], find:"condition", span:[0,2], explain:"'If I study' is the condition — what has to happen." },
+      { words:["I","will","pass","if","I","study"], find:"result", span:[0,2], explain:"'I will pass' is the result. Don't be fooled — the 'if' part is at the end here." },
     ],
     items:[
-      { text:"I will pass if I study.", zone:"First conditional (real)" },
-      { text:"I would travel if I won the lottery.", zone:"Second conditional (imaginary)" },
-      { text:"If it rains, we will stay inside.", zone:"First conditional (real)" },
-      { text:"If I were rich, I would help.", zone:"Second conditional (imaginary)" },
-      { text:"You will catch the bus if you hurry.", zone:"First conditional (real)" },
-      { text:"If she studied harder, she would pass.", zone:"Second conditional (imaginary)" },
+      { words:["If","it","rains",",","we","will","stay","in"], find:"condition", span:[0,2] },
+      { words:["If","it","rains",",","we","will","stay","in"], find:"result", span:[4,7] },
+      { words:["We","will","stay","in","if","it","rains"], find:"condition", span:[4,6] },
+      { words:["We","will","stay","in","if","it","rains"], find:"result", span:[0,3] },
+      { words:["You","will","catch","the","bus","if","you","hurry"], find:"condition", span:[5,7] },
+      { words:["If","you","hurry",",","you","will","catch","the","bus"], find:"result", span:[4,8] },
     ],
   },
   items:[

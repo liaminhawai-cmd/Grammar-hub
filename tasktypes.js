@@ -388,67 +388,90 @@
       },
     },
 
-    /* ===== edit: fix a faulty sentence by taking the wrong word out and
-       dragging (or tapping) the right one in from a small bank. Tests BOTH
-       spotting the error and supplying the fix, and can't be gamed by length
-       or position. Graded on the final sentence against accept[].
-       Item: { type:"edit", prompt, tokens:[words], bank:[choices], accept:[...] } */
+    /* ===== edit: change a sentence by taking a word out and putting the right
+       one in — or, with allowInsert, adding a word/comma in a chosen gap. Used
+       two ways: "fix the error" and "change it from meaning A to meaning B".
+       Tests spotting WHERE/WHAT to change and supplying it; graded on the final
+       sentence, so it can't be gamed by length or position.
+       Item: { type:"edit", prompt, tokens:[words], bank:[choices], accept:[...],
+               allowInsert?:true } */
     edit: {
-      label: "Fix it",
+      label: "Edit it",
 
       render(item) {
+        const ins = item.allowInsert;
         const prompt = `<div class="cue">${esc(item.prompt || "Fix the sentence.")}</div>`;
-        const tokens = item.tokens.map((w, i) =>
-          `<button type="button" class="edit-token" data-i="${i}">${esc(w)}</button>`).join("");
+        let row = "";
+        item.tokens.forEach((w, i) => {
+          if (ins) row += `<button type="button" class="edit-gap" data-pos="${i}" aria-label="add here"></button>`;
+          row += `<button type="button" class="edit-token" data-i="${i}">${esc(w)}</button>`;
+        });
+        if (ins) row += `<button type="button" class="edit-gap" data-pos="${item.tokens.length}" aria-label="add here"></button>`;
         const bank = item.bank.map((w) =>
           `<button type="button" class="edit-word" data-w="${esc(w)}">${esc(w)}</button>`).join("");
+        const hint = ins
+          ? "Tap a space to add a word or comma, or tap a word to take it out. Then tap or drag in your choice."
+          : "Tap the wrong word to take it out, then tap or drag in the right one.";
         return `${prompt}
-          <div class="edit-hint">Tap the wrong word to take it out, then tap or drag in the right one.</div>
-          <div class="edit-sentence" data-removed="-1">${tokens}</div>
+          <div class="edit-hint">${hint}</div>
+          <div class="edit-sentence" data-active="none">${row}</div>
           <div class="edit-bank">${bank}</div>`;
       },
 
       wire(area) {
         const row = area.querySelector(".edit-sentence");
-        const slot = () => row.querySelector(".edit-slot");
+        const active = () => row.querySelector(".edit-slot, .edit-gap.active");
 
-        function restore(el) {
-          el.outerHTML = `<button type="button" class="edit-token" data-i="${el.dataset.i}">${esc(el.dataset.orig)}</button>`;
+        function clearActive() {
+          const a = active();
+          if (!a) return;
+          if (a.classList.contains("edit-slot")) {
+            a.outerHTML = `<button type="button" class="edit-token" data-i="${a.dataset.i}">${esc(a.dataset.orig)}</button>`;
+          } else { a.classList.remove("active", "filled"); a.dataset.fill = ""; a.textContent = ""; }
+          row.dataset.active = "none";
         }
         row.addEventListener("click", (e) => {
-          const el = e.target.closest(".edit-token, .edit-slot");
-          if (!el) return;
-          if (el.classList.contains("edit-slot")) { restore(el); row.dataset.removed = "-1"; return; }
-          const existing = slot();
-          if (existing) restore(existing);
-          const i = el.dataset.i, w = el.textContent;
-          el.outerHTML = `<span class="edit-slot" data-i="${i}" data-orig="${esc(w)}" data-fill=""></span>`;
-          row.dataset.removed = i;
-          ready(area);
+          const slot = e.target.closest(".edit-slot");
+          const gap = e.target.closest(".edit-gap");
+          const tok = e.target.closest(".edit-token");
+          if (slot) { // tap a removed word to restore it
+            slot.outerHTML = `<button type="button" class="edit-token" data-i="${slot.dataset.i}">${esc(slot.dataset.orig)}</button>`;
+            row.dataset.active = "none"; return;
+          }
+          if (gap) {
+            if (gap.classList.contains("active")) { clearActive(); return; }  // tap again to cancel
+            clearActive();
+            gap.classList.add("active"); gap.dataset.fill = "";
+            row.dataset.active = "gap"; ready(area); return;
+          }
+          if (tok) {
+            clearActive();
+            tok.outerHTML = `<span class="edit-slot" data-i="${tok.dataset.i}" data-orig="${esc(tok.textContent)}" data-fill=""></span>`;
+            row.dataset.active = "slot"; ready(area); return;
+          }
         });
 
         function fill(word) {
-          const s = slot();
-          if (!s) return;
-          s.dataset.fill = word; s.textContent = word; s.classList.add("filled");
+          const a = active();
+          if (!a) return;
+          a.dataset.fill = word; a.textContent = word; a.classList.add("filled");
           ready(area);
         }
-        const bankWords = Array.from(area.querySelectorAll(".edit-word"));
-        bankWords.forEach((b) => {
+        Array.from(area.querySelectorAll(".edit-word")).forEach((b) => {
           b.addEventListener("click", () => fill(b.dataset.w));
           let drag = false, sx, sy;
           b.addEventListener("pointerdown", (e) => { drag = true; b.setPointerCapture(e.pointerId); sx = e.clientX; sy = e.clientY; b.classList.add("dragging"); });
           b.addEventListener("pointermove", (e) => {
             if (!drag) return;
             b.style.transform = `translate(${e.clientX - sx}px,${e.clientY - sy}px)`;
-            const s = slot();
-            if (s) { const r = s.getBoundingClientRect(); s.classList.toggle("over", e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom); }
+            const a = active();
+            if (a) { const r = a.getBoundingClientRect(); a.classList.toggle("over", e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom); }
           });
           b.addEventListener("pointerup", (e) => {
             if (!drag) return;
             drag = false; b.classList.remove("dragging"); b.style.transform = "";
-            const s = slot();
-            if (s) { const r = s.getBoundingClientRect(); s.classList.remove("over");
+            const a = active();
+            if (a) { const r = a.getBoundingClientRect(); a.classList.remove("over");
               if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) fill(b.dataset.w); }
           });
         });
@@ -456,13 +479,17 @@
 
       collect(area) {
         const row = area.querySelector(".edit-sentence");
-        if (row.dataset.removed === "-1") return null;
+        if (row.dataset.active === "none") return null;
         const parts = [];
         Array.from(row.children).forEach((ch) => {
-          if (ch.classList.contains("edit-slot")) { if (ch.dataset.fill) parts.push(ch.dataset.fill); }
+          if (ch.classList.contains("edit-gap")) { if (ch.classList.contains("filled") && ch.dataset.fill) parts.push(ch.dataset.fill); }
+          else if (ch.classList.contains("edit-slot")) { if (ch.dataset.fill) parts.push(ch.dataset.fill); }
           else parts.push(ch.textContent);
         });
-        return parts.join(" ");
+        // attach punctuation to the previous word (", " not " , ")
+        let out = "";
+        parts.forEach((p) => { if (/^[,.;:!?]+$/.test(p)) out += p; else out += (out ? " " : "") + p; });
+        return out;
       },
 
       check(item, response) {
@@ -471,9 +498,9 @@
       },
 
       mark(area, item, result) {
-        area.querySelectorAll(".edit-token, .edit-word").forEach((el) => { el.disabled = true; el.style.pointerEvents = "none"; });
-        const s = area.querySelector(".edit-slot");
-        if (s) s.classList.add(result.correct ? "correct" : "incorrect");
+        area.querySelectorAll(".edit-token, .edit-word, .edit-gap").forEach((el) => { el.disabled = true; el.style.pointerEvents = "none"; });
+        const a = area.querySelector(".edit-slot, .edit-gap.filled");
+        if (a) a.classList.add(result.correct ? "correct" : "incorrect");
       },
     },
 

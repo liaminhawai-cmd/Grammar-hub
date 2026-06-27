@@ -56,6 +56,12 @@
   let sortIdx = 0;
   let sortStreak = 0;
   let sortErrors = 0;
+  // clause-pick metalanguage (identify a clause inside a full sentence)
+  let clIdoIdx = 0;
+  let clauseBank = [];
+  let clauseIdx = 0;
+  let clauseStreak = 0;
+  let clauseErrors = 0;
   const WEDO_COUNT = 4;        // guided-practice items before the mastery check
   const YOUDO_TARGET = 5;      // correct-in-a-row to unlock the skill
 
@@ -524,6 +530,114 @@
     }
   }
 
+  /* ---------------- METALANGUAGE: pick a clause inside a full sentence ----
+     For conditionals: the whole sentence is shown and the learner taps the
+     part asked for (the condition, or the result). The 'if' part appears at
+     the start in some items and at the end in others, and you are sometimes
+     asked for the result — so it can't be gamed by spotting the word "if" or
+     by position. Single tap: any word inside the target clause counts. */
+
+  function clauseAsk(find) {
+    return find === "condition" ? "the CONDITION (the if-part)" : "the RESULT (what happens)";
+  }
+
+  function startClauseIDo() {
+    teachPhase = "cl-ido";
+    clIdoIdx = 0;
+    renderClauseIDo();
+  }
+
+  function renderClauseIDo() {
+    const cp = targetCell().clausePick;
+    const m = cp.modelled[clIdoIdx];
+    const total = cp.modelled.length;
+    $("preteachPhase").textContent = "Clauses · I do";
+    $("preteachProgress").textContent = `Example ${clIdoIdx + 1} of ${total}`;
+    $("preteachBar").style.width = Math.round(12 + ((clIdoIdx + 1) / total) * 22) + "%";
+    const chips = m.words.map((w, i) =>
+      `<span class="clause-word${i >= m.span[0] && i <= m.span[1] ? " correct" : ""}">${escapeHtmlE(w)}</span>`).join("");
+    $("preteachContent").innerHTML =
+      `<div class="teach-phase">Watch me find it</div>` +
+      `<div class="clause-ask">Find ${clauseAsk(m.find)}.</div>` +
+      `<div class="clause-sentence">${chips}</div>` +
+      `<div class="teach-feedback good">${escapeHtmlE(m.explain)}</div>`;
+    $("preteachNextBtn").style.display = "";
+    $("preteachNextBtn").textContent = clIdoIdx < total - 1 ? "Next example" : "Your turn (We do)";
+  }
+
+  function startClauseWeDo() {
+    teachPhase = "cl-wedo";
+    clauseBank = shuffle(targetCell().clausePick.items.slice()).slice(0, WEDO_COUNT);
+    clauseIdx = 0;
+    renderClausePick();
+  }
+
+  function startClauseYouDo() {
+    teachPhase = "cl-youdo";
+    clauseBank = shuffle(targetCell().clausePick.items.slice());
+    clauseIdx = 0; clauseStreak = 0; clauseErrors = 0;
+    renderClausePick();
+  }
+
+  function renderClausePick() {
+    const youdo = teachPhase === "cl-youdo";
+    const cp = targetCell().clausePick;
+    if (clauseIdx >= clauseBank.length) { clauseBank = shuffle(cp.items.slice()); clauseIdx = 0; }
+    const item = clauseBank[clauseIdx];
+    $("preteachPhase").textContent = youdo ? "Clauses · you do" : "Clauses · we do";
+    if (youdo) {
+      $("preteachProgress").textContent = "Keep your streak going";
+      $("preteachBar").style.width = Math.round(58 + (Math.min(clauseStreak, YOUDO_TARGET) / YOUDO_TARGET) * 20) + "%";
+    } else {
+      $("preteachProgress").textContent = `Find ${clauseIdx + 1} of ${clauseBank.length}`;
+      $("preteachBar").style.width = Math.round(36 + ((clauseIdx + 1) / clauseBank.length) * 20) + "%";
+    }
+    $("preteachNextBtn").style.display = "none";
+    const chips = item.words.map((w, i) =>
+      `<button type="button" class="clause-word" data-i="${i}">${escapeHtmlE(w)}</button>`).join("");
+    $("preteachContent").innerHTML =
+      `<div class="teach-phase">${youdo ? "Find it yourself" : "Now you try"}</div>` +
+      `<div class="clause-ask">Tap ${clauseAsk(item.find)}.</div>` +
+      `<div class="clause-sentence" id="clauseRow">${chips}</div>` +
+      `<div class="teach-feedback" id="clauseFb"></div>` +
+      `<div class="sort-streak" id="clauseStreak">${youdo ? `Correct in a row: ${clauseStreak} / ${YOUDO_TARGET}` : ``}</div>`;
+    $("clauseRow").querySelectorAll(".clause-word").forEach((btn) => btn.addEventListener("click", () => onClauseTap(btn, item)));
+  }
+
+  function onClauseTap(btn, item) {
+    const fb = $("clauseFb");
+    const youdo = teachPhase === "cl-youdo";
+    const i = +btn.dataset.i;
+    if (i >= item.span[0] && i <= item.span[1]) {
+      const row = $("clauseRow");
+      for (let j = item.span[0]; j <= item.span[1]; j++) {
+        const w = row.querySelector(`.clause-word[data-i="${j}"]`);
+        if (w) w.classList.add("correct");
+      }
+      row.querySelectorAll(".clause-word").forEach((w) => { w.disabled = true; });
+      fb.className = "teach-feedback good";
+      fb.textContent = `✓ Yes — that's ${item.find === "condition" ? "the condition" : "the result"}.`;
+      if (youdo) {
+        clauseStreak++;
+        const s = $("clauseStreak"); if (s) s.textContent = `Correct in a row: ${clauseStreak} / ${YOUDO_TARGET}`;
+        if (clauseStreak >= YOUDO_TARGET && clauseErrors <= 1) { setTimeout(startSkillPreteach, 950); return; }
+      }
+      setTimeout(() => {
+        clauseIdx++;
+        if (!youdo && clauseIdx >= clauseBank.length) { startClauseYouDo(); return; }
+        renderClausePick();
+      }, 850);
+    } else {
+      btn.classList.add("incorrect"); btn.disabled = true;
+      fb.className = "teach-feedback bad";
+      const hint = item.find === "condition"
+        ? "The condition is the part with 'if'."
+        : "The result is the part WITHOUT 'if' — what actually happens.";
+      fb.innerHTML = `Not that one. ${hint} Try again.`;
+      if (youdo) clauseErrors++;
+    }
+  }
+
   function startSkillPreteach() {
     teachPhase = "skill";
     const skills = getTeachingSkills();
@@ -582,13 +696,18 @@
   function onPreteachNext() {
     const target = targetCell();
     if (teachPhase === "intention") {
-      if (target && target.sort) startMlIDo();
+      if (target && target.clausePick) startClauseIDo();
+      else if (target && target.sort) startMlIDo();
       else if (target && (target.vocab || []).length) startVocabTeach();
       else startSkillPreteach();
     } else if (teachPhase === "ml-ido") {
       mlIdoIdx++;
       if (mlIdoIdx < target.sort.modelled.length) renderMlIDo();
       else startMlWeDo();
+    } else if (teachPhase === "cl-ido") {
+      clIdoIdx++;
+      if (clIdoIdx < target.clausePick.modelled.length) renderClauseIDo();
+      else startClauseWeDo();
     } else if (teachPhase === "vocab-teach") {
       vocabIdx++;
       if (vocabIdx < vocabQueue.length) renderVocabTeach();
