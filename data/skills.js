@@ -95,7 +95,7 @@ window.SKILLS = [
       { type:"gapfill", prompt:"Write a verb to complete the sentence", before:"The teacher", after:"the homework.", cue:"collect", accept:["collects","collected"], explain:"The teacher collects/collected the homework — verb completes the SVO.", tags:["svo"] },
       { type:"gapfill", prompt:"Add ANY subject — who or what kicked the ball?", before:"", after:"kicked the ball over the fence.", cue:"a person or thing", accept:["i","you","he","she","we","they","it","the boy","the girl","the dog","the player","tom","sam","mia"], explain:"Any subject works here: I, you, he, she, we, they, it, or a noun like 'the boy'. A subject is needed before the verb 'kicked'.", tags:["svo"] },
       { type:"choose", prompt:"Which is a complete sentence?", options:["The cat sleeps on the sofa.","Sleeps on the sofa.","The cat on the sofa.","On the sofa sleeps."], answer:"The cat sleeps on the sofa.", explain:"Complete SVO: the cat (subject) sleeps (verb) on the sofa (rest).", tags:["svo"] },
-      { type:"choose", prompt:"Which sentence is correct?", options:["My friend plays football.","My friend play football.","My friend are playing football.","My friend do play football."], answer:"My friend plays football.", explain:"Singular subject (friend) + verb + s = plays.", tags:["svo"] },
+      { type:"choose", prompt:"Which sentence has the words in the right order (subject, verb, object)?", options:["The boy kicked the ball.","Kicked the boy the ball.","The ball the boy kicked.","The boy the ball kicked."], answer:"The boy kicked the ball.", explain:"Subject (the boy) + verb (kicked) + object (the ball), in that order.", tags:["svo"] },
       { type:"order", prompt:"Arrange the words to tell us where she goes", words:["school","to","goes","She"], answer:"She goes to school", explain:"Subject (She) + verb (goes) + rest (to school) = SVO order.", tags:["svo"] },
       { type:"order", prompt:"Arrange the words to say what the cat does", words:["the","reads","cat","book","a"], answer:"The cat reads a book", explain:"Subject (the cat) + verb (reads) + object (a book) = correct SVO.", tags:["svo"] },
       { type:"match", prompt:"One little comma, two very different meanings. Match each sentence to what it actually says.", pairs:[
@@ -1090,12 +1090,12 @@ window.SKILLS = [
     ],
   },
   items:[
-      { type:"identify", prompt:"Which question word fits?", sentence:"___ did you buy that shirt?", options:["Where","What","When","Who"], answer:"Where", explain:"Where asks about place.", tags:["wh-question"] },
-      { type:"identify", prompt:"Which question word fits?", sentence:"___ were you late?", options:["Why","When","How","Where"], answer:"Why", explain:"Why asks about reason.", tags:["wh-question"] },
+      { type:"identify", prompt:"Which question word fits?", sentence:"___ do you live?", options:["Where","When","Who","Why"], answer:"Where", explain:"Only 'Where do you live?' is natural here — where asks about place.", tags:["wh-question"] },
+      { type:"identify", prompt:"Which question word fits?", sentence:"___ are you crying?", options:["Why","When","Where","Who"], answer:"Why", explain:"Only 'Why are you crying?' fits — why asks about the reason.", tags:["wh-question"] },
       { type:"identify", prompt:"Correct or incorrect word order?", sentence:"<b>What does she want?</b>", options:["correct","incorrect"], answer:"correct", explain:"Wh-word + does + subject + base verb = correct order.", tags:["wh-question"] },
-      { type:"gapfill", prompt:"Add the question word", before:"", after:"did you go yesterday?", cue:"where / when / why", accept:["where"], explain:"Asking about a place = where.", tags:["wh-question"] },
-      { type:"gapfill", prompt:"Add the question word", before:"", after:"is your birthday?", cue:"when / where / what", accept:["when"], explain:"Asking about a time/date = when.", tags:["wh-question"] },
-      { type:"gapfill", prompt:"Add the question word", before:"", after:"broke the window?", cue:"who / what / when", accept:["who"], explain:"Asking about a person (subject question) = who.", tags:["wh-question"] },
+      { type:"gapfill", prompt:"Add the question word", before:"", after:"are my keys?", cue:"where / when / why", accept:["where"], explain:"Asking about a place = where: where are my keys?", tags:["wh-question"] },
+      { type:"gapfill", prompt:"Add the question word", before:"", after:"does the film start?", cue:"when / where / why", accept:["when"], explain:"Asking about a time = when: when does the film start?", tags:["wh-question"] },
+      { type:"gapfill", prompt:"Add the question word", before:"", after:"is your best friend?", cue:"who / what / where", accept:["who"], explain:"Asking about a person = who: who is your best friend?", tags:["wh-question"] },
   ] },
   { id:"question-c3", category:"Questions & Negation", band:"C3", name:"Inversion & Question Tags", example:"You're coming, aren't you?", introduced:true, mode:"progression", assessed:false, resources:{ sheets:[{name:"Auxiliary and Modal Verbs",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Auxiliary-and-Modal-Verbs.aspx"}] },
   vocab:[
