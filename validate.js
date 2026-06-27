@@ -62,7 +62,7 @@ window.SKILLS.forEach((skill) => {
     let modelAnswer = null;
     if (item.type === 'identify' || item.type === 'choose' || item.type === 'order') {
       modelAnswer = item.answer;
-    } else if (item.type === 'gapfill' || item.type === 'transform' || item.type === 'join') {
+    } else if (item.type === 'gapfill' || item.type === 'transform' || item.type === 'join' || item.type === 'edit') {
       modelAnswer = item.accept?.[0];
     } else if (item.type === 'match') {
       // match has no scalar answer: the model response is the identity pairing.

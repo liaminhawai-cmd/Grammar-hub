@@ -388,6 +388,95 @@
       },
     },
 
+    /* ===== edit: fix a faulty sentence by taking the wrong word out and
+       dragging (or tapping) the right one in from a small bank. Tests BOTH
+       spotting the error and supplying the fix, and can't be gamed by length
+       or position. Graded on the final sentence against accept[].
+       Item: { type:"edit", prompt, tokens:[words], bank:[choices], accept:[...] } */
+    edit: {
+      label: "Fix it",
+
+      render(item) {
+        const prompt = `<div class="cue">${esc(item.prompt || "Fix the sentence.")}</div>`;
+        const tokens = item.tokens.map((w, i) =>
+          `<button type="button" class="edit-token" data-i="${i}">${esc(w)}</button>`).join("");
+        const bank = item.bank.map((w) =>
+          `<button type="button" class="edit-word" data-w="${esc(w)}">${esc(w)}</button>`).join("");
+        return `${prompt}
+          <div class="edit-hint">Tap the wrong word to take it out, then tap or drag in the right one.</div>
+          <div class="edit-sentence" data-removed="-1">${tokens}</div>
+          <div class="edit-bank">${bank}</div>`;
+      },
+
+      wire(area) {
+        const row = area.querySelector(".edit-sentence");
+        const slot = () => row.querySelector(".edit-slot");
+
+        function restore(el) {
+          el.outerHTML = `<button type="button" class="edit-token" data-i="${el.dataset.i}">${esc(el.dataset.orig)}</button>`;
+        }
+        row.addEventListener("click", (e) => {
+          const el = e.target.closest(".edit-token, .edit-slot");
+          if (!el) return;
+          if (el.classList.contains("edit-slot")) { restore(el); row.dataset.removed = "-1"; return; }
+          const existing = slot();
+          if (existing) restore(existing);
+          const i = el.dataset.i, w = el.textContent;
+          el.outerHTML = `<span class="edit-slot" data-i="${i}" data-orig="${esc(w)}" data-fill=""></span>`;
+          row.dataset.removed = i;
+          ready(area);
+        });
+
+        function fill(word) {
+          const s = slot();
+          if (!s) return;
+          s.dataset.fill = word; s.textContent = word; s.classList.add("filled");
+          ready(area);
+        }
+        const bankWords = Array.from(area.querySelectorAll(".edit-word"));
+        bankWords.forEach((b) => {
+          b.addEventListener("click", () => fill(b.dataset.w));
+          let drag = false, sx, sy;
+          b.addEventListener("pointerdown", (e) => { drag = true; b.setPointerCapture(e.pointerId); sx = e.clientX; sy = e.clientY; b.classList.add("dragging"); });
+          b.addEventListener("pointermove", (e) => {
+            if (!drag) return;
+            b.style.transform = `translate(${e.clientX - sx}px,${e.clientY - sy}px)`;
+            const s = slot();
+            if (s) { const r = s.getBoundingClientRect(); s.classList.toggle("over", e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom); }
+          });
+          b.addEventListener("pointerup", (e) => {
+            if (!drag) return;
+            drag = false; b.classList.remove("dragging"); b.style.transform = "";
+            const s = slot();
+            if (s) { const r = s.getBoundingClientRect(); s.classList.remove("over");
+              if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) fill(b.dataset.w); }
+          });
+        });
+      },
+
+      collect(area) {
+        const row = area.querySelector(".edit-sentence");
+        if (row.dataset.removed === "-1") return null;
+        const parts = [];
+        Array.from(row.children).forEach((ch) => {
+          if (ch.classList.contains("edit-slot")) { if (ch.dataset.fill) parts.push(ch.dataset.fill); }
+          else parts.push(ch.textContent);
+        });
+        return parts.join(" ");
+      },
+
+      check(item, response) {
+        const accept = (item.accept || []).map(norm);
+        return { correct: accept.includes(norm(response)), expected: item.accept[0] };
+      },
+
+      mark(area, item, result) {
+        area.querySelectorAll(".edit-token, .edit-word").forEach((el) => { el.disabled = true; el.style.pointerEvents = "none"; });
+        const s = area.querySelector(".edit-slot");
+        if (s) s.classList.add(result.correct ? "correct" : "incorrect");
+      },
+    },
+
     /* ===== match: same words, different punctuation/grammar, different meaning ===== *
        The point is that a small change flips the meaning ("Let's eat, Grandma"
        vs "Let's eat Grandma"). Learner taps a sentence, then taps the meaning

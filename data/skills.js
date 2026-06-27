@@ -89,12 +89,12 @@ window.SKILLS = [
   },
   items:[
       { type:"transform", prompt:"Put these words in subject-verb-object order.", sentence:"the ball / kicked / the boy", accept:["the boy kicked the ball"], explain:"Subject (the boy) + verb (kicked) + object (the ball).", tags:["svo"] },
-      { type:"produce", prompt:"Write a complete sentence with a subject, a verb, and an object (e.g. The dog chased the cat).", tags:["svo"] },
+      { type:"order", prompt:"Put the words in order to make a complete sentence.", words:["My","sister","plays","the","piano"], answer:"My sister plays the piano", explain:"Subject (My sister) + verb (plays) + object (the piano).", tags:["svo"] },
       { type:"identify", prompt:"Is this a complete sentence?", sentence:"<b>She reads books every night.</b>", options:["Yes — subject + verb + rest","No — missing a subject","No — missing a verb","No — it is a fragment"], answer:"Yes — subject + verb + rest", explain:"She (subject) reads (verb) books every night — complete SVO.", tags:["svo"] },
       { type:"identify", prompt:"Is this a complete sentence?", sentence:"<b>Running to the shops.</b>", options:["Yes — subject + verb + rest","No — missing a subject","No — missing a verb","No — it is a fragment"], answer:"No — missing a subject", explain:"There is no subject: who is running?", tags:["svo"] },
       { type:"gapfill", prompt:"Write a verb to complete the sentence", before:"The teacher", after:"the homework.", cue:"collect", accept:["collects","collected"], explain:"The teacher collects/collected the homework — verb completes the SVO.", tags:["svo"] },
       { type:"gapfill", prompt:"Add ANY subject — who or what kicked the ball?", before:"", after:"kicked the ball over the fence.", cue:"a person or thing", accept:["i","you","he","she","we","they","it","the boy","the girl","the dog","the player","tom","sam","mia"], explain:"Any subject works here: I, you, he, she, we, they, it, or a noun like 'the boy'. A subject is needed before the verb 'kicked'.", tags:["svo"] },
-      { type:"choose", prompt:"Which is a complete sentence?", options:["The cat sleeps on the sofa.","Sleeps on the sofa.","The cat on the sofa.","On the sofa sleeps."], answer:"The cat sleeps on the sofa.", explain:"Complete SVO: the cat (subject) sleeps (verb) on the sofa (rest).", tags:["svo"] },
+      { type:"choose", prompt:"Which one is a complete sentence?", options:["The cat slept.","The small grey cat on the warm windowsill in the afternoon sun.","After the long and tiring day at school yesterday.","Running quickly down the busy street near the shops."], answer:"The cat slept.", explain:"'The cat slept' has a subject and a verb. The longer options are just descriptions with no verb doing the action, so they are fragments, not sentences.", tags:["svo"] },
       { type:"choose", prompt:"Which sentence has the words in the right order (subject, verb, object)?", options:["The boy kicked the ball.","Kicked the boy the ball.","The ball the boy kicked.","The boy the ball kicked."], answer:"The boy kicked the ball.", explain:"Subject (the boy) + verb (kicked) + object (the ball), in that order.", tags:["svo"] },
       { type:"order", prompt:"Arrange the words to tell us where she goes", words:["school","to","goes","She"], answer:"She goes to school", explain:"Subject (She) + verb (goes) + rest (to school) = SVO order.", tags:["svo"] },
       { type:"order", prompt:"Arrange the words to say what the cat does", words:["the","reads","cat","book","a"], answer:"The cat reads a book", explain:"Subject (the cat) + verb (reads) + object (a book) = correct SVO.", tags:["svo"] },
@@ -185,7 +185,7 @@ window.SKILLS = [
   items:[
       { type:"join", prompt:"Join with 'because' to give a reason.", sentence1:"He wore a jacket.", sentence2:"It was cold.", accept:["he wore a jacket because it was cold","because it was cold he wore a jacket","because it was cold, he wore a jacket"], explain:"because introduces the reason: he wore a jacket because it was cold.", tags:["subordination"] },
       { type:"join", prompt:"Join with 'although' to show contrast.", sentence1:"She was tired.", sentence2:"She kept working.", accept:["although she was tired she kept working","although she was tired, she kept working","she kept working although she was tired"], explain:"although introduces the contrast: although she was tired, she kept working.", tags:["subordination"] },
-      { type:"produce", prompt:"Write a complex sentence using a subordinating conjunction (because, although, when, if).", tags:["subordination"] },
+      { type:"edit", prompt:"Fix the linking word.", tokens:["We","went","out","despite","it","was","raining"], bank:["although","because","unless"], accept:["We went out although it was raining"], explain:"Use 'although' before a clause (despite is followed by a noun): although it was raining.", tags:["subordination"] },
       { type:"gapfill", prompt:"Begin the sentence to show the order in time: homework first, then outside", before:"", after:"she finished her homework, she went outside.", cue:"what shows the time order?", accept:["after","when"], explain:"After (or when) shows the time order: finishing homework came first.", tags:["subordination"] },
       { type:"gapfill", prompt:"Connect these to give the reason he wore a jacket", before:"He wore a jacket", after:"it was cold.", cue:"what gives the reason?", accept:["because","as"], explain:"Because (or as) gives the reason for wearing a jacket.", tags:["subordination"] },
       { type:"gapfill", prompt:"Connect these so the game starts the moment everyone arrives", before:"We will start the game", after:"everyone arrives.", cue:"what marks the time?", accept:["when","once","after"], explain:"When (or once/after) shows the time the game will start.", tags:["subordination"] },
@@ -220,7 +220,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite as a cleft to emphasise 'Mia'.", sentence:"Mia solved the problem.", accept:["it was mia who solved the problem","it was mia that solved the problem"], explain:"Cleft: It was Mia who solved the problem.", tags:["cleft"] },
       { type:"transform", prompt:"Rewrite as a cleft to emphasise 'the rain'.", sentence:"The rain ruined the picnic.", accept:["it was the rain that ruined the picnic","it was the rain which ruined the picnic"], explain:"Cleft: It was the rain that ruined the picnic.", tags:["cleft"] },
-      { type:"produce", prompt:"Write a cleft sentence (It was ... who/that ...) to emphasise a person.", tags:["cleft"] },
+      { type:"edit", prompt:"Fix the cleft sentence.", tokens:["It","was","Mia","which","solved","it"], bank:["who","that","whose"], accept:["It was Mia who solved it"], explain:"Use 'who' for a person in a cleft: It was Mia who solved it.", tags:["cleft"] },
       { type:"gapfill", prompt:"Complete the cleft sentence", before:"It was my sister", after:"found the lost key.", cue:"who / that / which", accept:["who","that"], explain:"Who or that introduces the relative clause in a cleft.", tags:["cleft"] },
       { type:"gapfill", prompt:"Complete the cleft sentence", before:"It was in Melbourne", after:"they first met.", cue:"that / who / which", accept:["that"], explain:"That links the focus (in Melbourne) to the rest of the cleft.", tags:["cleft"] },
       { type:"gapfill", prompt:"Rewrite as a cleft: emphasise 'the noise'", before:"It was", after:"that woke me up.", cue:"the noise", accept:["the noise"], explain:"The cleft moves 'the noise' into the focus position after 'It was'.", tags:["cleft"] },
@@ -260,7 +260,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite so it is happening right now (present continuous).", sentence:"She reads a book.", accept:["she is reading a book","shes reading a book"], explain:"Present continuous = am/is/are + verb-ing: she is reading a book.", tags:["present-continuous"] },
       { type:"transform", prompt:"Rewrite so it happened yesterday (past simple).", sentence:"They walk to school.", accept:["they walked to school"], explain:"Past simple of a regular verb = verb + ed: they walked to school.", tags:["past-simple"] },
-      { type:"produce", prompt:"Write one sentence about what you do every morning. Use the present simple (e.g. I eat, she goes).", tags:["present-simple"] },
+      { type:"edit", prompt:"Fix the verb.", tokens:["She","go","to","work","every","day"], bank:["goes","going","went"], accept:["She goes to work every day"], explain:"Third person singular present simple adds -s: she goes.", tags:["present-simple"] },
       { type:"gapfill",  prompt:"Write the correct form", before:"Right now, I", after:"English.",  cue:"study",  accept:["am studying"], explain:"Happening now = present continuous: am + studying.", tags:["present-continuous"] },
       { type:"gapfill",  prompt:"Write the correct form", before:"Every morning she", after:"the bus.", cue:"catch", accept:["catches"], explain:"Habit, third person singular = catch + es.", tags:["present-simple"] },
       { type:"gapfill",  prompt:"Write the correct form", before:"Last weekend they", after:"their cousins.", cue:"visit", accept:["visited"], explain:"Finished past = visit + ed.", tags:["past-simple"] },
@@ -299,7 +299,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite in the present perfect (it started before and still matters now).", sentence:"I finish my work.", accept:["i have finished my work","ive finished my work"], explain:"Present perfect = have/has + past participle: I have finished my work.", tags:["present-perfect"] },
       { type:"transform", prompt:"Rewrite in the present perfect.", sentence:"She visits Japan.", accept:["she has visited japan","shes visited japan"], explain:"has + past participle: she has visited Japan.", tags:["present-perfect"] },
-      { type:"produce", prompt:"Write one sentence about something you have done in your life. Use the present perfect (have/has + past participle).", tags:["present-perfect"] },
+      { type:"edit", prompt:"Fix the verb.", tokens:["I","have","saw","that","film"], bank:["seen","see","seeing"], accept:["I have seen that film"], explain:"Present perfect uses the past participle: I have seen.", tags:["present-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"We", after:"that movie twice.", cue:"see", accept:["have seen"], explain:"Experience up to now = have + past participle: have seen.", tags:["present-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"He", after:"his lunch yet.", cue:"not eat", accept:["has not eaten","hasn't eaten","hasnt eaten"], explain:"Third person + not + past participle: has not eaten.", tags:["present-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"She", after:"to Perth three times.", cue:"travel", accept:["has travelled","has traveled"], explain:"Third person experience = has + past participle: has travelled.", tags:["present-perfect"] },
@@ -341,7 +341,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite in the past perfect (this action happened first).", sentence:"She finishes dinner.", accept:["she had finished dinner","shed finished dinner"], explain:"Past perfect = had + past participle: she had finished dinner.", tags:["past-perfect"] },
       { type:"transform", prompt:"Rewrite so the action was in progress in the past (past continuous).", sentence:"He reads a book.", accept:["he was reading a book"], explain:"Past continuous = was/were + verb-ing: he was reading a book.", tags:["past-continuous"] },
-      { type:"produce", prompt:"Write a sentence with two past actions. Use the past perfect (had + past participle) for the one that happened first.", tags:["past-perfect"] },
+      { type:"edit", prompt:"Fix the verb.", tokens:["She","had","ate","before","we","arrived"], bank:["eaten","eat","eating"], accept:["She had eaten before we arrived"], explain:"Past perfect = had + past participle: had eaten.", tags:["past-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"By the time we arrived, the film", after:".", cue:"already start", accept:["had already started"], explain:"Earlier past action = had + already + past participle.", tags:["past-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"She", after:"for two hours when the bus finally came.", cue:"wait", accept:["had been waiting"], explain:"Duration before a past event = had been + verb-ing.", tags:["past-perfect-progressive"] },
       { type:"gapfill", prompt:"Write the correct form", before:"They", after:"all afternoon before it rained.", cue:"swim", accept:["had been swimming"], explain:"Ongoing past action before another past event = had been swimming.", tags:["past-perfect-progressive"] },
@@ -375,7 +375,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite to show it will be in progress at a future time (future progressive).", sentence:"I fly to London.", accept:["i will be flying to london","ill be flying to london"], explain:"Future progressive = will be + verb-ing: I will be flying to London.", tags:["future-progressive"] },
       { type:"transform", prompt:"Rewrite to show it will be finished before a future point (future perfect).", sentence:"I finish the report.", accept:["i will have finished the report","ill have finished the report"], explain:"Future perfect = will have + past participle: I will have finished the report.", tags:["future-perfect"] },
-      { type:"produce", prompt:"Write one sentence about what you will be doing this time tomorrow. Use the future progressive (will be + verb-ing).", tags:["future-progressive"] },
+      { type:"edit", prompt:"Fix the verb form.", tokens:["This","time","tomorrow","I","will","flying"], bank:["be","been","being"], accept:["This time tomorrow I will be flying"], explain:"Future progressive = will be + -ing: will be flying.", tags:["future-progressive"] },
       { type:"gapfill", prompt:"Write the correct form", before:"By December, we", after:"here for five years.", cue:"live", accept:["will have lived"], explain:"Completed duration by a future point = will have + past participle.", tags:["future-perfect"] },
       { type:"gapfill", prompt:"Write the correct form", before:"This time tomorrow, he", after:"on the train.", cue:"sit", accept:["will be sitting"], explain:"In progress at a future moment = will be + verb-ing.", tags:["future-progressive"] },
       { type:"gapfill", prompt:"Write the correct form", before:"By the end of the year, she", after:"200 books.", cue:"read", accept:["will have read"], explain:"Accumulated total by a future deadline = will have + past participle.", tags:["future-perfect"] },
@@ -411,7 +411,7 @@ window.SKILLS = [
   },
   items:[
       { type:"transform", prompt:"Rewrite as a rule using 'must'.", sentence:"Wear a helmet.", accept:["you must wear a helmet"], explain:"must = a rule or strong obligation: you must wear a helmet.", tags:["must"] },
-      { type:"produce", prompt:"Write one sentence about something you are able to do. Use 'can'.", tags:["can"] },
+      { type:"edit", prompt:"Fix the verb after the modal.", tokens:["She","can","speaks","French"], bank:["speak","spoke","speaking"], accept:["She can speak French"], explain:"After a modal, use the base verb: can speak.", tags:["can"] },
       { type:"gapfill",  prompt:"Add the modal (obligation)", before:"You", after:"wear a helmet when cycling.", cue:"must / can", accept:["must"], explain:"A rule = must.", tags:["must"] },
       { type:"gapfill",  prompt:"Add the modal (ability)",    before:"He", after:"swim very well.",             cue:"must / can", accept:["can"],  explain:"Ability = can.", tags:["can"] },
       { type:"choose", prompt:"Which shows obligation?", options:["You can swim.","You must wear a seatbelt.","You might be late.","You could help if you wanted."], answer:"You must wear a seatbelt.", explain:"'Must' shows a rule or strong obligation.", tags:["must"] },
@@ -446,7 +446,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite to show it is possible but not certain (use 'might').", sentence:"It rains tonight.", accept:["it might rain tonight"], explain:"might = possible, not certain: it might rain tonight.", tags:["might"] },
       { type:"transform", prompt:"Rewrite to give permission (use 'may').", sentence:"You leave now.", accept:["you may leave now"], explain:"may = giving permission: you may leave now.", tags:["may"] },
-      { type:"produce", prompt:"Write one sentence about something that might happen tomorrow. Use 'may' or 'might'.", tags:["might"] },
+      { type:"edit", prompt:"Fix the verb after the modal.", tokens:["It","might","rains","tomorrow"], bank:["rain","rained","raining"], accept:["It might rain tomorrow"], explain:"After a modal, use the base verb: might rain.", tags:["might"] },
       { type:"gapfill", prompt:"Add the modal (possibility)", before:"He", after:"be late for class.", cue:"may / might", accept:["may","might"], explain:"Both may and might express possibility here.", tags:["may","might"] },
       { type:"gapfill", prompt:"Add the modal (permission)", before:"You", after:"use my calculator.", cue:"may / must", accept:["may"], explain:"Giving permission = may.", tags:["may"] },
       { type:"gapfill", prompt:"Add the modal (possibility)", before:"They", after:"move to Brisbane next year.", cue:"might / must", accept:["might"], explain:"Uncertain future plan = might (possibility, not obligation).", tags:["might"] },
@@ -481,7 +481,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite to show regret (use 'should have').", sentence:"I didn't study.", accept:["i should have studied","i shouldve studied"], explain:"should have + past participle = regret: I should have studied.", tags:["should-have"] },
       { type:"transform", prompt:"Rewrite as a strong guess about the past (use 'must have').", sentence:"She forgot her keys.", accept:["she must have forgotten her keys"], explain:"must have + past participle = a confident conclusion: she must have forgotten her keys.", tags:["must-have"] },
-      { type:"produce", prompt:"Write one sentence about something you regret not doing. Use 'should have + past participle'.", tags:["should-have"] },
+      { type:"edit", prompt:"Fix the verb.", tokens:["You","should","have","went","earlier"], bank:["gone","go","going"], accept:["You should have gone earlier"], explain:"Modal perfect = should have + past participle: should have gone.", tags:["should-have"] },
       { type:"gapfill", prompt:"Write the modal perfect form", before:"You", after:"earlier. Now we are late.", cue:"should / leave", accept:["should have left"], explain:"Past regret = should have + past participle.", tags:["should-have"] },
       { type:"gapfill", prompt:"Write the modal perfect form", before:"It is wet outside. It", after:"during the night.", cue:"must / rain", accept:["must have rained"], explain:"Strong deduction about the past = must have + past participle.", tags:["must-have"] },
       { type:"gapfill", prompt:"Write the modal perfect form", before:"We", after:"the bus, but we walked instead.", cue:"could / take", accept:["could have taken"], explain:"Past possibility not taken = could have + past participle.", tags:["could-have"] },
@@ -515,7 +515,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite as a guess about an action in progress in the past (use 'must have been + -ing').", sentence:"She slept.", accept:["she must have been sleeping"], explain:"must have been + verb-ing = a guess about an ongoing past action: she must have been sleeping.", tags:["modal-perfect-progressive"] },
       { type:"transform", prompt:"Rewrite as a guess about right now (use 'must be + -ing').", sentence:"He works.", accept:["he must be working"], explain:"must be + verb-ing = a guess about now: he must be working.", tags:["modal-progressive"] },
-      { type:"produce", prompt:"Write one sentence guessing what someone was doing earlier. Use 'must have been' or 'might have been' + verb-ing.", tags:["modal-perfect-progressive"] },
+      { type:"edit", prompt:"Fix the verb form.", tokens:["She","must","have","been","sleep"], bank:["sleeping","slept","sleeps"], accept:["She must have been sleeping"], explain:"must have been + -ing: been sleeping.", tags:["modal-perfect-progressive"] },
       { type:"gapfill", prompt:"Write the modal progressive form", before:"She", after:"all night; she looks exhausted.", cue:"must / study", accept:["must have been studying"], explain:"Strong deduction about ongoing past = must have been + verb-ing.", tags:["modal-perfect-progressive"] },
       { type:"gapfill", prompt:"Write the modal progressive form", before:"They", after:"for the wrong bus.", cue:"might / wait", accept:["might have been waiting"], explain:"Speculation about ongoing past = might have been + verb-ing.", tags:["modal-perfect-progressive"] },
       { type:"gapfill", prompt:"Write the modal progressive form", before:"He", after:"too fast when the accident happened.", cue:"could / drive", accept:["could have been driving"], explain:"Possible ongoing past action = could have been + verb-ing.", tags:["modal-perfect-progressive"] },
@@ -533,26 +533,26 @@ window.SKILLS = [
     { text:"Plants die if they get no water.", note:"The result can come first — no comma then." },
   ],
   sort:{
-    prompt:"A conditional has two parts. Drag each part to where it belongs.",
-    zones:["If-clause","Result clause"],
+    prompt:"Read the verbs. Is it always true (zero) or one likely future (first)? The 'if' part can come first or last.",
+    zones:["Zero conditional (always true)","First conditional (likely future)"],
     modelled:[
-      { text:"If you heat ice", zone:"If-clause", explain:"This sets the condition — it starts with if. That is the if-clause." },
-      { text:"it melts", zone:"Result clause", explain:"This is what always happens. That is the result clause." },
+      { text:"If you heat ice, it melts.", zone:"Zero conditional (always true)", explain:"present + present, always true — that is a zero conditional." },
+      { text:"If it rains tomorrow, we will cancel.", zone:"First conditional (likely future)", explain:"present + will, one future possibility — that is a first conditional." },
     ],
     items:[
-      { text:"If you mix blue and yellow", zone:"If-clause" },
-      { text:"you get green", zone:"Result clause" },
-      { text:"If you drop it", zone:"If-clause" },
-      { text:"it breaks", zone:"Result clause" },
-      { text:"If you don't water plants", zone:"If-clause" },
-      { text:"they die", zone:"Result clause" },
+      { text:"Ice melts if you heat it.", zone:"Zero conditional (always true)" },
+      { text:"We will cancel if it rains tomorrow.", zone:"First conditional (likely future)" },
+      { text:"If you mix blue and yellow, you get green.", zone:"Zero conditional (always true)" },
+      { text:"If I finish early, I will call you.", zone:"First conditional (likely future)" },
+      { text:"Plants die if they get no water.", zone:"Zero conditional (always true)" },
+      { text:"You will pass if you study hard.", zone:"First conditional (likely future)" },
     ],
   },
   items:[
       { type:"gapfill", prompt:"Write the correct form", before:"If you heat ice, it", after:".", cue:"melt", accept:["melts"], explain:"Zero conditional: present + present for facts.", tags:["zero"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If you press this button, the light", after:".", cue:"turn on", accept:["turns on"], explain:"Zero conditional: a general truth, present + present.", tags:["zero"] },
       { type:"join", prompt:"Join into a zero conditional (a general fact).", sentence1:"You heat ice.", sentence2:"It melts.", accept:["if you heat ice it melts","if you heat ice, it melts","it melts if you heat ice"], explain:"Zero conditional = if + present, present: if you heat ice, it melts.", tags:["zero"] },
-      { type:"produce", prompt:"Write one zero-conditional sentence about a fact that is always true (if + present, present).", tags:["zero"] },
+      { type:"edit", prompt:"Fix the verb.", tokens:["If","you","heat","ice","it","melt"], bank:["melts","melted","melting"], accept:["If you heat ice it melts"], explain:"Zero conditional: present + present, third person 'melts'.", tags:["zero"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If plants do not get water, they", after:".", cue:"die", accept:["die"], explain:"Zero conditional: general truth = present + present.", tags:["zero"] },
       { type:"choose", prompt:"Which is a zero conditional?", options:["If you study, you will pass.","If you mix blue and yellow, you get green.","If I were rich, I would travel.","If she had studied, she would have passed."], answer:"If you mix blue and yellow, you get green.", explain:"Always-true fact, present + present = zero conditional.", tags:["zero"] },
       { type:"choose", prompt:"Which sentence is always true?", options:["If it rains, we will stay inside.","If you add salt to water, it dissolves.","If I studied, I would pass.","If they had left earlier, they would have arrived."], answer:"If you add salt to water, it dissolves.", explain:"A scientific/general fact = zero conditional (always true).", tags:["zero"] },
@@ -569,19 +569,19 @@ window.SKILLS = [
     { text:"If you heat water to 100°C, it will boil.", note:"A likely, specific result." },
   ],
   sort:{
-    prompt:"Drag each part of these first conditionals to where it belongs.",
-    zones:["If-clause","Result clause"],
+    prompt:"Read the verbs. Is it real and likely (first) or imaginary (second)? The 'if' part can come first or last.",
+    zones:["First conditional (real)","Second conditional (imaginary)"],
     modelled:[
-      { text:"If I study hard", zone:"If-clause", explain:"The condition, in present simple. That is the if-clause." },
-      { text:"I will pass", zone:"Result clause", explain:"The likely result, with will. That is the result clause." },
+      { text:"If I study, I will pass.", zone:"First conditional (real)", explain:"present + will — a real, likely future. That is a first conditional." },
+      { text:"If I won the lottery, I would travel.", zone:"Second conditional (imaginary)", explain:"past + would — imaginary now. That is a second conditional." },
     ],
     items:[
-      { text:"If it rains", zone:"If-clause" },
-      { text:"we will stay inside", zone:"Result clause" },
-      { text:"If you hurry", zone:"If-clause" },
-      { text:"you will catch the bus", zone:"Result clause" },
-      { text:"If she calls", zone:"If-clause" },
-      { text:"I will answer", zone:"Result clause" },
+      { text:"I will pass if I study.", zone:"First conditional (real)" },
+      { text:"I would travel if I won the lottery.", zone:"Second conditional (imaginary)" },
+      { text:"If it rains, we will stay inside.", zone:"First conditional (real)" },
+      { text:"If I were rich, I would help.", zone:"Second conditional (imaginary)" },
+      { text:"You will catch the bus if you hurry.", zone:"First conditional (real)" },
+      { text:"If she studied harder, she would pass.", zone:"Second conditional (imaginary)" },
     ],
   },
   items:[
@@ -591,7 +591,7 @@ window.SKILLS = [
       { type:"gapfill",  prompt:"Write the correct form", before:"If the team", after:"hard, they will win the final.", cue:"train", accept:["trains"], explain:"The if-clause uses present simple; third person singular = train + s.", tags:["first"] },
       { type:"join", prompt:"Join into a first conditional (a likely future).", sentence1:"I study.", sentence2:"I will pass.", accept:["if i study i will pass","if i study, i will pass","i will pass if i study"], explain:"First conditional = if + present, will + base verb: if I study, I will pass.", tags:["first"] },
       { type:"join", prompt:"Join into a first conditional.", sentence1:"You hurry.", sentence2:"You will catch the bus.", accept:["if you hurry you will catch the bus","if you hurry, you will catch the bus","you will catch the bus if you hurry"], explain:"if + present, will + base: if you hurry, you will catch the bus.", tags:["first"] },
-      { type:"produce", prompt:"Write a first-conditional sentence about your weekend (if + present, will + verb).", tags:["first"] },
+      { type:"edit", prompt:"Fix the result clause.", tokens:["If","it","rains","we","stay","inside"], bank:["will stay","stayed","would stay"], accept:["If it rains we will stay inside"], explain:"First conditional result uses will: we will stay.", tags:["first"] },
       { type:"choose", prompt:"Which is a correct first conditional?", options:["If it rains, we will cancel the picnic.","If it will rain, we will cancel the picnic.","If it rains, we cancelled the picnic.","If it rained, we would cancel the picnic."], answer:"If it rains, we will cancel the picnic.", explain:"If + present simple (rains), then will + base verb (cancel). Never put 'will' in the if-clause.", tags:["first"] },
   ]},
   { id:"cond-c3", category:"Conditionals", band:"C3", name:"Second", example:"If I were taller, I'd play basketball.", introduced:true, mode:"progression", assessed:true, resources:{ sheets:[{name:"Tense Consistency",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Tense-Consistency.aspx"},{name:"Verbs",url:"https://kewhighschool.sharepoint.com/sites/KHSWritingHub/SitePages/CS-%C2%B7-Verbs.aspx"},{name:"ABC: Conditionals",url:"https://www.abc.net.au/education/learn-english/conditionals-in-english/11359496"},{name:"ABC: Will or would",url:"https://www.abc.net.au/education/learn-english/learn-english-will-or-would/7360202"}] },
@@ -623,7 +623,7 @@ window.SKILLS = [
   items:[
       { type:"join", prompt:"Join into a second conditional (imaginary now).", sentence1:"I was rich.", sentence2:"I would travel.", accept:["if i were rich i would travel","if i were rich, i would travel","i would travel if i were rich","if i was rich i would travel","if i was rich, i would travel"], explain:"Second conditional = if + past, would + base. Use 'were': if I were rich, I would travel.", tags:["second"] },
       { type:"transform", prompt:"Rewrite as imaginary now (second conditional).", sentence:"If I have time, I will help.", accept:["if i had time i would help","if i had time, i would help"], explain:"Second conditional = if + past, would: if I had time, I would help.", tags:["second"] },
-      { type:"produce", prompt:"Write a second-conditional sentence about an imaginary situation (if + past, would + verb).", tags:["second"] },
+      { type:"edit", prompt:"Fix the verb (second conditional).", tokens:["If","I","was","you","I","would","leave"], bank:["were","am","be"], accept:["If I were you I would leave"], explain:"The second conditional uses 'were' for all subjects: if I were you.", tags:["second"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If I", after:"you, I would apologise.", cue:"be", accept:["were","was"], explain:"If I were you = second conditional (were is traditional, was is accepted).", tags:["second"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If we had more time, we", after:"to the beach.", cue:"go", accept:["would go","d go"], explain:"would + base verb in the result clause of the second conditional.", tags:["second"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If he", after:"harder, he would get better marks.", cue:"study", accept:["studied"], explain:"If-clause uses past simple in the second conditional: studied.", tags:["second"] },
@@ -657,7 +657,7 @@ window.SKILLS = [
   items:[
       { type:"join", prompt:"Join into a third conditional (a different past).", sentence1:"She had trained harder.", sentence2:"She would have won.", accept:["if she had trained harder she would have won","if she had trained harder, she would have won","she would have won if she had trained harder"], explain:"Third conditional = if + past perfect, would have + participle: if she had trained harder, she would have won.", tags:["third"] },
       { type:"transform", prompt:"Rewrite as a third conditional (imagine a different past).", sentence:"If it rains, we will cancel.", accept:["if it had rained we would have cancelled","if it had rained, we would have cancelled","if it had rained we would have canceled","if it had rained, we would have canceled"], explain:"Third conditional shifts both verbs back: if it had rained, we would have cancelled.", tags:["third"] },
-      { type:"produce", prompt:"Write a third-conditional sentence about something you wish had gone differently (if + past perfect, would have + participle).", tags:["third"] },
+      { type:"edit", prompt:"Fix the verb (third conditional).", tokens:["If","she","had","study","she","would","have","passed"], bank:["studied","studies","studying"], accept:["If she had studied she would have passed"], explain:"Third conditional: had + past participle (had studied).", tags:["third"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If he had left earlier, he", after:"the train.", cue:"catch", accept:["would have caught"], explain:"Third conditional result = would have + past participle.", tags:["third"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If I", after:"about the test, I would have revised.", cue:"know", accept:["had known"], explain:"Third conditional if-clause = had + past participle.", tags:["third"] },
       { type:"gapfill", prompt:"Write the correct form", before:"If she had eaten breakfast, she", after:"hungry now.", cue:"not be", accept:["would not be","wouldn't be","wouldnt be"], explain:"Mixed conditional: past cause, present result = would (not) + base.", tags:["mixed"] },
@@ -693,7 +693,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite in the passive (keep the focus on the window).", sentence:"Someone broke the window.", accept:["the window was broken","the window was broken by someone"], explain:"Passive = be + past participle: the window was broken.", tags:["passive-intro"] },
       { type:"transform", prompt:"Rewrite in the passive.", sentence:"The dog chased the cat.", accept:["the cat was chased","the cat was chased by the dog"], explain:"The object becomes the subject: the cat was chased (by the dog).", tags:["passive-intro"] },
-      { type:"produce", prompt:"Write one passive sentence: something + was/were + past participle (e.g. The cup was dropped).", tags:["passive-intro"] },
+      { type:"edit", prompt:"Fix the passive verb.", tokens:["The","window","was","break"], bank:["broken","broke","breaking"], accept:["The window was broken"], explain:"Passive = be + past participle: was broken.", tags:["passive-intro"] },
       { type:"gapfill", prompt:"Say what happened to the letter (keep the focus on the letter)", before:"The letter", after:"yesterday.", cue:"send (past)", accept:["was sent"], explain:"Passive past = was + past participle: was sent.", tags:["passive-intro"] },
       { type:"gapfill", prompt:"Say what happened to the homework", before:"The homework", after:"by the teacher.", cue:"check (past)", accept:["was checked"], explain:"Passive past = was + past participle: was checked.", tags:["passive-intro"] },
       { type:"gapfill", prompt:"Focus on the language, not the speakers", before:"English", after:"in many countries.", cue:"speak (present)", accept:["is spoken"], explain:"Passive present = is + past participle: is spoken.", tags:["passive-intro"] },
@@ -729,7 +729,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite in the present passive (a general fact).", sentence:"People grow rice in Asia.", accept:["rice is grown in asia"], explain:"Present passive = is/are + past participle: rice is grown in Asia.", tags:["present-passive"] },
       { type:"transform", prompt:"Rewrite in the past passive.", sentence:"They built the bridge in 1932.", accept:["the bridge was built in 1932"], explain:"Past passive = was/were + past participle: the bridge was built in 1932.", tags:["past-passive"] },
-      { type:"produce", prompt:"Write one passive sentence about the past (something + was/were + past participle).", tags:["past-passive"] },
+      { type:"edit", prompt:"Fix the passive verb.", tokens:["The","bridge","was","build","in","1932"], bank:["built","building","builds"], accept:["The bridge was built in 1932"], explain:"Past passive = was + past participle: was built.", tags:["past-passive"] },
       { type:"gapfill", prompt:"Write the passive form", before:"The books", after:"to the library yesterday.", cue:"return", accept:["were returned"], explain:"Past passive, plural subject = were + past participle.", tags:["past-passive"] },
       { type:"gapfill", prompt:"Write the passive form", before:"Coffee", after:"in Brazil.", cue:"grow", accept:["is grown"], explain:"Present passive fact = is + past participle.", tags:["present-passive"] },
       { type:"gapfill", prompt:"Write the passive form", before:"The email", after:"to all staff last Friday.", cue:"send", accept:["was sent"], explain:"Past passive, singular subject = was + past participle.", tags:["past-passive"] },
@@ -764,7 +764,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Rewrite as a passive report (start with 'The CEO').", sentence:"People say the CEO has resigned.", accept:["the ceo is said to have resigned"], explain:"Passive reporting: the CEO is said to have resigned.", tags:["passive-reporting"] },
       { type:"transform", prompt:"Rewrite as a passive report (start with 'She').", sentence:"Everyone believes she is honest.", accept:["she is believed to be honest"], explain:"Passive reporting: she is believed to be honest.", tags:["passive-reporting"] },
-      { type:"produce", prompt:"Write one passive-reporting sentence (X is said / believed / thought to ...).", tags:["passive-reporting"] },
+      { type:"edit", prompt:"Fix the reporting verb.", tokens:["He","is","believe","to","be","honest"], bank:["believed","believing","believes"], accept:["He is believed to be honest"], explain:"Passive reporting: is believed to.", tags:["passive-reporting"] },
       { type:"gapfill", prompt:"Complete the passive report", before:"He", after:"to be very wealthy.", cue:"believe", accept:["is believed"], explain:"Passive reporting = is + past participle + to: is believed.", tags:["passive-reporting"] },
       { type:"gapfill", prompt:"Complete the passive report", before:"The suspect", after:"to have fled the city.", cue:"report", accept:["is reported","was reported"], explain:"Passive reporting = is/was reported + to have.", tags:["passive-reporting"] },
       { type:"gapfill", prompt:"Complete the passive report", before:"The painting", after:"to be worth millions.", cue:"say", accept:["is said"], explain:"Passive reporting = is said + to be.", tags:["passive-reporting"] },
@@ -800,7 +800,7 @@ window.SKILLS = [
   items:[
       { type:"join", prompt:"Join into one sentence using 'who'.", sentence1:"That is the boy.", sentence2:"He won the race.", accept:["that is the boy who won the race"], explain:"who joins a clause about a person: that is the boy who won the race.", tags:["who"] },
       { type:"join", prompt:"Join into one sentence using 'which'.", sentence1:"She found the book.", sentence2:"It was on the table.", accept:["she found the book which was on the table"], explain:"which joins a clause about a thing: she found the book which was on the table.", tags:["which"] },
-      { type:"produce", prompt:"Write one sentence using a relative clause with 'who' to describe a person.", tags:["who"] },
+      { type:"edit", prompt:"Fix the relative pronoun.", tokens:["The","book","who","is","on","the","table"], bank:["which","whom","whose"], accept:["The book which is on the table"], explain:"Use 'which' for a thing, not 'who'.", tags:["which"] },
       { type:"gapfill", prompt:"Add the relative pronoun", before:"I have a friend", after:"speaks four languages.", cue:"who / which", accept:["who"], explain:"Friend is a person = who.", tags:["who"] },
       { type:"gapfill", prompt:"Add the relative pronoun", before:"This is the bus", after:"goes to the city.", cue:"who / which / that", accept:["which","that"], explain:"Bus is a thing = which or that.", tags:["which"] },
       { type:"gapfill", prompt:"Add the relative pronoun", before:"She is the doctor", after:"helped my mother.", cue:"who / which", accept:["who"], explain:"Doctor is a person = who.", tags:["who"] },
@@ -834,7 +834,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Add commas to make this non-defining (extra information).", sentence:"My brother who lives in Perth is a doctor.", accept:["my brother, who lives in perth, is a doctor"], explain:"Non-defining clauses take commas: My brother, who lives in Perth, is a doctor.", tags:["non-defining"] },
       { type:"join", prompt:"Join with a defining relative clause (no commas — say which man).", sentence1:"The man is my uncle.", sentence2:"He lives next door.", accept:["the man who lives next door is my uncle"], explain:"Defining clause, no commas: the man who lives next door is my uncle.", tags:["defining"] },
-      { type:"produce", prompt:"Write a non-defining relative clause sentence (extra info, with commas) about a family member.", tags:["non-defining"] },
+      { type:"choose", prompt:"Which sentence punctuates the extra information correctly?", options:["My sister, who lives in Perth, is a nurse.","My sister who lives in Perth is a nurse.","My sister, who lives in Perth is a nurse.","My sister who lives in Perth, is a nurse."], answer:"My sister, who lives in Perth, is a nurse.", explain:"A non-defining clause needs a comma on both sides.", tags:["non-defining"] },
       { type:"gapfill", prompt:"Add commas if needed (type the full clause)", before:"My dog", after:"loves swimming.", cue:"who is called Max / add commas if non-defining", accept:[", who is called max,",", who is called Max,"], explain:"My dog is unique, so this is non-defining and needs commas.", tags:["non-defining"] },
       { type:"gapfill", prompt:"Add the relative pronoun", before:"The students", after:"passed the exam were very happy.", cue:"who / which", accept:["who"], explain:"Students are people = who. No commas = defining.", tags:["defining"] },
       { type:"gapfill", prompt:"Add the relative pronoun", before:"The Yarra River", after:"runs through Melbourne, is very long.", cue:"who / which", accept:["which",", which"], explain:"The Yarra is unique, so use which with commas (non-defining).", tags:["non-defining"] },
@@ -873,7 +873,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Reduce the relative clause (drop 'who is').", sentence:"The man who is standing there is my dad.", accept:["the man standing there is my dad"], explain:"Drop 'who is' and keep the -ing form: the man standing there is my dad.", tags:["reduced"] },
       { type:"transform", prompt:"Reduce the relative clause (drop 'which was').", sentence:"The car which was parked outside is gone.", accept:["the car parked outside is gone"], explain:"Drop 'which was' and keep the past participle: the car parked outside is gone.", tags:["reduced"] },
-      { type:"produce", prompt:"Write one sentence with a reduced relative clause (drop 'who/which is' and use the -ing or -ed form).", tags:["reduced"] },
+      { type:"edit", prompt:"Fix the reduced relative clause.", tokens:["The","boy","sit","there","is","my","cousin"], bank:["sitting","sat","sits"], accept:["The boy sitting there is my cousin"], explain:"A reduced relative clause uses the -ing form: the boy sitting there.", tags:["reduced"] },
       { type:"gapfill", prompt:"Reduce the clause", before:"The woman", after:"at the desk is the principal.", cue:"who is sitting -> ?", accept:["sitting"], explain:"Remove who is, keep the participle: sitting.", tags:["reduced"] },
       { type:"gapfill", prompt:"Reduce the clause", before:"The letter", after:"to her was returned.", cue:"which was sent -> ?", accept:["sent"], explain:"Remove which was, keep the past participle: sent.", tags:["reduced"] },
       { type:"gapfill", prompt:"Reduce the clause", before:"Students", after:"near school walk to class.", cue:"who live -> ?", accept:["living"], explain:"Remove who + change verb to participle: living.", tags:["reduced"] },
@@ -910,7 +910,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Fix the agreement error.", sentence:"She walk to school every day.", accept:["she walks to school every day"], explain:"Third person singular needs the -s: she walks to school every day.", tags:["sv-agreement"] },
       { type:"transform", prompt:"Fix the agreement error.", sentence:"The children likes ice cream.", accept:["the children like ice cream"], explain:"Children is plural, so use 'like': the children like ice cream.", tags:["sv-agreement"] },
-      { type:"produce", prompt:"Write one sentence with a plural subject and a matching verb (e.g. they play, my friends like).", tags:["sv-agreement"] },
+      { type:"edit", prompt:"Fix the verb.", tokens:["The","children","likes","ice","cream"], bank:["like","liked","liking"], accept:["The children like ice cream"], explain:"Plural subject (children) takes 'like'.", tags:["sv-agreement"] },
       { type:"gapfill", prompt:"Write the correct form", before:"He", after:"the guitar very well.", cue:"play", accept:["plays"], explain:"Third person singular = play + s.", tags:["sv-agreement"] },
       { type:"gapfill", prompt:"Write the correct form", before:"My parents", after:"in a big house.", cue:"live", accept:["live"], explain:"Plural subject = base form: live.", tags:["sv-agreement"] },
       { type:"gapfill", prompt:"Write the correct form", before:"The cat", after:"on the sofa every afternoon.", cue:"sleep", accept:["sleeps"], explain:"Singular subject = sleep + s.", tags:["sv-agreement"] },
@@ -946,7 +946,7 @@ window.SKILLS = [
   items:[
       { type:"gapfill", prompt:"Write the plural form", before:"There are five ", after:" on the shelf.", cue:"(box)", accept:["boxes"], explain:"Add -es after x: box -> boxes.", tags:["regular-plural"] },
       { type:"gapfill", prompt:"Write the plural form", before:"Three ", after:" visited the clinic.", cue:"(woman)", accept:["women"], explain:"woman -> women is an irregular plural.", tags:["irregular-plural"] },
-      { type:"produce", prompt:"Write one sentence using an irregular plural (e.g. children, feet, mice, people).", tags:["irregular-plural"] },
+      { type:"edit", prompt:"Fix the plural.", tokens:["I","saw","three","mouses"], bank:["mice","mouse","meeces"], accept:["I saw three mice"], explain:"mouse -> mice (an irregular plural).", tags:["irregular-plural"] },
       { type:"gapfill", prompt:"Write the plural", before:"There are six", after:"in the pond.", cue:"fish", accept:["fish"], explain:"Fish is the same in singular and plural.", tags:["irregular-plural"] },
       { type:"gapfill", prompt:"Write the plural", before:"He lost two", after:"in an accident.", cue:"tooth", accept:["teeth"], explain:"tooth -> teeth is an irregular plural.", tags:["irregular-plural"] },
       { type:"gapfill", prompt:"Write the plural", before:"We saw three", after:"on the farm.", cue:"sheep", accept:["sheep"], explain:"Sheep is the same in singular and plural.", tags:["irregular-plural"] },
@@ -983,7 +983,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Fix the quantifier error.", sentence:"There is many traffic on the road.", accept:["there is much traffic on the road"], explain:"Traffic is uncountable, so use 'much': there is much traffic on the road.", tags:["quantifier"] },
       { type:"gapfill", prompt:"Add 'much' or 'many'", before:"How ", after:" information do you have?", cue:"much / many", accept:["much"], explain:"Information is uncountable, so use 'much'.", tags:["quantifier"] },
-      { type:"produce", prompt:"Write one sentence using 'a few' (countable) or 'a little' (uncountable) correctly.", tags:["quantifier"] },
+      { type:"edit", prompt:"Fix the quantifier.", tokens:["There","is","many","traffic"], bank:["much","more","lots"], accept:["There is much traffic"], explain:"Traffic is uncountable, so use 'much'.", tags:["quantifier"] },
       { type:"gapfill", prompt:"Choose the correct quantifier", before:"There are not", after:"chairs in the room.", cue:"much / many", accept:["many"], explain:"Chairs are countable = many.", tags:["quantifier"] },
       { type:"gapfill", prompt:"Choose the correct quantifier", before:"She does not have", after:"homework tonight.", cue:"much / many", accept:["much"], explain:"Homework is uncountable = much.", tags:["quantifier"] },
       { type:"gapfill", prompt:"Choose the correct quantifier", before:"There is", after:"milk left in the fridge.", cue:"a few / a little", accept:["a little"], explain:"Milk is uncountable = a little.", tags:["quantifier"] },
@@ -1017,7 +1017,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Fix the agreement error (the verb should match the nearest part).", sentence:"Neither the teacher nor the students was happy.", accept:["neither the teacher nor the students were happy"], explain:"The nearest subject (students) is plural, so use 'were'.", tags:["complex-subject"] },
       { type:"gapfill", prompt:"Choose the verb (treat the team as one unit)", before:"The team ", after:" the trophy every year.", cue:"win / wins", accept:["wins"], explain:"A collective noun acting as one unit takes a singular verb: the team wins.", tags:["collective"] },
-      { type:"produce", prompt:"Write one sentence with a collective noun (team, family, class) and a verb that matches.", tags:["collective"] },
+      { type:"edit", prompt:"Fix the verb.", tokens:["Neither","Tom","nor","Sam","were","late"], bank:["was","is","be"], accept:["Neither Tom nor Sam was late"], explain:"Neither ... nor with singular names takes a singular verb: was.", tags:["complex-subject"] },
       { type:"gapfill", prompt:"Write the correct verb form", before:"The family", after:"going on holiday next week.", cue:"is / are", accept:["is","are"], explain:"Both are acceptable: is (unit) or are (individual members).", tags:["collective"] },
       { type:"gapfill", prompt:"Write the correct verb form", before:"Either the cat or the dogs", after:"making noise.", cue:"is / are", accept:["are"], explain:"Nearest subject (dogs) is plural = are.", tags:["complex-subject"] },
       { type:"gapfill", prompt:"Write the correct verb form", before:"The committee", after:"reached a decision.", cue:"has / have", accept:["has","have"], explain:"Both work: has (one body) or have (individual members).", tags:["collective"] },
@@ -1054,7 +1054,7 @@ window.SKILLS = [
   items:[
       { type:"choose", prompt:"Which one is a yes/no question (auxiliary before the subject)?", options:["Does she like chocolate","She likes chocolate","She doesn't like chocolate","Chocolate is her favourite"], answer:"Does she like chocolate", explain:"A yes/no question inverts the order: the auxiliary 'does' comes before the subject 'she'. The others all keep statement order.", tags:["yes-no"] },
       { type:"transform", prompt:"Fix the error.", sentence:"He don't want to go.", accept:["he doesnt want to go","he does not want to go"], explain:"Third person singular needs 'doesn't': he doesn't want to go.", tags:["negation"] },
-      { type:"produce", prompt:"Write one yes/no question using 'do' or 'does' (e.g. Does she like music?).", tags:["yes-no"] },
+      { type:"edit", prompt:"Fix the negative.", tokens:["He","don't","like","fish"], bank:["doesn't","didn't","isn't"], accept:["He doesn't like fish"], explain:"Third person singular negative: doesn't.", tags:["negation"] },
       { type:"gapfill", prompt:"Make a question", before:"", after:"you live near the school?", cue:"do / does", accept:["do"], explain:"You = do (not does).", tags:["yes-no"] },
       { type:"gapfill", prompt:"Make it negative", before:"She", after:"like spicy food.", cue:"do + not", accept:["does not","doesn't","doesnt"], explain:"Third person singular negative = does not / doesn't.", tags:["negation"] },
       { type:"gapfill", prompt:"Make a question", before:"", after:"he speak French?", cue:"do / does", accept:["does"], explain:"He = third person singular = does.", tags:["yes-no"] },
@@ -1092,7 +1092,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Make a wh- question about the place (ask where).", sentence:"She lives in Perth.", accept:["where does she live"], explain:"Wh-word + does + subject + base verb: where does she live?", tags:["wh-question"] },
       { type:"transform", prompt:"Make a wh- question about the time (ask when).", sentence:"The film starts at eight.", accept:["when does the film start"], explain:"when + does + subject + base verb: when does the film start?", tags:["wh-question"] },
-      { type:"produce", prompt:"Write one wh- question of your own (start with who, what, where, when, why, or how).", tags:["wh-question"] },
+      { type:"edit", prompt:"Fix the auxiliary verb.", tokens:["Where","do","she","live"], bank:["does","did","is"], accept:["Where does she live"], explain:"Third person singular question uses 'does': where does she live?", tags:["wh-question"] },
       { type:"gapfill", prompt:"Add the question word", before:"", after:"are my keys?", cue:"where / when / why", accept:["where"], explain:"Asking about a place = where: where are my keys?", tags:["wh-question"] },
       { type:"gapfill", prompt:"Add the question word", before:"", after:"does the film start?", cue:"when / where / why", accept:["when"], explain:"Asking about a time = when: when does the film start?", tags:["wh-question"] },
       { type:"gapfill", prompt:"Add the question word", before:"", after:"is your best friend?", cue:"who / what / where", accept:["who"], explain:"Asking about a person = who: who is your best friend?", tags:["wh-question"] },
@@ -1126,7 +1126,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Fix the question tag.", sentence:"He can swim, can he?", accept:["he can swim, cant he","he can swim cant he"], explain:"A positive statement needs a negative tag: he can swim, can't he?", tags:["question-tag"] },
       { type:"gapfill", prompt:"Add the question tag", before:"You finished your homework,", after:"?", cue:"positive statement -> negative tag", accept:["didnt you","did not you"], explain:"Positive statement + negative tag: you finished it, didn't you?", tags:["question-tag"] },
-      { type:"produce", prompt:"Write a statement with a correct question tag (positive statement -> negative tag).", tags:["question-tag"] },
+      { type:"edit", prompt:"Fix the question tag.", tokens:["He","can","swim","can","he"], bank:["can't","cannot","does"], accept:["He can swim can't he"], explain:"A positive statement takes a negative tag: can't he?", tags:["question-tag"] },
       { type:"gapfill", prompt:"Add the question tag", before:"You are coming to the party,", after:"?", cue:"tag", accept:["aren't you","arent you"], explain:"Positive (are) -> negative tag: aren't you.", tags:["question-tag"] },
       { type:"gapfill", prompt:"Add the question tag", before:"She hasn't finished yet,", after:"?", cue:"tag", accept:["has she"], explain:"Negative (hasn't) -> positive tag: has she.", tags:["question-tag"] },
       { type:"gapfill", prompt:"Add the question tag", before:"They went home early,", after:"?", cue:"tag", accept:["didn't they","didnt they"], explain:"Positive past (went) -> negative tag: didn't they.", tags:["question-tag"] },
@@ -1160,7 +1160,7 @@ window.SKILLS = [
   items:[
       { type:"transform", prompt:"Make it indirect (start with 'Do you know').", sentence:"Where does she work?", accept:["do you know where she works"], explain:"Indirect: statement word order: do you know where she works?", tags:["indirect"] },
       { type:"transform", prompt:"Make it indirect (start with 'Could you tell me').", sentence:"What time is it?", accept:["could you tell me what time it is"], explain:"No inversion inside: could you tell me what time it is?", tags:["indirect"] },
-      { type:"produce", prompt:"Write one indirect question (start with 'Could you tell me ...' or 'Do you know ...').", tags:["indirect"] },
+      { type:"choose", prompt:"Which is the correct indirect question?", options:["Could you tell me where the station is?","Could you tell me where is the station?","Could you tell me where the station?","Where the station is could you tell me?"], answer:"Could you tell me where the station is?", explain:"Indirect questions use statement order: where the station is.", tags:["indirect"] },
       { type:"gapfill", prompt:"Rewrite as indirect", before:"Could you tell me", after:"?", cue:"Where is the station?", accept:["where the station is"], explain:"Indirect: remove inversion -> where the station is.", tags:["indirect"] },
       { type:"gapfill", prompt:"Rewrite as indirect", before:"Do you know", after:"?", cue:"What time does the shop close?", accept:["what time the shop closes"], explain:"Indirect: statement order + present simple -> what time the shop closes.", tags:["indirect"] },
       { type:"gapfill", prompt:"Rewrite as indirect", before:"I wonder", after:".", cue:"Why did she leave?", accept:["why she left"], explain:"Indirect: statement order + past simple -> why she left.", tags:["indirect"] },
