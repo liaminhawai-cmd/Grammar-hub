@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARC Lesson-Plan Scraper</title>
+<style>
+  :root { --accent:#a83232; --ink:#2b2b2b; --muted:#7a7468; --line:#d8cfbb; --bg:#fbf7ee; }
+  * { box-sizing:border-box; }
+  body { font-family:Arial, Helvetica, sans-serif; color:var(--ink); background:var(--bg);
+         margin:0; padding:0; line-height:1.55; }
+  .wrap { max-width:780px; margin:0 auto; padding:28px 22px 80px; }
+  h1 { font-family:Georgia, serif; color:var(--accent); font-size:1.7rem; margin:0 0 6px; }
+  h2 { font-family:Georgia, serif; color:var(--accent); font-size:1.15rem; margin:28px 0 8px; }
+  p.lead { color:var(--muted); margin:0 0 8px; }
+  ol { padding-left:20px; }
+  li { margin:6px 0; }
+  .bookmarklet { display:inline-block; background:var(--accent); color:#fff; text-decoration:none;
+                 font-weight:700; padding:10px 18px; border-radius:8px; margin:6px 0; cursor:grab; }
+  .note { font-size:13px; color:var(--muted); }
+  textarea { width:100%; height:230px; font:12px/1.45 monospace; padding:10px;
+             border:1px solid var(--line); border-radius:8px; background:#fff; resize:vertical; }
+  .copybtn { font:inherit; font-size:14px; padding:8px 14px; border:1px solid var(--accent);
+             color:var(--accent); background:#fff; border-radius:8px; cursor:pointer; margin-top:8px; }
+  .copybtn:hover { background:#faf2ef; }
+  code { background:#f0e9da; padding:1px 5px; border-radius:4px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:14px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ARC Lesson-Plan Scraper</h1>
+  <p class="lead">
+    The ARC lesson plans sit behind a Department login, so this has to run inside your
+    own logged-in browser tab. It reads every English literacy skills lesson-plan link on
+    whatever ARC page you are viewing, and gives you a tidy <b>title / id / url / section</b>
+    table you can paste straight into the resources sheet.
+  </p>
+
+  <h2>How to use it</h2>
+  <ol>
+    <li>Log in to ARC and open a lesson-plans listing page (for example the English literacy
+        skills lesson plans index, or any sub-section that lists lessons).</li>
+    <li>Run the scraper one of two ways:
+      <ul>
+        <li><b>Bookmarklet</b> — drag the red button below onto your bookmarks bar once.
+            Then, on the ARC page, click it.</li>
+        <li><b>Console</b> — press <code>F12</code>, open the <b>Console</b> tab, paste the
+            snippet below, press Enter.</li>
+      </ul>
+    </li>
+    <li>A panel pops up with the results already selected. Click <b>Copy</b> (or press
+        <code>Ctrl/Cmd+C</code>), then paste into a spreadsheet or send it back here.</li>
+    <li>Scroll/expand any collapsed sections first if the page hides lessons until opened —
+        the scraper only sees what is currently in the page.</li>
+  </ol>
+
+  <h2>1 · Bookmarklet (drag to bookmarks bar)</h2>
+  <a class="bookmarklet" href="javascript:(function(){var seen={},rows=[],lastH=&quot;&quot;;document.querySelectorAll(&quot;h1,h2,h3,h4,h5,h6,a[href]&quot;).forEach(function(n){if(/^H[1-6]$/.test(n.tagName)){lastH=n.textContent.replace(/\s+/g,&quot; &quot;).trim();return;}var href=n.href||&quot;&quot;,m=href.match(/english-literacy-skills-lesson-plans\/(\d+)/);if(!m||seen[href])return;seen[href]=1;rows.push([(n.textContent||&quot;&quot;).replace(/\s+/g,&quot; &quot;).trim(),m[1],href,lastH]);});var tsv=&quot;title\tid\turl\tsection\n&quot;+rows.map(function(r){return r.join(&quot;\t&quot;);}).join(&quot;\n&quot;);var ov=document.createElement(&quot;div&quot;);ov.style.cssText=&quot;position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center&quot;;var box=document.createElement(&quot;div&quot;);box.style.cssText=&quot;background:#fff;padding:16px;border-radius:10px;max-width:92vw;max-height:92vh;display:flex;flex-direction:column;gap:10px;font-family:Arial,sans-serif&quot;;var h=document.createElement(&quot;b&quot;);h.textContent=&quot;ARC scrape — &quot;+rows.length+&quot; lesson plans found&quot;;var ta=document.createElement(&quot;textarea&quot;);ta.style.cssText=&quot;width:84vw;height:62vh;font:13px/1.4 monospace&quot;;ta.value=tsv;var bar=document.createElement(&quot;div&quot;);bar.style.cssText=&quot;display:flex;gap:8px&quot;;var copy=document.createElement(&quot;button&quot;);copy.textContent=&quot;Copy&quot;;copy.onclick=function(){ta.select();document.execCommand(&quot;copy&quot;);copy.textContent=&quot;Copied&quot;;};var close=document.createElement(&quot;button&quot;);close.textContent=&quot;Close&quot;;close.onclick=function(){ov.remove();};bar.appendChild(copy);bar.appendChild(close);box.appendChild(h);box.appendChild(ta);box.appendChild(bar);ov.appendChild(box);document.body.appendChild(ov);ta.focus();ta.select();})();">ARC Scraper</a>
+  <p class="note">If your browser blocks dragging it, right-click &rarr; "Bookmark this link", or just use the console snippet below.</p>
+
+  <h2>2 · Console snippet (paste into DevTools)</h2>
+  <div class="card">
+    <textarea id="snippet" readonly>(function () {
+  var seen = {}, rows = [], lastH = "";
+  document.querySelectorAll("h1,h2,h3,h4,h5,h6,a[href]").forEach(function (n) {
+    if (/^H[1-6]$/.test(n.tagName)) { lastH = n.textContent.replace(/\s+/g, " ").trim(); return; }
+    var href = n.href || "", m = href.match(/english-literacy-skills-lesson-plans\/(\d+)/);
+    if (!m || seen[href]) return;
+    seen[href] = 1;
+    rows.push([(n.textContent || "").replace(/\s+/g, " ").trim(), m[1], href, lastH]);
+  });
+  var tsv = "title\tid\turl\tsection\n" + rows.map(function (r) { return r.join("\t"); }).join("\n");
+  var ov = document.createElement("div");
+  ov.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center";
+  var box = document.createElement("div");
+  box.style.cssText = "background:#fff;padding:16px;border-radius:10px;max-width:92vw;max-height:92vh;display:flex;flex-direction:column;gap:10px;font-family:Arial,sans-serif";
+  var h = document.createElement("b"); h.textContent = "ARC scrape — " + rows.length + " lesson plans found";
+  var ta = document.createElement("textarea");
+  ta.style.cssText = "width:84vw;height:62vh;font:13px/1.4 monospace"; ta.value = tsv;
+  var bar = document.createElement("div"); bar.style.cssText = "display:flex;gap:8px";
+  var copy = document.createElement("button"); copy.textContent = "Copy";
+  copy.onclick = function () { ta.select(); document.execCommand("copy"); copy.textContent = "Copied"; };
+  var close = document.createElement("button"); close.textContent = "Close";
+  close.onclick = function () { ov.remove(); };
+  bar.appendChild(copy); bar.appendChild(close);
+  box.appendChild(h); box.appendChild(ta); box.appendChild(bar);
+  ov.appendChild(box); document.body.appendChild(ov);
+  ta.focus(); ta.select();
+  console.table(rows.map(function (r) { return { title: r[0], id: r[1], section: r[3] }; }));
+})();</textarea>
+    <br><button class="copybtn" onclick="var t=document.getElementById('snippet');t.select();document.execCommand('copy');this.textContent='Copied';">Copy snippet</button>
+  </div>
+
+  <p class="note">
+    The scraper matches links containing
+    <code>english-literacy-skills-lesson-plans/&lt;id&gt;</code> and tags each one with the
+    nearest heading above it as its <b>section</b>, so the strand grouping comes through. If
+    a page uses a different link pattern, send me a sample and I will widen the match.
+  </p>
+</div>
+</body>
+</html>

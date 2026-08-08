@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Name That Tense! Mastery Quiz</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;min-height:100vh;background:linear-gradient(135deg,#111827,#312e81);display:flex;align-items:center;justify-content:center;padding:24px;color:#111827}
+.card{background:white;width:min(1120px,100%);border-radius:28px;padding:32px;box-shadow:0 25px 80px #0008}
+h1{font-size:62px;margin:0 0 8px;line-height:.95}h2{font-size:38px;margin:0 0 16px}.muted{font-size:24px;color:#6b7280;line-height:1.35}.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.pill{background:#ede9fe;color:#4c1d95;padding:10px 16px;border-radius:999px;font-weight:800}.score{background:#ecfeff;color:#155e75;padding:10px 16px;border-radius:999px;font-weight:800}.wrongpill{background:#fef2f2;color:#991b1b;padding:10px 16px;border-radius:999px;font-weight:800}
+.sentence{font-size:46px;line-height:1.15;font-weight:800;text-align:center;background:#f8fafc;border:4px solid #e5e7eb;border-radius:24px;padding:32px;margin:20px 0}.sentence strong{color:#7c3aed;text-decoration:underline;text-decoration-thickness:5px;text-underline-offset:8px}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:16px}.option{font-size:25px;font-weight:800;text-align:left;padding:22px;border-radius:18px;border:3px solid #e5e7eb;background:#f3f4f6;cursor:pointer}.option:hover{border-color:#06b6d4}.correct{background:#dcfce7!important;border-color:#16a34a!important;color:#14532d}.incorrect{background:#fee2e2!important;border-color:#dc2626!important;color:#7f1d1d}
+.feedback{font-size:23px;line-height:1.35;margin-top:18px;padding:20px;border-radius:20px;background:#f8fafc;border:3px dashed #cbd5e1;min-height:90px}.good{background:#f0fdf4;border-color:#16a34a}.bad{background:#fef2f2;border-color:#dc2626}
+.controls{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px}button{border:0;border-radius:18px;font-weight:800;cursor:pointer}.primary{font-size:24px;padding:18px 28px;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:white}.secondary{font-size:18px;padding:14px 20px;background:#e5e7eb;color:#111827}.primary:disabled{opacity:.4;cursor:default}.screen{display:none}.active{display:block}.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0}.rule{background:#f8fafc;border:3px solid #e5e7eb;border-radius:20px;padding:18px;font-size:20px}.rule b{display:block;color:#7c3aed;margin-bottom:8px}.barwrap{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden}.bar{height:100%;width:0;background:linear-gradient(90deg,#7c3aed,#06b6d4)}.final{font-size:82px;font-weight:900;color:#7c3aed;margin:10px 0}
+.clue{margin-top:16px;background:#fffbeb;border:3px solid #fde68a;border-radius:18px;padding:14px;font-size:19px}
+.reviewbox{background:#f8fafc;border:3px solid #e5e7eb;border-radius:22px;padding:20px;margin:18px 0;font-size:21px;line-height:1.4}.green{color:#15803d;font-weight:900}.red{color:#b91c1c;font-weight:900}.mini{font-size:16px;color:#6b7280;margin-top:8px}
+.teacherTable{width:100%;border-collapse:collapse;margin-top:12px;font-size:16px}.teacherTable th,.teacherTable td{border:2px solid #e5e7eb;padding:10px;text-align:left;vertical-align:top}.teacherTable th{background:#ede9fe;color:#4c1d95}.teacherTable tr:nth-child(even){background:#fff}.smallcaps{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:#6b7280}
+@media(max-width:760px){h1{font-size:44px}.sentence{font-size:34px}.options,.rules{grid-template-columns:1fr}.card{padding:22px}}
+</style>
+</head>
+<body>
+<div class="card">
+<section id="start" class="screen active">
+<div class="pill">Edward Scissorhands Edition</div>
+<h1>Name That Tense!</h1>
+<p class="muted">A clickable Year 7 grammar game show with mastery rounds.</p>
+<div class="rules">
+<div class="rule"><b>1. Main Round</b>Students answer every question once.</div>
+<div class="rule"><b>2. Mastery Rounds</b>Only incorrect questions come back.</div>
+<div class="rule"><b>3. Finish</b>The quiz continues until every question is correct.</div>
+</div>
+<p class="muted">Includes simple, continuous and perfect tenses.</p>
+<div class="controls"><button class="primary" onclick="startGame()">Start Quiz</button><button class="secondary" onclick="shuffleQs()">Shuffle Questions</button></div>
+</section>
+
+<section id="quiz" class="screen">
+<div class="top"><div class="pill" id="count"></div><div class="score" id="score"></div><div class="wrongpill" id="leftCount"></div></div>
+<div class="barwrap"><div class="bar" id="bar"></div></div>
+<div class="smallcaps" id="roundLabel"></div>
+<h2 id="roundTitle">What tense is this?</h2>
+<div class="sentence" id="sent"></div>
+<div class="options" id="opts"></div>
+<div class="feedback" id="feed">Choose an answer.</div>
+<div class="clue"><b>Clue card:</b> simple = one action | continuous = be + ing | perfect = have + past participle</div>
+<div class="controls"><button class="secondary" onclick="restart()">Back to Start</button><button class="primary" id="next" onclick="nextQ()" disabled>Next Question</button></div>
+</section>
+
+<section id="between" class="screen">
+<div class="pill" id="betweenPill">Round complete</div>
+<h1 id="betweenTitle">Keep Going</h1>
+<p class="muted" id="betweenText"></p>
+<div class="reviewbox" id="betweenList"></div>
+<div class="controls"><button class="secondary" onclick="restart()">Back to Start</button><button class="primary" onclick="startNextRound()">Start Next Round</button></div>
+</section>
+
+<section id="end" class="screen">
+<div class="pill">Mastery complete</div>
+<h1>All Correct!</h1>
+<div class="final" id="final"></div>
+<p class="muted" id="msg"></p>
+<div class="reviewbox" id="summary"></div>
+<div class="controls"><button class="primary" onclick="startGame()">Play Again</button><button class="secondary" onclick="shuffleQs();startGame()">Shuffle + Play</button><button class="secondary" onclick="copyTeacherResults()">Copy Teacher Results</button></div>
+<p class="mini" id="copyNote"></p>
+</section>
+</div>
+
+<script>
+let questions = [{"id": 0, "sentence": "Edward <strong>lives</strong> alone in the mansion.", "plain": "Edward lives alone in the mansion.", "options": ["present simple", "past simple", "present continuous", "past perfect"], "answer": "present simple", "explain": "Present simple uses the base verb or verb + s/es."}, {"id": 1, "sentence": "Peg <strong>found</strong> Edward upstairs.", "plain": "Peg found Edward upstairs.", "options": ["future simple", "past simple", "present perfect", "past continuous"], "answer": "past simple", "explain": "Found is the past form of find."}, {"id": 2, "sentence": "Kim <strong>will understand</strong> Edward later in the film.", "plain": "Kim will understand Edward later in the film.", "options": ["future simple", "future continuous", "future perfect", "present simple"], "answer": "future simple", "explain": "Will + verb shows future simple."}, {"id": 3, "sentence": "Kim <strong>is dancing</strong> in the snow.", "plain": "Kim is dancing in the snow.", "options": ["present simple", "present continuous", "past continuous", "present perfect"], "answer": "present continuous", "explain": "Is + verb-ing shows present continuous."}, {"id": 4, "sentence": "Edward <strong>was carving</strong> the ice when Kim came outside.", "plain": "Edward was carving the ice when Kim came outside.", "options": ["past simple", "past continuous", "present continuous", "past perfect"], "answer": "past continuous", "explain": "Was/were + verb-ing shows past continuous."}, {"id": 5, "sentence": "Tomorrow, we <strong>will be learning</strong> about tenses.", "plain": "Tomorrow, we will be learning about tenses.", "options": ["future simple", "future continuous", "future perfect", "present continuous"], "answer": "future continuous", "explain": "Will be + verb-ing shows future continuous."}, {"id": 6, "sentence": "Edward <strong>has made</strong> a beautiful sculpture.", "plain": "Edward has made a beautiful sculpture.", "options": ["past simple", "present perfect", "past perfect", "future perfect"], "answer": "present perfect", "explain": "Has/have + past participle shows present perfect."}, {"id": 7, "sentence": "The neighbours <strong>have judged</strong> Edward unfairly.", "plain": "The neighbours have judged Edward unfairly.", "options": ["present perfect", "past perfect", "future continuous", "present simple"], "answer": "present perfect", "explain": "Have + judged shows present perfect."}, {"id": 8, "sentence": "Edward <strong>had lived</strong> alone before Peg found him.", "plain": "Edward had lived alone before Peg found him.", "options": ["present perfect", "past continuous", "past perfect", "future simple"], "answer": "past perfect", "explain": "Had + past participle shows past perfect."}, {"id": 9, "sentence": "Kim <strong>had heard</strong> a noise before she went outside.", "plain": "Kim had heard a noise before she went outside.", "options": ["past simple", "past perfect", "present perfect", "future perfect"], "answer": "past perfect", "explain": "Had heard shows something happened before another past action."}, {"id": 10, "sentence": "By the end of the film, Kim <strong>will have realised</strong> the truth.", "plain": "By the end of the film, Kim will have realised the truth.", "options": ["future simple", "future continuous", "future perfect", "present perfect"], "answer": "future perfect", "explain": "Will have + past participle shows future perfect."}, {"id": 11, "sentence": "By tomorrow, we <strong>will have practised</strong> all nine tenses.", "plain": "By tomorrow, we will have practised all nine tenses.", "options": ["future perfect", "past perfect", "future continuous", "present simple"], "answer": "future perfect", "explain": "Will have practised shows the action will be finished before a future time."}, {"id": 12, "sentence": "The neighbours <strong>are staring</strong> at Edward.", "plain": "The neighbours are staring at Edward.", "options": ["present continuous", "past continuous", "present perfect", "past simple"], "answer": "present continuous", "explain": "Are + verb-ing shows present continuous."}, {"id": 13, "sentence": "Jim <strong>lied</strong> to Kim.", "plain": "Jim lied to Kim.", "options": ["present simple", "past simple", "past perfect", "future simple"], "answer": "past simple", "explain": "Lied is a past tense verb."}, {"id": 14, "sentence": "Edward <strong>will be making</strong> sculptures tomorrow.", "plain": "Edward will be making sculptures tomorrow.", "options": ["future simple", "future continuous", "future perfect", "present continuous"], "answer": "future continuous", "explain": "Will be + verb-ing shows future continuous."}, {"id": 15, "sentence": "Peg <strong>takes</strong> Edward home.", "plain": "Peg takes Edward home.", "options": ["present simple", "past simple", "present perfect", "future simple"], "answer": "present simple", "explain": "Takes is verb + s, which shows present simple."}, {"id": 16, "sentence": "Edward <strong>had finished</strong> the sculpture before Kim arrived.", "plain": "Edward had finished the sculpture before Kim arrived.", "options": ["past perfect", "present perfect", "past continuous", "future perfect"], "answer": "past perfect", "explain": "Had finished shows past perfect."}, {"id": 17, "sentence": "By the end of the lesson, we <strong>will have learned</strong> the tenses.", "plain": "By the end of the lesson, we will have learned the tenses.", "options": ["future continuous", "future perfect", "future simple", "past perfect"], "answer": "future perfect", "explain": "Will have learned shows future perfect."}];
+let allQuestions = [...questions];
+let currentSet = [];
+let nextSet = [];
+let roundNumber = 1;
+let i = 0;
+let answered = false;
+let totalAttempts = 0;
+let firstRoundCorrect = 0;
+let attemptsById = {};
+let correctEver = {};
+let attemptLog = [];
+let teacherResultsText = '';
+
+function clean(text){ return text.replace(/<[^>]*>/g,''); }
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function shuffleQs(){for(let a=questions.length-1;a>0;a--){let b=Math.floor(Math.random()*(a+1));[questions[a],questions[b]]=[questions[b],questions[a]]} allQuestions=[...questions];}
+function startGame(){
+  allQuestions=[...questions];
+  currentSet=[...allQuestions];
+  nextSet=[];
+  roundNumber=1;
+  i=0;
+  answered=false;
+  totalAttempts=0;
+  firstRoundCorrect=0;
+  attemptsById={};
+  correctEver={};
+  attemptLog=[];
+  teacherResultsText='';
+  allQuestions.forEach(q => { attemptsById[q.id]=0; correctEver[q.id]=false; });
+  show('quiz');
+  render();
+}
+function restart(){show('start')}
+function render(){
+  answered=false;
+  let q=currentSet[i];
+  document.getElementById('roundLabel').textContent = roundNumber === 1 ? 'Main Round' : 'Mastery Round ' + (roundNumber - 1);
+  document.getElementById('roundTitle').textContent = roundNumber === 1 ? 'What tense is this?' : 'Try this one again';
+  document.getElementById('count').textContent = `Question ${i+1} of ${currentSet.length}`;
+  document.getElementById('score').textContent = `Total attempts: ${totalAttempts}`;
+  document.getElementById('leftCount').textContent = `Still to master: ${countNotMastered()}`;
+  document.getElementById('bar').style.width=`${i/currentSet.length*100}%`;
+  document.getElementById('sent').innerHTML=q.sentence;
+  document.getElementById('feed').className='feedback';
+  document.getElementById('feed').innerHTML='Choose an answer.';
+  document.getElementById('next').disabled=true;
+  document.getElementById('next').textContent = i === currentSet.length - 1 ? 'Finish Round' : 'Next Question';
+  let box=document.getElementById('opts'); box.innerHTML='';
+  q.options.forEach((op,n)=>{
+    let btn=document.createElement('button');
+    btn.className='option';
+    btn.innerHTML=String.fromCharCode(65+n)+'. '+op;
+    btn.onclick=()=>choose(btn,op);
+    box.appendChild(btn);
+  });
+}
+function countNotMastered(){
+  return allQuestions.filter(q => !correctEver[q.id]).length;
+}
+function choose(btn,op){
+  if(answered)return;
+  answered=true;
+  let q=currentSet[i];
+  let buttons=[...document.querySelectorAll('.option')];
+  buttons.forEach(b=>b.disabled=true);
+  let correct = op===q.answer;
+  totalAttempts++;
+  attemptsById[q.id]++;
+  attemptLog.push({
+    round: roundNumber === 1 ? 'Main round' : 'Mastery round ' + (roundNumber - 1),
+    question: clean(q.sentence),
+    chosen: op,
+    correctAnswer: q.answer,
+    result: correct ? 'Correct' : 'Incorrect',
+    attemptNumberForQuestion: attemptsById[q.id]
+  });
+
+  if(correct){
+    correctEver[q.id]=true;
+    if(roundNumber === 1) firstRoundCorrect++;
+    btn.classList.add('correct');
+    document.getElementById('feed').className='feedback good';
+    document.getElementById('feed').innerHTML='<b>Correct!</b><br>'+q.explain;
+  } else {
+    if(!nextSet.some(item => item.id === q.id)) nextSet.push(q);
+    btn.classList.add('incorrect');
+    buttons.forEach(b=>{ if(b.textContent.includes(q.answer)) b.classList.add('correct'); });
+    document.getElementById('feed').className='feedback bad';
+    document.getElementById('feed').innerHTML='<b>Not quite.</b><br>'+q.explain+'<br><br><b>This question will come back in the next mastery round.</b>';
+  }
+  document.getElementById('score').textContent = `Total attempts: ${totalAttempts}`;
+  document.getElementById('leftCount').textContent = `Still to master: ${countNotMastered()}`;
+  document.getElementById('next').disabled=false;
+}
+function nextQ(){
+  i++;
+  if(i>=currentSet.length){
+    if(nextSet.length>0){
+      showBetween();
+    } else if(countNotMastered() > 0){
+      nextSet = allQuestions.filter(q => !correctEver[q.id]);
+      showBetween();
+    } else {
+      endGame();
+    }
+  } else render();
+}
+function showBetween(){
+  show('between');
+  document.getElementById('betweenPill').textContent = roundNumber === 1 ? 'Main round complete' : 'Mastery round complete';
+  document.getElementById('betweenTitle').textContent = 'Keep Going';
+  document.getElementById('betweenText').textContent = `${nextSet.length} question${nextSet.length===1?'':'s'} will come back. The quiz will keep going until every question has been answered correctly.`;
+  let html = '<b>Questions coming back:</b><ul>';
+  nextSet.forEach(q => { html += `<li>${q.sentence}</li>`; });
+  html += '</ul>';
+  document.getElementById('betweenList').innerHTML = html;
+}
+function startNextRound(){
+  currentSet=[...nextSet];
+  nextSet=[];
+  roundNumber++;
+  i=0;
+  answered=false;
+  show('quiz');
+  render();
+}
+function endGame(){
+  show('end');
+  document.getElementById('final').textContent = totalAttempts + ' attempts';
+  let extra = totalAttempts === allQuestions.length ? 'Perfect first time. No mastery rounds needed.' : `Mastered all ${allQuestions.length} questions after ${totalAttempts} total attempts.`;
+  document.getElementById('msg').textContent = extra;
+
+  let summary = `<b>First round score:</b> ${firstRoundCorrect}/${allQuestions.length}<br>`;
+  summary += `<b>Total attempts to get all correct:</b> ${totalAttempts}<br>`;
+  summary += `<h2>Teacher Results Summary</h2>`;
+  summary += `<p class="mini">This shows how many attempts each question took before it was answered correctly.</p>`;
+  summary += `<table class="teacherTable"><thead><tr><th>Question</th><th>Correct answer</th><th>Attempts needed</th><th>First attempt</th><th>Attempt history</th></tr></thead><tbody>`;
+
+  allQuestions.forEach(q => {
+    let logs = attemptLog.filter(row => row.question === clean(q.sentence));
+    let first = logs.length ? `${logs[0].chosen} (${logs[0].result})` : '';
+    let history = logs.map(row => `${row.round}: ${row.chosen} - ${row.result}`).join('<br>');
+    let cls = attemptsById[q.id] === 1 ? 'green' : 'red';
+    summary += `<tr><td>${clean(q.sentence)}</td><td>${q.answer}</td><td class="${cls}">${attemptsById[q.id]}</td><td>${first}</td><td>${history}</td></tr>`;
+  });
+  summary += `</tbody></table>`;
+
+  teacherResultsText = `Name That Tense - Teacher Results\nFirst round score: ${firstRoundCorrect}/${allQuestions.length}\nTotal attempts to get all correct: ${totalAttempts}\n\n`;
+  allQuestions.forEach(q => {
+    let logs = attemptLog.filter(row => row.question === clean(q.sentence));
+    let first = logs.length ? `${logs[0].chosen} (${logs[0].result})` : '';
+    let history = logs.map(row => `${row.round}: ${row.chosen} - ${row.result}`).join(' | ');
+    teacherResultsText += `Question: ${clean(q.sentence)}\nCorrect answer: ${q.answer}\nAttempts needed: ${attemptsById[q.id]}\nFirst attempt: ${first}\nHistory: ${history}\n\n`;
+  });
+
+  document.getElementById('summary').innerHTML = summary;
+}
+function copyTeacherResults(){
+  if(!teacherResultsText){
+    document.getElementById('copyNote').textContent = 'No results to copy yet.';
+    return;
+  }
+  navigator.clipboard.writeText(teacherResultsText).then(() => {
+    document.getElementById('copyNote').textContent = 'Teacher results copied.';
+  }).catch(() => {
+    document.getElementById('copyNote').textContent = 'Copy did not work in this browser. Select the Teacher Results Summary table and copy manually.';
+  });
+}
+</script>
+</body>
+</html>

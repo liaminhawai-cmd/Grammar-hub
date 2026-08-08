@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Suppress the browser's own page translation (Chrome "Translate this page",
+     Google Translate widget). The in-app EAL tool is the only sanctioned way to
+     translate, so students can't one-click translate answers we withhold. -->
+<meta name="google" content="notranslate">
+<title>Grammar Hub — ELC</title>
+<style>
+  /* Palette deliberately matches the Aussie Phonics Trainer so the two
+     tools read as one suite. The signature element here is the SEQUENCE
+     MATRIX on the landing screen: the whole ELC progression is visible
+     at once, and a cell is the unit of practice. */
+  :root{
+    --bg:#f4efe6; --paper:#fbf7ee; --ink:#1f1f1f; --muted:#6b6256;
+    --line:#d8cfbb; --line-soft:#e8e0cd; --accent:#a83232;
+    --correct:#2f6a3e; --wrong:#a83232; --okbg:#eef5ee; --badbg:#f7ecec;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);
+       min-height:100vh;padding:16px;display:flex;justify-content:center;align-items:flex-start;color:var(--ink)}
+  .container{background:var(--paper);border:1px solid var(--line);border-radius:12px;
+       max-width:860px;width:100%;padding:26px;margin-top:12px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  /* the selector screen uses the full width; task/report stay reading-width */
+  body.wide .container{max-width:min(1440px,96vw)}
+  h1{text-align:center;font-size:23px;font-family:Georgia,'Times New Roman',serif;letter-spacing:.5px}
+  h3{font-family:Georgia,serif;font-size:15px;margin:18px 0 8px;color:var(--ink)}
+  .subtitle{color:var(--muted);text-align:center;margin:6px 0 18px;font-size:13px}
+  .muted{color:var(--muted);font-size:13px;line-height:1.5}
+  .screen{display:none}.screen.active{display:block}
+  button{font-family:inherit}
+
+  /* ---- buttons ---- */
+  .btn{padding:11px 18px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-weight:600;
+       cursor:pointer;background:var(--paper);color:var(--ink);transition:all .15s ease}
+  .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn-primary:hover:not(:disabled){background:#8c2828}
+  .btn-primary:disabled{background:var(--line);border-color:var(--line);color:var(--muted);cursor:not-allowed}
+  .btn-ghost{background:var(--bg);color:var(--muted)}
+  .btn-ghost:hover{color:var(--ink);border-color:var(--ink)}
+  .linkbtn{background:none;border:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;padding:4px 8px}
+  .linkbtn:hover{text-decoration:underline}
+
+  /* ---- select: filter + matrix ---- */
+  .filter-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+  .filter-btn{border:1px solid var(--line-soft);background:var(--bg);color:var(--muted);font-size:11px;
+       font-weight:600;padding:5px 12px;border-radius:14px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px}
+  .filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .filter-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+  .matrix{display:flex;flex-direction:column;gap:4px;overflow-x:auto}
+  .matrix-row{display:grid;grid-template-columns:128px repeat(4,1fr);gap:4px;min-width:620px}
+  .matrix-cell{border:1px solid var(--line-soft);border-radius:7px;background:var(--paper);
+       padding:7px 6px;min-height:52px;display:flex;flex-direction:column;justify-content:center;gap:3px}
+  .matrix-head .matrix-cell{min-height:0;background:transparent;border:none;padding:2px 6px}
+  .colhead{text-align:center;font-weight:800;font-size:12px;color:var(--muted)}
+  .rowlabel{justify-content:center;font-weight:700;font-size:11px;color:var(--ink);
+       background:var(--bg);text-transform:uppercase;letter-spacing:.3px;text-align:left}
+  .cell-name{font-size:11px;font-weight:600;line-height:1.25}
+  .cell-count{font-size:10px;font-weight:700;color:var(--accent);align-self:flex-start;
+       background:var(--bg);border-radius:10px;padding:0 6px}
+  .cell-count.zero{color:var(--muted)}
+  .has-items{cursor:pointer}
+  .has-items:hover{border-color:var(--accent)}
+  /* cascade: mastered cell (bright green), levels below it (faint green),
+     and the next band up — the one you'll actually drill (accent ring). */
+  .matrix-cell.below{background:var(--okbg);border-color:var(--line-soft)}
+  .matrix-cell.achieved{background:var(--correct);border-color:var(--correct)}
+  .matrix-cell.achieved .cell-name{color:var(--paper)}
+  .matrix-cell.achieved .cell-count{background:var(--okbg);color:var(--correct)}
+  .matrix-cell.target{border:2px solid var(--accent)}
+  .drill-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;
+       color:var(--accent);align-self:flex-start;background:var(--bg);border-radius:8px;padding:0 5px}
+  .rowlabel{cursor:pointer}
+  .rowlabel.beginner{outline:2px solid var(--accent);outline-offset:-2px}
+  .matrix-head .rowlabel{cursor:default}
+  .no-items{opacity:.65}
+  .empty{background:var(--bg);align-items:center;opacity:.5}
+  .empty .dash{color:var(--muted)}
+
+  /* ---- assessed marker ---- */
+  .rowlabel.unassessed{opacity:.85}
+  .unassessed-mark{color:var(--accent);font-weight:800;margin-left:2px}
+  /* non-EAL (year-level) view: a timeline — a shared F–10 year axis; each
+     chunk is a bar spanning its years, so strands read left to right.
+     No band columns, no curriculum codes on screen. */
+  .vic-row{display:grid;grid-template-columns:128px repeat(11,1fr);gap:4px;min-width:680px;margin-bottom:4px}
+  .vic-row .rowlabel{grid-column:1}
+  .vic-yearhead .rowlabel{background:transparent;border:none}
+  .vic-tick{text-align:center;font-size:10px;font-weight:800;color:var(--muted);align-self:end;padding-bottom:2px}
+  .vic-chunk{font:inherit;color:inherit;text-align:left;cursor:pointer;align-items:flex-start;min-width:0}
+  .vic-chunk:hover{border-color:var(--accent)}
+  .vic-chunk .cell-name{overflow-wrap:break-word}
+  .vic-years{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--accent);white-space:nowrap}
+  .vic-covers{font-size:10px;color:var(--muted)}
+  .matrix-legend{font-size:11px;color:var(--muted);margin-top:8px;min-height:0}
+  .matrix-legend .unassessed-mark{margin-right:3px}
+
+  /* ---- pools ---- */
+  .pools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .pool-btn{display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--line);border-radius:10px;
+       background:var(--paper);cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);transition:all .15s ease}
+  .pool-btn:hover{border-color:var(--accent)}
+  .pool-btn.selected{border:2px solid var(--accent);background:#faf5f0}
+  .pool-btn .pool-count{font-size:10px;font-weight:700;color:var(--accent);background:var(--bg);border-radius:10px;padding:0 6px}
+  .pool-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);margin-bottom:4px}
+
+  .select-toolbar{display:flex;justify-content:space-between;align-items:center;margin:16px 0 0;flex-wrap:wrap;gap:8px}
+  .count-pill{background:var(--bg);color:var(--accent);border:1px solid var(--line);border-radius:20px;
+       padding:5px 14px;font-size:12px;font-weight:600}
+  .start-bar{margin-top:18px;text-align:center}.start-bar .btn{width:100%;max-width:320px}
+
+  /* ---- task ---- */
+  .progress-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);margin-bottom:8px}
+  .progress-track{height:8px;background:var(--line-soft);border-radius:99px;overflow:hidden;margin-bottom:6px}
+  .progress-fill{height:100%;width:0;background:var(--accent);transition:width .3s ease}
+  .skill-tag{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:center;margin:10px 0 4px}
+  .prompt{font-family:Georgia,serif;font-size:16px;text-align:center;color:var(--ink);margin-bottom:14px}
+  .stimulus{font-size:24px;line-height:1.3;font-weight:700;text-align:center;background:var(--bg);
+       border:1px solid var(--line);border-radius:12px;padding:24px 18px;margin-bottom:14px}
+  .stimulus b{color:var(--accent);text-decoration:underline;text-underline-offset:4px}
+  .stimulus.gap{font-size:21px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .gap-input{font-family:Georgia,serif;font-size:20px;font-weight:700;text-align:center;min-width:120px;
+       padding:6px 10px;border:2px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .gap-input:focus{outline:none;border-color:var(--accent)}
+  .gap-input.correct{border-color:var(--correct);background:var(--okbg)}
+  .gap-input.incorrect{border-color:var(--wrong);background:var(--badbg)}
+  .cue{text-align:center;color:var(--muted);font-size:13px;margin-bottom:8px}
+  .gap-cue{font-size:18px;font-weight:700;color:var(--accent);letter-spacing:.5px}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .option{font-size:15px;font-weight:600;text-align:left;padding:14px 16px;border-radius:10px;
+       border:2px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .option:hover{border-color:var(--accent)}
+  .option.chosen{border-color:var(--accent);background:#faf5f0}
+  .option.correct{background:var(--okbg);border-color:var(--correct);color:var(--correct)}
+  .option.incorrect{background:var(--badbg);border-color:var(--wrong);color:var(--wrong)}
+  @media(max-width:480px){.options{grid-template-columns:1fr}}
+  .feedback{font-size:14px;line-height:1.5;margin-top:14px;padding:14px;border-radius:10px;min-height:20px;color:var(--muted)}
+  .feedback.good{background:var(--okbg);color:#234e2c}
+  .feedback.bad{background:var(--badbg);color:#7a2020}
+  .stub{padding:18px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}
+  .action-row{display:flex;justify-content:space-between;gap:10px;margin-top:18px}
+  .exit-btn{background:none;border:none;color:var(--muted);font-weight:600;font-size:13px;cursor:pointer}
+  .exit-btn:hover{color:var(--ink)}
+
+  /* ---- report ---- */
+  .report-title{font-family:Georgia,serif;font-size:20px;text-align:center;margin-bottom:6px}
+  .big-stat{font-family:Georgia,serif;font-size:46px;font-weight:700;color:var(--accent);text-align:center;line-height:1}
+  .stat-label{text-align:center;color:var(--muted);font-size:13px;margin-bottom:6px}
+  #reportSummary p{text-align:center}
+  .skill-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line-soft);border-radius:8px;margin-bottom:5px;font-size:13px}
+  .skill-name{font-weight:600}
+  .skill-score{font-weight:800;border-radius:10px;padding:1px 9px}
+  .skill-score.ok{color:var(--correct);background:var(--okbg)}
+  .skill-score.mid{color:#8a6d1e;background:#f6efda}
+  .skill-score.low{color:var(--wrong);background:var(--badbg)}
+  .subskill-row{display:flex;justify-content:space-between;align-items:center;padding:4px 10px 4px 24px;
+       margin:-3px 0 5px;font-size:12px;color:var(--muted)}
+  .subskill-row .subskill-name::before{content:"\21B3";margin-right:6px;opacity:.6}
+  .subskill-name{font-weight:600}
+  .remed-row{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+  .remed-row a{color:var(--accent);margin-right:8px}
+  .report-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+  #copyNote{text-align:center;font-size:12px;color:var(--muted);margin-top:8px;min-height:14px}
+
+  /* ---- preteach (teaching mode) ---- */
+  .preteach-card{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:10px;background:var(--paper)}
+  .preteach-card.preteach-target{border:2px solid var(--accent)}
+  .preteach-band{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+  .preteach-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;margin-left:8px}
+  .preteach-label.review{color:var(--correct)}
+  .preteach-label.target{color:var(--accent)}
+  .preteach-label.stretch{color:var(--muted)}
+  .preteach-name{font-family:Georgia,serif;font-size:16px;font-weight:700;margin:6px 0 4px}
+  .preteach-example{font-family:Georgia,serif;font-size:15px;color:var(--muted);font-style:italic;line-height:1.4}
+  .preteach-links{font-size:12px;color:var(--muted);margin-top:8px}
+  .preteach-links a{color:var(--accent);margin-right:10px;text-decoration:none;font-weight:600}
+  .preteach-links a:hover{text-decoration:underline}
+
+  /* ---- teaching mode: vocab preteach ---- */
+  .teach-phase{font-family:Georgia,serif;font-size:14px;font-weight:700;color:var(--accent);
+       text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:4px}
+  .teach-term{font-family:Georgia,serif;font-size:22px;font-weight:700;text-align:center;margin:8px 0}
+  .teach-def{font-size:15px;color:var(--muted);text-align:center;line-height:1.5;margin-bottom:14px}
+  .teach-example{font-size:18px;font-weight:700;text-align:center;background:var(--bg);
+       border:1px solid var(--line);border-radius:12px;padding:18px;margin:10px 0 14px;line-height:1.4}
+  .teach-example b{color:var(--accent);text-decoration:underline;text-underline-offset:4px}
+  .vocab-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+  .vocab-opt{font-size:15px;font-weight:600;text-align:center;padding:14px 16px;border-radius:10px;
+       border:2px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+  .vocab-opt:hover{border-color:var(--accent)}
+  .vocab-opt.correct{background:var(--okbg);border-color:var(--correct);color:var(--correct)}
+  .vocab-opt.incorrect{background:var(--badbg);border-color:var(--wrong);color:var(--wrong)}
+  .teach-progress{font-size:12px;color:var(--muted);text-align:center;margin-bottom:8px}
+  .placement-msg{font-family:Georgia,serif;font-size:16px;text-align:center;line-height:1.5;
+       padding:18px;margin:16px 0;border-radius:12px;background:var(--bg);border:1px solid var(--line)}
+
+  /* ---- teaching mode: learning intention + success criteria slide ---- */
+  .li-box{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:6px 0 16px}
+  .li-eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+  .li-text{font-family:Georgia,serif;font-size:20px;line-height:1.35;color:var(--ink)}
+  .sc-list{display:flex;flex-direction:column;gap:10px;margin:10px 0 4px}
+  .sc-item{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line-soft);
+       border-radius:10px;background:var(--paper)}
+  .sc-item.locked{opacity:.6}
+  .sc-step{flex:0 0 auto;width:26px;height:26px;border-radius:99px;display:flex;align-items:center;justify-content:center;
+       font-size:12px;font-weight:800;background:var(--accent);color:#fff}
+  .sc-item.locked .sc-step{background:var(--line);color:var(--muted)}
+  .sc-item.done .sc-step{background:var(--correct)}
+  .sc-body{flex:1}
+  .sc-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);display:block;margin-bottom:2px}
+  .sc-goal{font-size:15px;font-weight:600;line-height:1.4}
+  .term-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .term-chip{font-size:13px;font-weight:700;padding:5px 12px;border-radius:14px;background:var(--paper);
+       border:1px solid var(--line);color:var(--accent)}
+  .teach-banner{text-align:center;font-size:13px;font-weight:700;color:var(--correct);background:var(--okbg);
+       border:1px solid #cfe3d2;border-radius:10px;padding:10px 14px;margin:0 0 14px}
+  .teach-feedback{font-size:14px;line-height:1.5;margin:12px 0 0;padding:12px 14px;border-radius:10px;min-height:18px}
+  .teach-feedback.good{background:var(--okbg);color:#234e2c}
+  .teach-feedback.bad{background:var(--badbg);color:#7a2020}
+  .vocab-opt.dim{opacity:.45}
+
+  /* ---- teaching mode: worked examples (richer skill modelling) ---- */
+  .worked-list{display:flex;flex-direction:column;gap:8px;margin:6px 0 4px}
+  .worked-row{border:1px solid var(--line-soft);border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;background:var(--paper)}
+  .worked-text{font-family:Georgia,serif;font-size:16px;font-weight:700;line-height:1.35}
+  .worked-text b{color:var(--accent)}
+  .worked-note{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .worked-note b{color:var(--accent);font-weight:700}
+
+  /* ---- teaching mode: drag-and-drop sorting board ---- */
+  .sort-prompt{font-size:14px;text-align:center;color:var(--ink);margin:4px 0 12px;line-height:1.45}
+  .sort-stage{display:flex;justify-content:center;align-items:center;min-height:64px;margin:6px 0}
+  .sort-tile{touch-action:none;user-select:none;font-size:16px;font-weight:700;padding:12px 18px;
+       border:2px solid var(--accent);border-radius:10px;background:var(--paper);color:var(--ink);cursor:grab;
+       display:inline-flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.08);transition:transform .16s ease}
+  .sort-tile.dragging{cursor:grabbing;box-shadow:0 8px 18px rgba(0,0,0,.2);transition:none;z-index:60;position:relative}
+  .sort-tile.placed{cursor:default;opacity:.85;box-shadow:none}
+  .zones{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+  .zone{flex:1 1 110px;min-height:84px;border:2px dashed var(--line);border-radius:10px;padding:10px 8px;
+       text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+       background:var(--bg);font:inherit;color:inherit;cursor:pointer}
+  .zone:hover{border-color:var(--accent)}
+  .zone-label{font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);margin-bottom:4px}
+  .zone.over{border-style:solid;border-color:var(--accent);background:#faf5f0}
+  .zone.correct{border-style:solid;border-color:var(--correct);background:var(--okbg)}
+  .zone .rested{font-size:13px;font-weight:700;color:var(--ink);margin-top:4px;line-height:1.3}
+  .sort-help{font-size:12px;color:var(--muted);text-align:center;margin:8px 0 2px}
+  .sort-streak{font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:10px;min-height:14px}
+
+  /* keyboard focus: a clear ring on every interactive task control */
+  .option:focus-visible,.zone:focus-visible,.clause-word:focus-visible,.vocab-opt:focus-visible,
+  .edit-token:focus-visible,.edit-word:focus-visible,.edit-gap:focus-visible,.order-word:focus-visible,
+  .match-item:focus-visible,.pool-btn:focus-visible,.filter-btn:focus-visible,.btn:focus-visible,
+  .sort-tile:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  /* honour reduced-motion for the drag/reveal transitions */
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important}}
+
+  /* ---- clause pick: tap the condition/result inside a full sentence ---- */
+  .clause-ask{font-family:Georgia,serif;font-size:15px;text-align:center;color:var(--ink);margin:2px 0 10px}
+  .clause-sentence{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;
+       background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px;margin:4px 0 6px;min-height:60px}
+  .clause-word{font:inherit;font-size:18px;font-weight:700;background:var(--paper);border:2px solid var(--line);
+       border-radius:8px;color:var(--ink);cursor:pointer;padding:6px 10px;transition:background .15s ease,border-color .15s ease}
+  .clause-word:hover:not(:disabled){border-color:var(--accent)}
+  /* selection must NOT share a hue with the error flash (--accent == --wrong
+     in this palette), or a picked word and a wrong word look the same */
+  .clause-word.sel{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+  .clause-word.correct{border-color:var(--correct);background:var(--okbg);color:var(--correct)}
+  .clause-word.incorrect{border-color:var(--wrong);background:var(--badbg);color:var(--wrong)}
+  .clause-punct{font-size:18px;font-weight:700;color:var(--muted);padding:6px 0}
+
+  /* ---- edit task: take the wrong word out, drag/tap the right one in ---- */
+  .edit-hint{font-size:12px;color:var(--muted);text-align:center;margin:4px 0 10px}
+  .edit-sentence{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;font-size:19px;
+       background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;min-height:62px}
+  .edit-token{font:inherit;font-size:19px;font-weight:700;background:transparent;border:none;
+       border-bottom:2px dashed transparent;color:var(--ink);cursor:pointer;padding:2px 4px;border-radius:5px}
+  .edit-token:hover{background:#f3e7e2;border-bottom-color:var(--accent)}
+  .edit-slot{display:inline-flex;align-items:center;justify-content:center;min-width:68px;min-height:34px;
+       border:2px dashed var(--accent);border-radius:7px;background:var(--paper);font-size:19px;font-weight:700;
+       color:var(--accent);padding:2px 10px;vertical-align:middle;cursor:pointer}
+  .edit-slot.over{background:#f3e7e2}
+  .edit-slot.filled{border-style:solid;background:#faf5f0}
+  .edit-slot.correct{border-color:var(--correct);background:var(--okbg);color:var(--correct)}
+  .edit-slot.incorrect{border-color:var(--wrong);background:var(--badbg);color:var(--wrong)}
+  .edit-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .edit-word{touch-action:none;user-select:none;font:inherit;font-size:15px;font-weight:700;padding:10px 15px;
+       border:2px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);cursor:grab;transition:transform .15s ease}
+  .edit-word:hover{border-color:var(--accent)}
+  .edit-word.dragging{cursor:grabbing;border-color:var(--accent);box-shadow:0 6px 14px rgba(0,0,0,.18);transition:none;z-index:60;position:relative}
+  /* insertion gaps (allowInsert: add a word or comma between words) */
+  .edit-gap{display:inline-block;width:12px;min-height:32px;border:none;background:transparent;border-radius:4px;cursor:pointer;vertical-align:middle}
+  .edit-gap:hover{background:#efe1db}
+  .edit-gap.active{width:54px;border:2px dashed var(--accent);background:var(--paper);color:var(--accent);font-weight:700;font-size:19px;text-align:center}
+  .edit-gap.filled{width:auto;min-width:0;border:2px solid var(--accent);background:#faf5f0;color:var(--accent);font-weight:700;font-size:19px;padding:2px 8px}
+  .edit-gap.correct{border:2px solid var(--correct);background:var(--okbg);color:var(--correct)}
+  .edit-gap.incorrect{border:2px solid var(--wrong);background:var(--badbg);color:var(--wrong)}
+
+  /* ---- order (word sequencing: tap words between bank and sentence line) ---- */
+  .order-line{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:54px;
+       padding:12px;border:2px dashed var(--line);border-radius:10px;background:var(--bg);margin:6px 0}
+  .order-line.correct{border-style:solid;border-color:var(--correct);background:var(--okbg)}
+  .order-line.incorrect{border-style:solid;border-color:var(--wrong);background:var(--badbg)}
+  .order-placeholder{color:var(--muted);font-size:13px;font-weight:600}
+  .order-bank{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+  .order-word{padding:10px 14px;border:2px solid var(--line);border-radius:10px;background:var(--paper);
+       color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;transition:all .15s ease}
+  .order-word:hover:not(:disabled){border-color:var(--accent)}
+  .order-word.in-line{border-color:var(--accent);background:#faf5f0}
+  .order-word:disabled{cursor:default;opacity:.9}
+  .order-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+
+  /* ---- produce (free response) ---- */
+  .produce-input{font-family:Georgia,serif;font-size:14px;padding:12px;border:2px solid var(--line);
+       border-radius:10px;background:var(--paper);color:var(--ink);width:100%;resize:vertical}
+  .produce-input:focus{outline:none;border-color:var(--accent)}
+  .produce-input:read-only{background:var(--bg);border-color:var(--line-soft)}
+  .produce-submitted{border-color:#888}
+
+  /* ---- match (meaning changes with a small tweak) ---- */
+  .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0}
+  .match-col{display:flex;flex-direction:column;gap:8px}
+  .match-item{position:relative;text-align:left;padding:12px 14px;border:2px solid var(--line);border-radius:10px;
+       background:var(--paper);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s ease}
+  .match-item:hover:not(:disabled){border-color:var(--accent)}
+  .match-item.pending{border-color:var(--accent);background:#faf5f0}
+  .match-item.paired{background:var(--bg);border-style:dashed}
+  .match-item.correct{background:var(--okbg);border-color:var(--correct);color:var(--correct)}
+  .match-item.incorrect{background:var(--badbg);border-color:var(--wrong);color:var(--wrong)}
+  .match-item:disabled{cursor:default}
+  .match-badge{position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;border-radius:99px;
+       background:var(--accent);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px}
+  .match-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+  @media(max-width:480px){.match-grid{grid-template-columns:1fr}}
+
+  /* ---- glossary: click a grammar term for its definition ---- */
+  .gloss{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:help;
+       border-bottom:1px dotted var(--accent)}
+  .gloss:hover{color:var(--accent)}
+  .gloss-pop{position:absolute;z-index:50;max-width:264px;background:var(--paper);border:1px solid var(--line);
+       border-radius:10px;box-shadow:0 4px 18px rgba(0,0,0,.16);padding:12px 14px;text-align:left}
+  .gloss-term{font-family:Georgia,serif;font-weight:700;font-size:14px;margin-bottom:4px}
+  .gloss-def{color:var(--muted);font-size:13px;line-height:1.45;margin-bottom:8px}
+  .gloss-links a{color:var(--accent);font-weight:600;text-decoration:none;font-size:12px}
+  .gloss-links a:hover{text-decoration:underline}
+
+  /* ---- report rubric (annotated end-of-session grid) ---- */
+  #reportRubric .matrix-cell{position:relative}
+  .matrix-cell.rpt-mastered{background:var(--correct);border-color:var(--correct)}
+  .matrix-cell.rpt-mastered .cell-name{color:var(--paper)}
+  .matrix-cell.rpt-partial{background:#f6efda;border-color:#caa53a}
+  .matrix-cell.rpt-missed{background:var(--badbg);border-color:var(--wrong)}
+  .matrix-cell.rpt-none{opacity:.5}
+  .rpt-mark{position:absolute;top:4px;right:6px;font-size:12px;font-weight:800}
+  .rpt-mark.ok{color:var(--paper)}
+  .rpt-mark.bad{color:var(--wrong)}
+  .matrix-cell.rpt-next{outline:2px solid var(--accent);outline-offset:-2px}
+  .rpt-subskill{font-size:9px;font-weight:700;line-height:1.3;color:#7a6310;margin-top:2px}
+  .rpt-subskill .x{color:var(--wrong)} .rpt-subskill .t{color:var(--correct)}
+  .rpt-next-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--accent)}
+
+  /* ---- level-up reveal: score holds ~1s, then the grid fades in,
+          mastered cells pop green one by one, and the next-selection
+          outline slides in last. ---- */
+  #reportScreen .report-reveal{transition:opacity .5s ease,transform .5s ease}
+  #reportScreen .report-reveal.pre-reveal{opacity:0;transform:translateY(10px)}
+  #reportRubric .matrix-cell{transition:background .45s ease,border-color .45s ease}
+  #reportRubric .matrix-cell .cell-name{transition:color .45s ease}
+  #reportRubric .matrix-cell.rpt-next{transition:outline-color .35s ease,background .45s ease,border-color .45s ease}
+  .matrix-cell.rpt-justmastered{animation:rptPop .5s ease}
+  @keyframes rptPop{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+
+  /* ---- export row ---- */
+  .export-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:12px}
+  .name-input{font-family:inherit;font-size:13px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;
+       background:var(--paper);color:var(--ink);min-width:180px}
+  .name-input:focus{outline:none;border-color:var(--accent)}
+
+  /* ---- EAL translate bar (shown only in EAL mode) ---- */
+  .tbar{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;gap:10px;align-items:center;
+        justify-content:center;flex-wrap:wrap;background:var(--ink);color:#fff;padding:7px 12px;
+        box-shadow:0 1px 6px rgba(0,0,0,.18)}
+  .tbar[hidden]{display:none}
+  .tbar-label{font-weight:700;letter-spacing:.4px;text-transform:uppercase;font-size:11px;opacity:.85}
+  .tbar select{font-family:inherit;font-size:13px;padding:5px 8px;border-radius:7px;border:1px solid #000;
+        background:#fff;color:var(--ink)}
+  .tbar-btn{font-family:inherit;font-size:13px;font-weight:700;padding:6px 14px;border-radius:7px;cursor:pointer;
+        border:1px solid #fff;background:transparent;color:#fff;transition:all .12s ease}
+  .tbar-btn:hover:not(:disabled){background:rgba(255,255,255,.14)}
+  .tbar-btn.on{background:#fff;color:var(--ink)}
+  .tbar-btn:disabled{opacity:.45;cursor:not-allowed}
+  .tbar-note{font-size:12px;opacity:.92;min-height:1em;min-width:60px}
+  body.tbar-space{padding-top:52px}
+  /* while translate mode is on, translatable text invites a tap */
+  body.tr-on .cell-name, body.tr-on .vic-chunk, body.tr-on .rowlabel,
+  body.tr-on #promptText, body.tr-on .stimulus, body.tr-on .cue,
+  body.tr-on .teach-def, body.tr-on .teach-example, body.tr-on .teach-term,
+  body.tr-on .li-text, body.tr-on .sc-goal, body.tr-on .term-chip,
+  body.tr-on .sort-prompt, body.tr-on .sort-help, body.tr-on .sort-tile, body.tr-on .clause-ask{
+    cursor:help;text-decoration:underline dotted var(--accent);
+    text-decoration-thickness:2px;text-underline-offset:3px}
+  body.tr-on .cell-name:hover, body.tr-on .vic-chunk:hover, body.tr-on .rowlabel:hover,
+  body.tr-on #promptText:hover, body.tr-on .stimulus:hover, body.tr-on .cue:hover,
+  body.tr-on .teach-def:hover, body.tr-on .teach-example:hover, body.tr-on .teach-term:hover,
+  body.tr-on .li-text:hover, body.tr-on .sc-goal:hover, body.tr-on .term-chip:hover,
+  body.tr-on .sort-prompt:hover, body.tr-on .sort-help:hover, body.tr-on .sort-tile:hover, body.tr-on .clause-ask:hover{
+    background:var(--okbg);border-radius:5px;box-shadow:0 0 0 3px var(--okbg)}
+  /* word-only mode (questions): I-beam cursor + a lighter dashed underline,
+     so it reads as "tap a single word" rather than the whole-sentence look */
+  body.tr-on.tr-word .cell-name, body.tr-on.tr-word .vic-chunk, body.tr-on.tr-word .rowlabel,
+  body.tr-on.tr-word #promptText, body.tr-on.tr-word .stimulus, body.tr-on.tr-word .cue,
+  body.tr-on.tr-word .teach-def, body.tr-on.tr-word .teach-example, body.tr-on.tr-word .teach-term,
+  body.tr-on.tr-word .li-text, body.tr-on.tr-word .sc-goal, body.tr-on.tr-word .term-chip,
+  body.tr-on.tr-word .sort-prompt, body.tr-on.tr-word .sort-help, body.tr-on.tr-word .sort-tile, body.tr-on.tr-word .clause-ask{
+    cursor:text;text-decoration-style:dashed;text-decoration-thickness:1px;
+    text-decoration-color:rgba(168,50,50,.4)}
+  /* the one word currently in the student's language stays clearly marked */
+  .tr-word-live.tr-done{background:var(--okbg);border-radius:4px;box-shadow:0 0 0 2px var(--okbg)}
+  /* a question that tests word meaning switches the invitation off */
+  body.tr-on.tr-block #promptText, body.tr-on.tr-block .stimulus, body.tr-on.tr-block .cue,
+  body.tr-on.tr-block .teach-def, body.tr-on.tr-block .teach-example,
+  body.tr-on.tr-block .li-text, body.tr-on.tr-block .sc-goal, body.tr-on.tr-block .term-chip,
+  body.tr-on.tr-block .sort-prompt, body.tr-on.tr-block .sort-help, body.tr-on.tr-block .sort-tile, body.tr-on.tr-block .clause-ask{
+    cursor:default;text-decoration:none;background:none;box-shadow:none}
+  .tr-done{background:var(--okbg);border-radius:4px;box-shadow:0 0 0 2px var(--okbg)}
+  .tr-loading{opacity:.55}
+
+  /* ---- progress / report-anytime ---- */
+  .row-actions{display:inline-flex;gap:12px;align-items:center}
+  .prog-who{text-align:center;color:var(--muted);font-size:13px;margin-bottom:12px}
+  .prog-who b{color:var(--ink)}
+  .prog-section-title{font-family:Georgia,serif;font-size:15px;margin:20px 0 8px}
+  .prog-table{width:100%;border-collapse:collapse;margin:6px 0 4px}
+  .prog-table th,.prog-table td{border:1px solid var(--line);padding:7px 9px;font-size:13px;text-align:left}
+  .prog-table th{background:var(--bg);font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+  .prog-table td.num{text-align:right;font-weight:700;white-space:nowrap}
+  .prog-table tr.prog-total td{font-weight:800;background:var(--bg)}
+  .prog-empty{color:var(--muted);font-size:13px}
+  /* always-on build marker, faint bottom-left */
+  .build-tag{position:fixed;left:6px;bottom:5px;z-index:70;font-family:monospace;font-size:9px;
+    letter-spacing:.3px;color:var(--muted);opacity:.4;pointer-events:none;user-select:none}
+  @media print{
+    body{background:#fff;padding:0}
+    #translateBar,.noprint,.build-tag{display:none !important}
+    .screen{display:none !important}
+    #progressScreen.active{display:block !important}
+    .container{border:none;box-shadow:none;max-width:100%;padding:0;margin:0}
+  }
+</style>
+</head>
+<body translate="no" class="notranslate">
+<!-- EAL translate bar: the engine fills the language list, shows it only in
+     EAL mode, and wires tap-to-translate. Suppressed during meaning checks. -->
+<div id="translateBar" class="tbar" hidden>
+  <span class="tbar-label">EAL</span>
+  <select id="transLang" aria-label="translation language"></select>
+  <button id="transToggle" type="button" class="tbar-btn" aria-pressed="false">Translate</button>
+  <span id="transNote" class="tbar-note" aria-live="polite"></span>
+</div>
+<div class="container">
+  <h1>Grammar Hub</h1>
+  <p class="subtitle">ELC grammar progression · pick skills, practise, get a report</p>
+
+  <!-- ============ SELECT ============ -->
+  <section class="screen active" id="selectScreen">
+    <div class="filter-row" id="typeFilter"></div>
+    <div class="filter-row" id="curricToggle" aria-label="curriculum label scheme"></div>
+    <div class="matrix" id="matrix"></div>
+    <div class="matrix-legend" id="matrixLegend"></div>
+    <div class="pools" id="pools"></div>
+    <div class="select-toolbar">
+      <span class="count-pill" id="selCount">0 skills queued</span>
+      <span>
+        <button class="linkbtn" id="selectAllBtn">All strands</button>
+        <button class="linkbtn" id="selectNoneBtn">Clear</button>
+        <button class="linkbtn" id="clearSavedBtn">Clear saved progress</button>
+        <button class="linkbtn reportNowBtn">My report</button>
+      </span>
+    </div>
+    <div class="start-bar">
+      <button class="btn btn-primary" id="startBtn" disabled>Start practising</button>
+      <button class="btn btn-ghost" id="reviewWeakBtn" style="display:none;margin-top:8px">Review what you missed</button>
+    </div>
+    <p class="muted" style="text-align:center;margin-top:14px" id="helpText">
+      Click any skill to focus on it. You'll learn the key vocabulary first, see worked examples, then practise that skill plus the level below (review) and above (stretch).
+    </p>
+  </section>
+
+  <!-- ============ PRETEACH: vocab then skill (teaching mode) ============ -->
+  <section class="screen" id="preteachScreen">
+    <div class="progress-row">
+      <span id="preteachPhase">Vocabulary</span>
+      <span class="row-actions">
+        <button class="linkbtn reportNowBtn">My report</button>
+        <button class="exit-btn" id="preteachQuitBtn">Exit</button>
+      </span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="preteachBar"></div></div>
+    <div class="teach-progress" id="preteachProgress"></div>
+    <div id="preteachContent"></div>
+    <div class="start-bar">
+      <button class="btn btn-primary" id="preteachNextBtn">Next</button>
+    </div>
+  </section>
+
+  <!-- ============ PLACEMENT (teaching mode result) ============ -->
+  <section class="screen" id="placementScreen">
+    <div class="report-title">Results</div>
+    <div id="placementSummary"></div>
+    <div class="matrix" id="placementRubric"></div>
+    <div id="placementMsg" class="placement-msg"></div>
+    <div class="report-actions">
+      <button class="btn btn-primary" id="placementContinueBtn">Continue to next level</button>
+      <button class="btn btn-ghost" id="placementSelectBtn">Back to selector</button>
+      <button class="btn btn-ghost reportNowBtn">My progress report</button>
+    </div>
+
+    <div class="export-row">
+      <input id="studentNameP" class="name-input" type="text" maxlength="40" autocomplete="name"
+             placeholder="Your name (for the export)" aria-label="your name for the export">
+      <button class="btn btn-ghost" id="downloadCsvBtnP">Download CSV</button>
+      <button class="btn btn-ghost" id="copyTsvBtnP">Copy row for sheet</button>
+      <button class="btn btn-ghost" id="copyBtnP">Copy teacher text</button>
+    </div>
+    <div id="copyNoteP" aria-live="polite"></div>
+  </section>
+
+  <!-- ============ TASK ============ -->
+  <section class="screen" id="taskScreen">
+    <div class="progress-row">
+      <span id="roundText">Main round</span>
+      <span class="row-actions">
+        <button class="linkbtn reportNowBtn" id="reportNowBtn">My report</button>
+        <button class="exit-btn" id="quitBtn">Exit</button>
+      </span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="bar"></div></div>
+    <div class="progress-row"><span></span><span id="remainText"></span></div>
+
+    <div class="skill-tag" id="skillTag"></div>
+    <div class="prompt" id="promptText"></div>
+    <div id="taskArea"></div>
+    <div class="feedback" id="feedback" aria-live="polite" role="status"></div>
+
+    <div class="action-row">
+      <span></span>
+      <span>
+        <button class="btn btn-primary" id="checkBtn" disabled>Check</button>
+        <button class="btn btn-primary" id="nextBtn" style="display:none">Next</button>
+      </span>
+    </div>
+  </section>
+
+  <!-- ============ REPORT ============ -->
+  <section class="screen" id="reportScreen">
+    <div class="report-title">Session complete</div>
+    <div id="reportSummary"></div>
+
+    <h3>Your rubric now</h3>
+    <p class="muted" id="reportRubricHint">Ticks are mastered, orange is half-mastered, crosses need another go, grey wasn't included. We've moved your selection up a level where you mastered it — start again or adjust below.</p>
+    <div class="matrix" id="reportRubric"></div>
+    <div class="matrix-legend" id="reportRubricLegend"></div>
+
+    <div id="reportRemediation"></div>
+    <div id="reportSkills"></div>
+
+    <div class="report-actions">
+      <button class="btn btn-primary" id="reviseAgainBtn">Revise again ▸</button>
+      <button class="btn btn-ghost" id="adjustBtn">Adjust selection</button>
+      <button class="btn btn-ghost" id="restartBtn">Start over</button>
+      <button class="btn btn-ghost reportNowBtn">My progress report</button>
+    </div>
+
+    <div class="export-row">
+      <input id="studentName" class="name-input" type="text" maxlength="40" autocomplete="name"
+             placeholder="Your name (for the export)" aria-label="your name for the export">
+      <button class="btn btn-ghost" id="downloadCsvBtn">Download CSV</button>
+      <button class="btn btn-ghost" id="copyTsvBtn">Copy row for sheet</button>
+      <button class="btn btn-ghost" id="copyBtn">Copy teacher text</button>
+    </div>
+    <div id="copyNote" aria-live="polite"></div>
+  </section>
+
+  <!-- ============ PROGRESS (report anytime) ============ -->
+  <section class="screen" id="progressScreen">
+    <div class="report-title">My progress</div>
+    <div class="prog-who" id="progWho"></div>
+    <div id="progSession"></div>
+    <div id="progOverTime"></div>
+
+    <div class="export-row noprint">
+      <input id="studentNameR" class="name-input" type="text" maxlength="40" autocomplete="name"
+             placeholder="Your name" aria-label="your name for the report">
+      <input id="studentCodeR" class="name-input" type="text" maxlength="24"
+             placeholder="Student code" aria-label="your student code">
+    </div>
+    <div class="report-actions noprint">
+      <button class="btn btn-primary" id="progressBackBtn">◂ Back to practice</button>
+      <button class="btn btn-ghost" id="progressPdfBtn">Save as PDF</button>
+    </div>
+    <p class="muted noprint" id="progPdfHint" style="text-align:center">
+      Add your name and student code, then Save as PDF and send it to your teacher.
+      Going back keeps your place — your progress isn't cleared.
+    </p>
+  </section>
+</div>
+
+<!-- always-on build marker (engine fills it); confirms which deploy is live -->
+<div id="buildTag" class="build-tag notranslate" translate="no" aria-hidden="true"></div>
+
+<!-- click-to-define popover (filled and positioned by the engine) -->
+<div id="glossPop" class="gloss-pop" hidden></div>
+
+<!-- load order matters: content, glossary, then task types, then engine -->
+<script src="data/skills.js"></script>
+<script src="data/curriculum.js"></script>
+<script src="data/glossary.js"></script>
+<script src="tasktypes.js"></script>
+<script src="engine.js"></script>
+</body>
+</html>
