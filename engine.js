@@ -42,6 +42,7 @@
   const STORE_KEY = "grammarHub.v1";
   const BUILD = "2026-08-04.1";
   let history = [];       // [{date, skillId, right, total}] across sessions
+  let writings = [];      // [{date, promptId, text}] optional writing-task responses
   let savedName = "";     // remembered student name (survives refresh)
   let savedCode = "";     // remembered student code (survives refresh)
   // Label scheme: "eal" (C1–C4 bands, the default and source of truth) or
@@ -1354,8 +1355,9 @@
 
     // also store for teacher export
     lastReport = { bySkill, firstRight, total, totalAttempts };
-    buildTeacherExport(firstRight, total, totalAttempts, bySkill);
     recordHistory(bySkill);
+    drawWritingCard(bySkill, "placementWriting");
+    buildTeacherExport(firstRight, total, totalAttempts, bySkill);
 
     // reflect the placement move (drillTarget was advanced) in saved state
     if (savedName) { const e = $("studentNameP"); if (e) e.value = savedName; }
@@ -1432,15 +1434,16 @@
     buildReportRubric(bySkill);
     runReportReveal();
     lastReport = { bySkill, firstRight, total, totalAttempts };
-    buildTeacherExport(firstRight, total, totalAttempts, bySkill);
     recordHistory(bySkill);
+    drawWritingCard(bySkill, "reportWriting");
+    buildTeacherExport(firstRight, total, totalAttempts, bySkill);
   }
 
   function runReportReveal() {
     const sections = [
       document.querySelector("#reportScreen h3"),
       $("reportRubricHint"), $("reportRubric"), $("reportRubricLegend"),
-      $("reportRemediation"), $("reportSkills"),
+      $("reportRemediation"), $("reportSkills"), $("reportWriting"),
     ].filter(Boolean);
     sections.forEach((el) => el.classList.add("report-reveal", "pre-reveal"));
 
@@ -1571,7 +1574,7 @@
   function persist() {
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify({
-        v: 1, name: studentName(), code: savedCode, mode, curric: curriculum, rowLevel, drillTarget, selectedPools, history,
+        v: 1, name: studentName(), code: savedCode, mode, curric: curriculum, rowLevel, drillTarget, selectedPools, history, writings,
       }));
     } catch (e) { /* private mode / quota — carry on without saving */ }
   }
@@ -1585,6 +1588,7 @@
     if (s.drillTarget && typeof s.drillTarget === "object") drillTarget = s.drillTarget;
     if (s.selectedPools && typeof s.selectedPools === "object") selectedPools = s.selectedPools;
     if (Array.isArray(s.history)) history = s.history;
+    if (Array.isArray(s.writings)) writings = s.writings;
     if (typeof s.name === "string") savedName = s.name;
     if (typeof s.code === "string") savedCode = s.code;
     // drop anything that no longer matches the current rubric (content may have moved)
@@ -1603,7 +1607,7 @@
   }
   function clearSaved() {
     try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
-    rowLevel = {}; drillTarget = null; selectedPools = {}; history = []; savedName = ""; savedCode = "";
+    rowLevel = {}; drillTarget = null; selectedPools = {}; history = []; writings = []; savedName = ""; savedCode = "";
     const a = $("studentName"), b = $("studentNameP");
     if (a) a.value = ""; if (b) b.value = "";
     ["studentNameR", "studentCodeR"].forEach((id) => { const el = $(id); if (el) el.value = ""; });
@@ -1648,6 +1652,86 @@
     buildModeToggle(); updateToolbar(); buildMatrix();
     if (Object.keys(rowLevel).length) startSession();
   }
+  /* ---------------- writing prompts (data/prompts.js) ---------------- */
+  // A short optional writing task at the end of a session, aimed at what the
+  // student most needs to consolidate. Revision mode targets the 1–3 weakest
+  // cells across saved history; a teaching cycle targets the cell(s) just
+  // drilled, shakiest first. Never scored — the response is saved so it shows
+  // in the report and teacher export, nothing more.
+  function writingTargets(bySkill) {
+    if (mode === "revision") {
+      const weak = skillWeakness().slice(0, 3).map((w) => w.id);
+      if (weak.length) return weak;
+    }
+    return Object.entries(bySkill)
+      .filter(([id]) => { const sk = skillById(id); return sk && sk.mode === "progression"; })
+      .sort((a, b) => (a[1].right / a[1].total) - (b[1].right / b[1].total))
+      .slice(0, 3).map(([id]) => id);
+  }
+  // Best prompt = covers as many target cells as possible without dragging in
+  // cells the student doesn't need: one weak cell → a single-skill prompt for
+  // it; two or three shared weaknesses → a prompt that hits them together.
+  function pickPrompt(targets, excludeId) {
+    const bank = window.WRITING_PROMPTS || [];
+    if (!bank.length || !targets.length) return null;
+    const W = new Set(targets);
+    const scored = [];
+    bank.forEach((p) => {
+      const cover = p.skills.filter((s) => W.has(s)).length;
+      if (!cover) return;
+      const stray = p.skills.length - cover;
+      scored.push({ p, score: cover * 2 - stray + (p.skills.includes(targets[0]) ? 1 : 0) });
+    });
+    if (!scored.length) return null;
+    // "different prompt" drops the current one first, so it falls through to
+    // the next-best tier instead of dealing the same card again
+    const pool2 = scored.filter((x) => x.p.id !== excludeId);
+    const use = pool2.length ? pool2 : scored;
+    const top = use.reduce((m, x) => Math.max(m, x.score), -Infinity);
+    const cands = use.filter((x) => x.score === top);
+    return cands[Math.floor(Math.random() * cands.length)].p;
+  }
+  let writingPrompt = null, writingTargetIds = [];
+  function drawWritingCard(bySkill, elId) {
+    const el = $(elId);
+    if (!el) return;
+    writingTargetIds = writingTargets(bySkill);
+    writingPrompt = pickPrompt(writingTargetIds, null);
+    renderWritingCard(el);
+  }
+  function renderWritingCard(el) {
+    const p = writingPrompt;
+    if (!p) { el.innerHTML = ""; return; }
+    const saved = writings.find((w) => w.promptId === p.id);
+    const names = p.skills.map((id) => { const sk = skillById(id); return sk ? `${sk.name} (${skillBandLabel(sk.band)})` : id; });
+    el.innerHTML = `<div class="writing-card">
+        <h3>✍️ ${escapeHtmlE(p.title)}</h3>
+        <div class="wp-meta">Optional writing task · ${escapeHtmlE(p.time)} · practises ${escapeHtmlE(names.join(" + "))}</div>
+        <div class="wp-prompt">${escapeHtmlE(p.prompt)}</div>
+        <ul class="wp-checks">${p.checks.map((c) => `<li>${escapeHtmlE(c)}</li>`).join("")}</ul>
+        <textarea data-wp-text placeholder="Type it here if you like — it goes on your report so your teacher can read it. Or write it on paper instead.">${escapeHtmlE(saved ? saved.text : "")}</textarea>
+        <div class="wp-foot">
+          <button class="btn btn-ghost" type="button" data-wp-shuffle>Try a different prompt</button>
+          <span class="wp-note" data-wp-note>${saved && saved.text ? "Saved on this device ✓" : "Nothing here is marked — this is practice, not a test."}</span>
+        </div>
+      </div>`;
+    el.querySelector("[data-wp-shuffle]").addEventListener("click", () => {
+      writingPrompt = pickPrompt(writingTargetIds, p.id);
+      renderWritingCard(el);
+    });
+    el.querySelector("[data-wp-text]").addEventListener("input", (e) => {
+      const text = e.target.value;
+      const cur = writings.find((w) => w.promptId === p.id);
+      if (cur) { cur.text = text; cur.date = todayStr(); }
+      else writings.push({ date: todayStr(), promptId: p.id, text });
+      while (writings.length > 20) writings.shift();
+      persist();
+      const n = el.querySelector("[data-wp-note]");
+      if (n) n.textContent = "Saved on this device ✓";
+      if (lastReport) buildTeacherExport(lastReport.firstRight, lastReport.total, lastReport.totalAttempts, lastReport.bySkill);
+    });
+  }
+
   function setCopyNote(msg) {
     ["copyNote", "copyNoteP"].forEach((id) => { const el = $(id); if (el) el.textContent = msg; });
   }
@@ -1712,6 +1796,15 @@
       const tags = Object.entries(s.tags || {});
       if (tags.length > 1) tags.forEach(([tag, x]) => { t += `      - ${tag}: ${x.right}/${x.total}\n`; });
     });
+    const written = writings.filter((w) => w.text && w.text.trim());
+    if (written.length) {
+      t += `\nWriting tasks (optional, unmarked):\n`;
+      written.slice(-3).forEach((w) => {
+        const p = (window.WRITING_PROMPTS || []).find((x) => x.id === w.promptId);
+        t += `  ${w.date} · ${p ? p.title : w.promptId}${p ? ` (${p.skills.join(", ")})` : ""}\n`;
+        t += `    "${w.text.trim()}"\n`;
+      });
+    }
     t += `\nItem log:\n`;
     log.forEach((r) => { t += `  [r${r.round}] (${r.type}) ${r.skill} — "${r.response}" → ${r.result}\n`; });
     teacherText = t;

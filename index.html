@@ -164,6 +164,16 @@
   .subskill-name{font-weight:600}
   .remed-row{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
   .remed-row a{color:var(--accent);margin-right:8px}
+  .writing-card{margin-top:18px;padding:14px 16px;background:var(--paper);border:1px solid var(--line);
+    border-left:4px solid var(--accent);border-radius:10px}
+  .writing-card h3{margin:0 0 2px}
+  .writing-card .wp-meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .writing-card .wp-prompt{font-size:14px;line-height:1.55;margin-bottom:8px}
+  .writing-card ul.wp-checks{margin:0 0 10px 18px;padding:0;font-size:13px;color:var(--muted);line-height:1.6}
+  .writing-card textarea{width:100%;min-height:110px;font:inherit;font-size:14px;padding:9px 11px;
+    border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);resize:vertical}
+  .writing-card .wp-foot{display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .writing-card .wp-note{font-size:12px;color:var(--muted)}
   .report-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
   #copyNote{text-align:center;font-size:12px;color:var(--muted);margin-top:8px;min-height:14px}
 
@@ -515,6 +525,7 @@
     <div id="placementSummary"></div>
     <div class="matrix" id="placementRubric"></div>
     <div id="placementMsg" class="placement-msg"></div>
+    <div id="placementWriting"></div>
     <div class="report-actions">
       <button class="btn btn-primary" id="placementContinueBtn">Continue to next level</button>
       <button class="btn btn-ghost" id="placementSelectBtn">Back to selector</button>
@@ -569,6 +580,7 @@
 
     <div id="reportRemediation"></div>
     <div id="reportSkills"></div>
+    <div id="reportWriting"></div>
 
     <div class="report-actions">
       <button class="btn btn-primary" id="reviseAgainBtn">Revise again ▸</button>
@@ -619,6 +631,7 @@
 
 <!-- load order matters: content, glossary, then task types, then engine -->
 <script src="data/skills.js"></script>
+<script src="data/prompts.js"></script>
 <script src="data/curriculum.js"></script>
 <script src="data/glossary.js"></script>
 <script src="tasktypes.js"></script>
