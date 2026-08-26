@@ -4,6 +4,9 @@ This is a shared repo worked on by more than one model/person (Claude Code for
 mechanics, ChatGPT/Codex for content). These rules keep it from drifting into a
 mess. They are not suggestions. If a rule blocks you, raise it, don't route around it.
 
+Read `STYLE_GUIDE.md` first — the portable build principles behind everything
+below.
+
 ---
 
 ## 0. The lane rule (most important)
