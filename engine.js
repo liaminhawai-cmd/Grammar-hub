@@ -2264,6 +2264,12 @@
     updateToolbar();
     initTranslate();
     updateTranslateBar();
+    // ?progress=1 opens the progress report straight away. The ELC hub's
+    // "My Learning Record" links here, so a student can step from "all my
+    // apps" into this one's detail without hunting for the button.
+    let wantProgress = false;
+    try { wantProgress = new URLSearchParams(window.location.search).get("progress") === "1"; } catch (e) {}
+    if (wantProgress) openProgress();
     const buildTag = $("buildTag"); if (buildTag) buildTag.textContent = "build " + BUILD;
 
     // put the remembered name into both export fields and keep them in sync
