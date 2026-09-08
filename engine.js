@@ -40,7 +40,7 @@
 
   // ---- persistence (localStorage) ----
   const STORE_KEY = "grammarHub.v1";
-  const BUILD = "2026-08-04.1";
+  const BUILD = "2026-09-08.1";
   let history = [];       // [{date, skillId, right, total}] across sessions
   let writings = [];      // [{date, promptId, text}] optional writing-task responses
   let savedName = "";     // remembered student name (survives refresh)
@@ -609,6 +609,11 @@
   }
 
   function startTeaching() {
+    // Pools only, no strand cell targeted: nothing to preteach and nothing
+    // to place, so the run is plain practice (task -> report), same as
+    // revision. Without this it lands on an empty "0 levels" preteach page
+    // and then crashes at the end (endTeachingSession needs drillTarget).
+    if (!drillTarget) { show("task"); showItem(); return; }
     const target = targetCell();
     if (!target) { startSkillPreteach(); return; }
     teachPhase = "intention";
@@ -1212,6 +1217,9 @@
   /* ---------------- TEACHING MODE: PLACEMENT ---------------- */
 
   function endTeachingSession() {
+    // No target cell means there is nothing to place against: give the
+    // practice report instead of throwing (which froze Next on the last item).
+    if (!drillTarget) { endSession(); return; }
     const total = pool.length;
     const firstRight = pool.filter((e) => firstPass[e.uid]).length;
     const totalAttempts = Object.values(attempts).reduce((a, b) => a + b, 0);
