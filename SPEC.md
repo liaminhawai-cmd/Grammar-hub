@@ -73,18 +73,22 @@ its evidence base (acquisition-order literature): CURRICULUM-MAP.md.
 
 ## 5. Task-type library
 
-Each type is render + grade. Two built, five stubbed (the app still runs if content
-references a stub; it shows a notice). The diagnostics define each one.
+Each type is render + grade. All of these are built and auto-checked by
+`validate.js`; `produce` remains only as the engine's fallback for an unknown type
+and is banned from banks (JOBS house rules).
 
-| Type | Status | What it is |
-|---|---|---|
-| `identify` | built | MCQ, name the feature |
-| `gapfill` | built | type the correct form into a blank |
-| `choose` | stub | MCQ, pick the correct sentence (a vs b) |
-| `order` | stub | put scrambled words in order |
-| `join` | stub | combine two sentences with a target connective |
-| `transform` | stub | rewrite a sentence to a target form |
-| `produce` | stub | free written response, self/teacher assessed |
+| Type | What it is |
+|---|---|
+| `identify` | MCQ, name the feature |
+| `gapfill` | type the correct form into a blank |
+| `choose` | MCQ, pick the correct sentence |
+| `order` | put scrambled words in order |
+| `join` | combine two sentences with a target connective |
+| `transform` | rewrite a sentence to a target form |
+| `edit` | one sentence, one change: swap a word, or insert a word/comma |
+| `match` | pair sentences with the meaning a small change gives them |
+| `passage` | a longer text (paragraph, dialogue, book excerpt): find and fix several errors, or re-purpose a correct text to a new goal |
+| `produce` | free written response; fallback only, not for banks |
 
 ### Interface
 
@@ -128,7 +132,34 @@ Item shapes:
 { type:"identify", prompt, sentence /* <b> around target */, options:[...], answer, explain, tags:[...] }
 // gapfill
 { type:"gapfill", prompt, before, after, cue, accept:[...], explain, tags:[...] }
+// passage
+{ type:"passage", prompt,
+  lines:[ { who, text, accept:[...] },   // editable: `accept` lists every correct version of THIS line
+          { who, text } ],               // read-only context (a recast, a narrator); `who` optional
+  bank:[...],                            // shared replacements, incl. decoys; exact spelling/case as inserted
+  allowInsert,                           // true: gaps between words take a word or comma
+  source:{ title, author, year, note },  // optional attribution; note:"adapted" if simplified
+  explain, tags:[...] }
 ```
+
+Passage rules (content lane):
+
+- The unit of grading is the whole editable line: every error fixed, every sound
+  word left alone. `accept` must list each valid corrected line in full.
+- A passage lives in one cell and its errors are that cell's grammar. It may carry
+  one or two extra errors from a **lower band** of any strand (a C3 tense passage
+  may include a C1 agreement slip); never the same band or above. Pool passages
+  (articles, prepositions) may mix freely.
+- Put decoys in the passage, not only the bank: a correct word that looks wrong
+  (`read` as a past form) is what makes the task a reading task.
+- Tap-and-replace substitutes, inserts and deletes; it cannot **move** a word.
+  Word-order errors belong in `order`, not `passage`.
+- Book excerpts must be public domain in Australia (author died before 1955).
+  Simplify freely and mark `note:"adapted"`. Mentioning a modern title in a
+  dialogue is fine; quoting it is not.
+- A fluent-speaker line never corrects the learner; it models the form
+  (a recast). The learner's lines carry only the target errors, nothing else
+  non-standard, so the character reads as a learner, not a caricature.
 
 `tags`: sub-skill labels. Bundled cells (e.g. Present Simple/Continuous) MUST tag each
 item by sub-skill so the report can diagnose which half was missed. Grading normalises

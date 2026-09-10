@@ -62,6 +62,28 @@
     return a;
   }
 
+  // ---- passage helpers ----
+  // Words (letters, digits, apostrophes, hyphens) and single punctuation
+  // marks. Exposed on the type as `tokens` so validate.js tokenises the same way.
+  function passageTokens(text) {
+    return (text || "").match(/[\p{L}\p{N}'’\-]+|[^\s\p{L}\p{N}]/gu) || [];
+  }
+  const PUNCT_RE = /^[^\p{L}\p{N}]+$/u;
+  // Rebuild a line from tokens: closing marks hug the word before, opening
+  // marks hug the word after ("Rabbit, 'you may" not "Rabbit , ' you may").
+  function joinTokens(parts) {
+    let out = "", glue = false;
+    parts.forEach((p) => {
+      if (/^[,.;:!?'’”)\]]+$/.test(p)) out += p;
+      else out += (out && !glue ? " " : "") + p;
+      glue = /^[‘“(\[]+$/.test(p);
+    });
+    return out;
+  }
+  // Quote marks never decide a passage: strip them all before norm() so a
+  // learner's rebuilt line and the author's accept string compare cleanly.
+  function pnorm(s) { return norm((s || "").replace(/[‘’“”"']/g, "")); }
+
   // A placeholder type used by the five roadmap stubs below. Renders a
   // note, never reports an answer, so the engine's Check stays disabled.
   function stub(label, blurb) {
@@ -501,6 +523,159 @@
         area.querySelectorAll(".edit-token, .edit-word, .edit-gap").forEach((el) => { el.disabled = true; el.style.pointerEvents = "none"; });
         const a = area.querySelector(".edit-slot, .edit-gap.filled");
         if (a) a.classList.add(result.correct ? "correct" : "incorrect");
+      },
+    },
+
+    /* ===== passage: find and fix (or re-purpose) a longer text ===== *
+       Lines with `accept` are editable; lines without are read-only context
+       (a fluent speaker's recast, a narrator). Every word and mark in an
+       editable line is a tap target, so nothing gives the error away; a
+       shared bank supplies replacements; with allowInsert the spaces
+       between words take a word or comma too. Several edits can be live at
+       once. Correct = EVERY editable line matches one of its accept strings
+       after pnorm(): the errors are fixed AND the sound words were left
+       alone. An empty slot at Check time means "delete this word".        */
+    passage: {
+      label: "Fix the passage",
+      tokens: passageTokens,
+
+      render(item) {
+        const ins = !!item.allowInsert;
+        // the engine already shows item.prompt above the task area; only the
+        // how-to hint is rendered here
+        const hint = ins
+          ? "Tap a word to take it out, then tap the right word in the bank. Tap a space between words to add one there. Tap an empty box to put the word back."
+          : "Tap a word to take it out, then tap the right word in the bank. Tap an empty box to put the word back.";
+        const lines = (item.lines || []).map((line) => {
+          const who = line.who ? `<span class="passage-who">${esc(line.who)}</span>` : "";
+          if (!line.accept) {
+            return `<div class="passage-line">${who}<span class="passage-text">${esc(line.text)}</span></div>`;
+          }
+          const toks = passageTokens(line.text);
+          let row = "";
+          const gapAt = (pos) => `<button type="button" class="passage-gap" data-pos="${pos}" aria-label="add a word here"></button>`;
+          toks.forEach((w, i) => {
+            const punct = PUNCT_RE.test(w);
+            if (ins && !punct) row += gapAt(i);   // no gap before a comma or full stop
+            row += `<button type="button" class="${punct ? "passage-token punct" : "passage-token"}" data-i="${i}" data-orig="${esc(w)}">${esc(w)}</button>`;
+          });
+          if (ins && toks.length && !PUNCT_RE.test(toks[toks.length - 1])) row += gapAt(toks.length);
+          return `<div class="passage-line editable">${who}<span class="passage-text">${row}</span></div>`;
+        });
+        const order = shuffleIdx((item.bank || []).length);
+        const bank = order.map((k) =>
+          `<button type="button" class="edit-word" data-w="${esc(item.bank[k])}">${esc(item.bank[k])}</button>`).join("");
+        const src = item.source;
+        const source = src
+          ? `<div class="passage-source">${src.note === "adapted" ? "Adapted from" : "From"} ${esc(src.title)}` +
+            `${src.author ? ", " + esc(src.author) : ""}${src.year ? " (" + esc(String(src.year)) + ")" : ""}</div>`
+          : "";
+        return `<div class="edit-hint">${hint}</div>
+          <div class="passage">${lines.join("")}${source}</div>
+          <div class="edit-bank">${bank}</div>`;
+      },
+
+      wire(area) {
+        const box = area.querySelector(".passage");
+        const active = () => box.querySelector(".active");
+        const setActive = (el) => { const a = active(); if (a) a.classList.remove("active"); if (el) el.classList.add("active"); };
+        const tokenEl = (i, orig) => {
+          const t = document.createElement("button");
+          t.type = "button"; t.className = PUNCT_RE.test(orig) ? "passage-token punct" : "passage-token";
+          t.dataset.i = i; t.dataset.orig = orig; t.textContent = orig;
+          return t;
+        };
+
+        box.addEventListener("click", (e) => {
+          const tok = e.target.closest(".passage-token");
+          const slot = e.target.closest(".passage-slot");
+          const gap = e.target.closest(".passage-gap");
+          if (tok) {   // take the word out: an empty slot, waiting for a bank word
+            const s = document.createElement("button");
+            s.type = "button"; s.className = "passage-slot";
+            s.dataset.i = tok.dataset.i; s.dataset.orig = tok.dataset.orig; s.dataset.fill = "";
+            s.setAttribute("aria-label", `"${tok.dataset.orig}" taken out. Choose a word from the bank, or tap to put it back.`);
+            tok.replaceWith(s); setActive(s); ready(area); return;
+          }
+          if (slot) {
+            if (slot.dataset.fill) {   // filled: clear it and choose again
+              slot.dataset.fill = ""; slot.textContent = ""; slot.classList.remove("filled"); setActive(slot);
+            } else {                   // empty: put the original word back
+              slot.replaceWith(tokenEl(slot.dataset.i, slot.dataset.orig));
+            }
+            ready(area); return;
+          }
+          if (gap) {
+            if (gap.dataset.fill) {   // clear an insertion; drop the spare gap it opened
+              gap.dataset.fill = ""; gap.textContent = ""; gap.classList.remove("filled", "active");
+              const nx = gap.nextElementSibling;
+              if (nx && nx.classList.contains("passage-gap") && !nx.dataset.fill) nx.remove();
+            }
+            else if (gap.classList.contains("active")) gap.classList.remove("active");
+            else setActive(gap);
+            ready(area); return;
+          }
+        });
+
+        area.querySelectorAll(".edit-word").forEach((b) => {
+          b.addEventListener("click", () => {
+            let a = active();
+            if (!a) a = box.querySelector(".passage-slot:not(.filled)");   // first empty slot in reading order
+            if (!a) return;
+            a.dataset.fill = b.dataset.w; a.textContent = b.dataset.w;
+            a.classList.add("filled"); a.classList.remove("active");
+            // a filled gap opens a fresh one after it, so "at a" can go in
+            // as two consecutive insertions
+            if (a.classList.contains("passage-gap")) {
+              const nx = a.nextElementSibling;
+              if (!(nx && nx.classList.contains("passage-gap") && !nx.dataset.fill)) {
+                const g = document.createElement("button");
+                g.type = "button"; g.className = "passage-gap"; g.dataset.pos = a.dataset.pos;
+                g.setAttribute("aria-label", "add a word here");
+                a.after(g);
+              }
+            }
+            ready(area);
+          });
+        });
+      },
+
+      collect(area) {
+        const box = area.querySelector(".passage");
+        if (!box.querySelector(".passage-slot, .passage-gap.filled")) return null;
+        return Array.from(box.querySelectorAll(".passage-line.editable")).map((line) => {
+          const parts = [];
+          Array.from(line.querySelector(".passage-text").children).forEach((ch) => {
+            if (ch.classList.contains("passage-gap") || ch.classList.contains("passage-slot")) {
+              if (ch.dataset.fill) parts.push(ch.dataset.fill);
+            } else parts.push(ch.dataset.orig);
+          });
+          return joinTokens(parts);
+        });
+      },
+
+      // `lines` (per-line booleans) rides along for mark(); the engine only
+      // reads correct/expected.
+      check(item, response) {
+        const editable = (item.lines || []).filter((l) => l.accept);
+        const lines = editable.map((l, i) => {
+          const r = Array.isArray(response) ? response[i] : null;
+          return r != null && l.accept.map(pnorm).includes(pnorm(r));
+        });
+        const wrong = editable.filter((_, i) => !lines[i]);
+        const expected = (wrong.length ? wrong : editable).map((l) => l.accept[0]).join(" ");
+        return { correct: wrong.length === 0, expected, lines };
+      },
+
+      mark(area, item, result) {
+        area.querySelectorAll(".passage-token, .passage-slot, .passage-gap, .edit-word").forEach((el) => { el.disabled = true; });
+        area.querySelectorAll(".passage-line.editable").forEach((line, i) => {
+          const ok = result.lines ? !!result.lines[i] : result.correct;
+          line.classList.add(ok ? "correct" : "incorrect");
+          const m = document.createElement("span");   // glyph + colour, never colour alone
+          m.className = "passage-mark"; m.textContent = ok ? "✓" : "✗";
+          line.prepend(m);
+        });
       },
     },
 

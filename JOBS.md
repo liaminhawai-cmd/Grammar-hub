@@ -54,6 +54,18 @@ palette/tokens, and what is out of scope.
   the new history data, sub-skill drilldown, pool UI, ARC links pending the
   teacher's scraper run).
 
+- **2026-09-10:** `passage` task type (tasktypes.js) — longer texts with
+  several edits live at once: find-and-fix paragraphs, goal tweaks on a
+  correct text (tense consistency, can→must), learner/fluent-speaker
+  dialogues where the fluent line recasts rather than corrects, and adapted
+  public-domain excerpts. Bank + tap-to-replace (the `edit` mechanic at
+  passage scale), gaps chain for consecutive insertions, whole-line grading.
+  validate.js checks the bank can build each model line. SPEC §5/§6 carry
+  the schema and the lower-band rule for extra errors. Pilot content: 11
+  passages across tense-c1/c2, agree-c1/c2, sentence-c1/c2, question-c1,
+  modality-c1 and both pools (job 19). Learner characters Minh and Wei are
+  placeholders for the teacher to rename.
+
 ## P1 — do these first
 
 ### 1. De-tell audit of the remaining metalanguage sorts — DONE (2026-07-05)
@@ -201,5 +213,11 @@ matrix and a distinct report section.
 16. **Item analytics**: log per-item miss rates into the history schema and
     add a teacher export ranking the most-missed items — feeds bank pruning.
 17. **Multi-student profiles**: name-keyed saves on one device.
+19. **Passages: scale the pilot.** One `passage` per introduced cell (the
+    pilot covers 9 cells + 2 pools). Keep the mix: find-and-fix, goal tweak,
+    dialogue with recast, adapted excerpt. Excerpts need the source text
+    checked against Gutenberg (blocked from the build sandbox; the Peter
+    Rabbit passage was adapted from memory). Word-order transfer errors
+    (topic fronting, "I very like") go to `order`, not `passage`.
 18. **Rules-based free-build task**: still deferred on purpose (SPEC §11).
     Do not start.

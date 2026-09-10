@@ -67,6 +67,9 @@ window.SKILLS.forEach((skill) => {
     } else if (item.type === 'match') {
       // match has no scalar answer: the model response is the identity pairing.
       modelAnswer = (item.pairs || []).map((_, i) => [i, i]);
+    } else if (item.type === 'passage') {
+      // one string per editable line, in order
+      modelAnswer = (item.lines || []).filter((l) => l.accept).map((l) => l.accept[0]);
     } else if (item.type === 'produce') {
       // free response, no auto-grade — nothing to verify.
       return;
@@ -173,6 +176,41 @@ window.SKILLS.forEach((skill) => {
     if (cp.labels && !cp.labels[it.find]) {
       console.error(`❌ [${skill.id}] clausePick ${idx}: find "${it.find}" has no label`); errorCount++;
     }
+  });
+});
+
+// passage structural checks: at least one editable line, every accept
+// non-empty, and the bank can actually build accept[0] from the text (every
+// word in the model answer that is not already in the line must be in the
+// bank, or the item is unwinnable). The lower-band rule
+// for extra errors (SPEC §6) is a content rule and is not checkable here.
+window.SKILLS.forEach((skill) => {
+  (skill.items || []).forEach((item, idx) => {
+    if (item.type !== 'passage') return;
+    const type = window.TASK_TYPES.passage;
+    const lines = Array.isArray(item.lines) ? item.lines : [];
+    const editable = lines.filter((l) => l.accept);
+    if (!editable.length) { console.error(`❌ [${skill.id}] Item ${idx}: passage has no editable line`); errorCount++; }
+    if (!Array.isArray(item.bank) || !item.bank.length) { console.error(`❌ [${skill.id}] Item ${idx}: passage has no bank`); errorCount++; }
+    editable.forEach((l, li) => {
+      if (typeof l.text !== 'string' || !Array.isArray(l.accept) || !l.accept.length) {
+        console.error(`❌ [${skill.id}] Item ${idx}: passage line ${li} needs text and a non-empty accept`); errorCount++; return;
+      }
+      // case-insensitive, like grading: inserting "do" before "You" is fine
+      const lc = (t) => t.toLowerCase();
+      const have = {};
+      type.tokens(l.text).forEach((t) => { have[lc(t)] = (have[lc(t)] || 0) + 1; });
+      const bank = (item.bank || []).map(lc);
+      const missing = [];
+      type.tokens(l.accept[0]).forEach((t) => {
+        if (have[lc(t)] > 0) { have[lc(t)]--; return; }
+        if (!bank.includes(lc(t))) missing.push(t);
+      });
+      if (missing.length) {
+        console.error(`❌ [${skill.id}] Item ${idx}: passage line ${li}: bank cannot supply ${missing.map((m) => '"' + m + '"').join(', ')}`);
+        errorCount++;
+      }
+    });
   });
 });
 

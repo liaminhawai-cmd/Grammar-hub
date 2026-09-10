@@ -265,6 +265,7 @@
   /* keyboard focus: a clear ring on every interactive task control */
   .option:focus-visible,.zone:focus-visible,.clause-word:focus-visible,.vocab-opt:focus-visible,
   .edit-token:focus-visible,.edit-word:focus-visible,.edit-gap:focus-visible,.order-word:focus-visible,
+  .passage-token:focus-visible,.passage-slot:focus-visible,.passage-gap:focus-visible,
   .match-item:focus-visible,.pool-btn:focus-visible,.filter-btn:focus-visible,.btn:focus-visible,
   .sort-tile:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   /* honour reduced-motion for the drag/reveal transitions */
@@ -310,6 +311,39 @@
   .edit-gap.filled{width:auto;min-width:0;border:2px solid var(--accent);background:#faf5f0;color:var(--accent);font-weight:700;font-size:19px;padding:2px 8px}
   .edit-gap.correct{border:2px solid var(--correct);background:var(--okbg);color:var(--correct)}
   .edit-gap.incorrect{border:2px solid var(--wrong);background:var(--badbg);color:var(--wrong)}
+
+  /* ---- passage: find and fix (or re-purpose) a longer text; several edits live at once ---- */
+  .passage{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:6px 14px;margin-bottom:14px}
+  .passage-line{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-radius:8px}
+  .passage-line+.passage-line{border-top:1px solid var(--line-soft)}
+  .passage-who{flex:0 0 auto;min-width:56px;padding-top:10px;font-size:13px;font-weight:700;color:var(--muted)}
+  .passage-text{font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.5;color:var(--ink);
+       display:flex;flex-wrap:wrap;align-items:center;row-gap:2px}
+  .passage-line:not(.editable) .passage-text{display:block;padding:9px 0}
+  .passage-token{font:inherit;min-height:40px;padding:0 4px;background:transparent;border:none;
+       border-bottom:2px dashed transparent;border-radius:5px;color:inherit;cursor:pointer}
+  .passage-token.punct{padding:0 3px 0 0;margin-left:-6px}
+  .passage-token:hover:not(:disabled){background:var(--paper);border-bottom-color:var(--accent)}
+  .passage-slot{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:40px;margin:0 2px;padding:0 8px;
+       font:inherit;font-weight:700;color:var(--accent);background:var(--paper);border:2px dashed var(--accent);border-radius:7px;cursor:pointer}
+  .passage-slot.filled{border-style:solid}
+  /* insertion gaps (allowInsert): a thin tall target between words that opens into a box */
+  .passage-gap{display:inline-block;position:relative;width:14px;min-height:40px;margin:0 1px;border:none;background:transparent;border-radius:4px;cursor:pointer;vertical-align:middle}
+  /* a faint pill marks each gap, so touch users can find them without hover */
+  .passage-gap::before{content:"";position:absolute;left:5px;top:10px;width:4px;height:20px;border-radius:2px;background:var(--line-soft)}
+  .passage-gap:hover:not(:disabled){background:var(--line-soft)}
+  .passage-gap.active::before,.passage-gap.filled::before,.passage-gap:disabled::before{display:none}
+  .passage-gap.active,.passage-gap.filled{width:auto;min-width:44px;padding:0 8px;font:inherit;font-weight:700;color:var(--accent);
+       background:var(--paper);border:2px dashed var(--accent);border-radius:7px}
+  .passage-gap.filled{border-style:solid}
+  /* the slot or gap the next bank word fills: the same ring as keyboard focus */
+  .passage-slot.active,.passage-gap.active{outline:3px solid var(--accent);outline-offset:2px}
+  .passage-line.correct{background:var(--okbg)}
+  .passage-line.incorrect{background:var(--badbg)}
+  .passage-mark{flex:0 0 auto;padding-top:9px;font-weight:800}
+  .passage-line.correct .passage-mark{color:var(--correct)}
+  .passage-line.incorrect .passage-mark{color:var(--wrong)}
+  .passage-source{font-size:12px;color:var(--muted);text-align:right;padding:6px 4px 4px}
 
   /* ---- order (word sequencing: tap words between bank and sentence line) ---- */
   .order-line{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:54px;
