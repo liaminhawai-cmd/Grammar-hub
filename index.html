@@ -451,6 +451,21 @@
   .prog-table td.num{text-align:right;font-weight:700;white-space:nowrap}
   .prog-table tr.prog-total td{font-weight:800;background:var(--bg)}
   .prog-empty{color:var(--muted);font-size:13px}
+  /* "What you've done so far" — three counts, then one line per skill */
+  .prog-stats{display:flex;gap:8px;margin:6px 0 12px}
+  .prog-stats>div{flex:1;border:1px solid var(--line-soft);border-radius:8px;padding:8px 6px;text-align:center}
+  .prog-stats b{display:block;font-family:Georgia,serif;font-size:21px;color:var(--accent);line-height:1.1}
+  .prog-stats span{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+  .prog-frac{font-weight:400;color:var(--muted);margin-left:7px}
+  /* "Activity" — the same record as a dated diary */
+  .prog-day{margin-bottom:11px;break-inside:avoid}
+  .prog-day-date{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);
+                 border-bottom:1px solid var(--line-soft);padding-bottom:3px;margin-bottom:5px}
+  .prog-day-list{list-style:none;margin:0;padding:0}
+  .prog-day-list li{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:3px 0}
+  .prog-day-score{color:var(--muted);white-space:nowrap}
+  .prog-more{color:var(--muted);font-size:12px;font-style:italic}
+  @media (max-width:480px){ .prog-stats{flex-wrap:wrap} .prog-stats>div{min-width:30%} }
   /* always-on build marker, faint bottom-left */
   .build-tag{position:fixed;left:6px;bottom:5px;z-index:70;font-family:monospace;font-size:9px;
     letter-spacing:.3px;color:var(--muted);opacity:.4;pointer-events:none;user-select:none}
@@ -605,6 +620,7 @@
     <div class="prog-who" id="progWho"></div>
     <div id="progSession"></div>
     <div id="progOverTime"></div>
+    <div id="progActivity"></div>
 
     <div class="export-row noprint">
       <input id="studentNameR" class="name-input" type="text" maxlength="40" autocomplete="name"

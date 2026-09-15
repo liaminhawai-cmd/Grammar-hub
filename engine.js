@@ -40,7 +40,7 @@
 
   // ---- persistence (localStorage) ----
   const STORE_KEY = "grammarHub.v1";
-  const BUILD = "2026-08-04.1";
+  const BUILD = "2026-09-15.1";
   let history = [];       // [{date, skillId, right, total}] across sessions
   let writings = [];      // [{date, promptId, text}] optional writing-task responses
   let savedName = "";     // remembered student name (survives refresh)
@@ -2195,6 +2195,60 @@
     });
     return agg;
   }
+  /* A "YYYY-MM-DD" key rendered the way a student reads a date. Split the
+     key by hand rather than letting Date parse it: a bare ISO date string is
+     read as UTC, which renders as the day before in Melbourne. Same rule as
+     the ELC hub's learning record, so the two pages agree on what day it is. */
+  function progDayLabel(day) {
+    const p = String(day || "").split("-").map(Number);
+    if (p.length !== 3 || p.some(isNaN)) return String(day || "");
+    const d = new Date(p[0], p[1] - 1, p[2]);
+    if (isNaN(d)) return String(day);
+    const same = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+    if (same(d, new Date())) return "Today";
+    if (same(d, new Date(Date.now() - 86400000))) return "Yesterday";
+    return d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+
+  /* History and writings regrouped by the day they happened, newest first.
+     Two sessions on the same skill on the same day add together into one
+     line: the student wants to know what they did that day, not how many
+     times they pressed Start. */
+  function historyByDay() {
+    const days = {};
+    const dayFor = (date) => (days[date] = days[date] || { day: date, skills: {}, words: 0, pieces: 0 });
+    history.forEach((h) => {
+      if (!h || !h.date) return;
+      const d = dayFor(h.date);
+      const s = d.skills[h.skillId] = d.skills[h.skillId] || { right: 0, total: 0 };
+      s.right += h.right; s.total += h.total;
+    });
+    writings.forEach((w) => {
+      if (!w || !w.date || !w.text || !w.text.trim()) return;
+      const d = dayFor(w.date);
+      d.pieces++; d.words += w.text.trim().split(/\s+/).length;
+    });
+    return Object.values(days).sort((a, b) => (a.day < b.day) - (a.day > b.day));
+  }
+
+  /* One readable name for a skill. Pools carry band null, which the old
+     rate table printed literally as "null"; they also repeat their category
+     in their own name, so they read best as the name alone. */
+  function progSkillName(sk) {
+    const band = sk.band ? skillBandLabel(sk.band) : "";
+    if (!band && String(sk.name).indexOf(sk.category) === 0) return sk.name;
+    return [sk.category, band, sk.name].filter(Boolean).join(" · ");
+  }
+
+  // Plain words instead of a percentage column. Same thresholds the report
+  // already uses for its score pills, so the two never disagree.
+  function progStatus(right, total) {
+    const pct = total ? Math.round(100 * right / total) : 0;
+    if (pct === 100) return { cls: "ok", word: "Mastered" };
+    if (pct >= 50) return { cls: "mid", word: "Getting there" };
+    return { cls: "low", word: "Needs another go" };
+  }
+
   function buildProgress() {
     const who = studentName(), code = studentCode();
     $("progWho").innerHTML =
@@ -2221,21 +2275,73 @@
       $("progSession").innerHTML = `<p class="prog-empty">No questions answered in this session yet.</p>`;
     }
 
+    /* What you've done so far: three counts and one line per skill, in place
+       of the old four-column rate table. A student reads a word faster than a
+       percentage, and the fraction is still there for the teacher. */
     const agg = historyBySkill();
-    const otRows = Object.entries(agg)
+    const done = Object.entries(agg)
       .map(([id, a]) => ({ sk: skillById(id), a }))
       .filter((x) => x.sk)
-      .sort((x, y) => (x.sk.category + x.sk.band).localeCompare(y.sk.category + y.sk.band))
-      .map(({ sk, a }) => {
-        const pct = a.total ? Math.round(100 * a.right / a.total) : 0;
-        return `<tr><td>${escapeHtmlE(`${sk.category} · ${skillBandLabel(sk.band)} · ${sk.name}`)}</td>` +
-          `<td class="num">${a.right}/${a.total}</td><td class="num">${pct}%</td><td class="num">${a.sessions}</td></tr>`;
+      .sort((x, y) => (x.sk.category + x.sk.band).localeCompare(y.sk.category + y.sk.band));
+
+    if (!done.length) {
+      $("progOverTime").innerHTML =
+        `<div class="prog-section-title">What you've done so far</div>` +
+        `<p class="prog-empty">Nothing saved yet. Finish a practice session and it will show up here.</p>`;
+    } else {
+      let right = 0, total = 0;
+      done.forEach(({ a }) => { right += a.right; total += a.total; });
+      const dayCount = new Set(history.map((h) => h && h.date).filter(Boolean)).size;
+      const stat = (value, label) => `<div><b>${escapeHtmlE(String(value))}</b><span>${escapeHtmlE(label)}</span></div>`;
+      const rows = done.map(({ sk, a }) => {
+        const st = progStatus(a.right, a.total);
+        return `<div class="skill-row">` +
+          `<span class="skill-name">${escapeHtmlE(progSkillName(sk))}` +
+          `<span class="prog-frac">${a.right}/${a.total}</span></span>` +
+          `<span class="skill-score ${st.cls}">${st.word}</span></div>`;
       }).join("");
-    $("progOverTime").innerHTML = otRows
-      ? `<div class="prog-section-title">Your progress over time</div>` +
-        `<table class="prog-table"><tr><th>Skill</th><th>First try &#10003;</th><th>Rate</th><th>Sessions</th></tr>${otRows}</table>` +
-        `<p class="muted">Totals from every completed session saved on this device.</p>`
-      : `<div class="prog-section-title">Your progress over time</div><p class="prog-empty">Finish a session and your skills will start showing up here.</p>`;
+      $("progOverTime").innerHTML =
+        `<div class="prog-section-title">What you've done so far</div>` +
+        `<div class="prog-stats">` +
+          stat(dayCount, dayCount === 1 ? "day practised" : "days practised") +
+          stat(done.length, done.length === 1 ? "skill practised" : "skills practised") +
+          stat(`${right}/${total}`, "right first try") +
+        `</div>` + rows +
+        `<p class="muted">Every finished session saved on this device. “Right first try” counts only the very first attempt at each question.</p>`;
+    }
+
+    /* Activity: the same record read as a diary rather than a total, so a
+       student can see when they last touched something and a teacher can see
+       whether the practice is spread out or crammed. */
+    const box = $("progActivity");
+    if (box) {
+      const days = historyByDay();
+      if (!days.length) {
+        box.innerHTML = `<div class="prog-section-title">Activity</div>` +
+          `<p class="prog-empty">No dated activity yet. Days appear here once you finish a session.</p>`;
+      } else {
+        const SHOW = 30;
+        const blocks = days.slice(0, SHOW).map((d) => {
+          const lines = Object.entries(d.skills).map(([id, s]) => {
+            const sk = skillById(id);
+            const name = sk ? progSkillName(sk) : id;
+            return `<li><span>${escapeHtmlE(name)}</span><span class="prog-day-score">${s.right}/${s.total} first try</span></li>`;
+          });
+          if (d.pieces) {
+            lines.push(`<li><span>${d.pieces === 1 ? "Wrote a response" : `Wrote ${d.pieces} responses`}</span>` +
+              `<span class="prog-day-score">${d.words} word${d.words === 1 ? "" : "s"}</span></li>`);
+          }
+          return `<div class="prog-day"><div class="prog-day-date">${escapeHtmlE(progDayLabel(d.day))}</div>` +
+            `<ul class="prog-day-list">${lines.join("")}</ul></div>`;
+        }).join("");
+        // A long record is for reading, not scrolling: say what is behind the
+        // cut rather than silently dropping it.
+        const hidden = days.length - SHOW;
+        const more = hidden > 0
+          ? `<p class="prog-more">${hidden} earlier day${hidden === 1 ? "" : "s"} not shown.</p>` : "";
+        box.innerHTML = `<div class="prog-section-title">Activity</div>${blocks}${more}`;
+      }
+    }
   }
   function openProgress() {
     progCameFrom = activeScreenName();
