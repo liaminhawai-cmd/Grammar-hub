@@ -176,6 +176,31 @@ window.SKILLS.forEach((skill) => {
   });
 });
 
+// edit items: grading the model answer is not enough — a student has to be
+// able to BUILD it with the one change the edit UI allows: take a word out,
+// swap one for a bank word, or (allowInsert only) add a bank word in a gap.
+// An item needing an added word without allowInsert passed the check above
+// and left students stuck. Words join the way edit.collect() joins them.
+const editJoin = (parts) => parts.reduce((out, p) =>
+  /^[,.;:!?]+$/.test(p) ? out + p : out + (out ? ' ' : '') + p, '');
+window.SKILLS.forEach((skill) => {
+  (skill.items || []).forEach((item, idx) => {
+    if (item.type !== 'edit' || !Array.isArray(item.tokens) || !Array.isArray(item.bank)) return;
+    const t = item.tokens, built = [];
+    t.forEach((_, i) => {
+      built.push(editJoin(t.filter((_, j) => j !== i)));
+      item.bank.forEach((w) => built.push(editJoin(t.map((x, j) => (j === i ? w : x)))));
+    });
+    if (item.allowInsert) {
+      for (let p = 0; p <= t.length; p++) item.bank.forEach((w) => built.push(editJoin([...t.slice(0, p), w, ...t.slice(p)])));
+    }
+    if (!built.some((s) => window.TASK_TYPES.edit.check(item, s).correct)) {
+      console.error(`❌ [${skill.id}] Item ${idx}: edit answer can't be built in one change${item.allowInsert ? '' : ' (needs allowInsert?)'}`);
+      errorCount++;
+    }
+  });
+});
+
 // Report
 if (!silent) {
   if (errorCount === 0) {
